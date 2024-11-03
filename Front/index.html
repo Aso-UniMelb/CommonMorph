@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>CommonMorph</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body dir="ltr">
+  <div class="wrapper">
+    <div class="header">
+      <div>
+        <h1>CommonMorph</h1>
+        <div class="tab">
+          <a class="tablink" id="btab1" onclick="tab('tab1')">Linguist</a>
+          <a class="tablink" id="btab2" onclick="tab('tab2')">Speaker</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div id="tab1" class="tabcontent">
+        <div class="panel">
+          <details close>
+            <summary>List of dialects</summary>
+            <label><span class="addButton" id="btnAddDialect">Add</span></label>
+            <div id="lstDialects" class="list"></div>
+            <div id="frmDialect" class="form">
+              <form onsubmit="DialectSubmit(); return false;">
+                <input type="hidden" id="DialectId" />
+                <div class="field">
+                  <label for="txtDialectTitle">Title</label>
+                  <input type="text" id="txtDialectTitle" name="title" required />
+                </div>
+                <div class="field">
+                  <label for="txtDialectCode">Code <small>(ISO 639-3)</small></label>
+                  <input type="text" id="txtDialectCode" name="code" required />
+                </div>
+                <div class="field">
+                  <label for="txtDialectDescription">Description</label>
+                  <textarea id="txtDialectDescription" name="description"></textarea>
+                </div>
+                <div class="field">
+                  <label for="txtDialectKeyboardLayout">Valid Characters</label>
+                  <input type="text" id="txtDialectKeyboardLayout" name="keyboardLayout" />
+                </div>
+                <div class="field">
+                  <button type="submit" id="btnDialectSubmit"></button>
+                  <button type="button" id="btnDialectCancel">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </details>
+          <details open>
+            <summary>Current Dialect</summary>
+            <select id="cmbDialects" style="width: 300px;"></select>
+          </details>
+        </div>
+        <div class="panel">
+          <details open>
+            <summary>Paradigm Classes</summary>
+            <label> <span class="addButton" id="btnAddWordClass">Add</span></label>
+            <div id="lstWordClasses" class="list"></div>
+            <div id="frmWordClass" class="form">
+              <form onsubmit="WordClassSubmit(); return false;">
+                <input type="hidden" id="WordClassId" />
+                <div class="field">
+                  <label for="txtWordClassTitle">Title</label>
+                  <input type="text" id="txtWordClassTitle" name="title" required />
+                </div>
+                <div class="field">
+                  <label for="txtWordClassDescription">Description</label>
+                  <textarea id="txtWordClassDescription" name="description"></textarea>
+                </div>
+                <div class="field">
+                  <button type="submit" id="btnWordClassSubmit"></button>
+                  <button type="button" id="btnWordClassCancel">Cancel</button>
+                </div>
+              </form>
+            </div>
+            <details id="detailsSlots" open>
+              <summary>Slots of "<i id="txtSlotWClass"></i>"</summary>
+              <label><span class="addButton" id="btnAddSlot">Add</span></label>
+              <div id="lstSlots" class="list"></div>
+              <div id="frmSlots" class="form">
+                <form onsubmit="SlotsSubmit(); return false;">
+                  <input type="hidden" id="SlotId" />
+                  <input type="hidden" id="SlotWClassId" />
+                  <div class="field">
+                    <label for="txtSlotUniMorphTags">UniMorph Tags</label>
+                    <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" />
+                  </div>
+                  <div class="field">
+                    <label for="txtSlotFormula">Formula <small>(optional)</small></label>
+                    <input type="text" id="txtSlotFormula" name="formula" />
+                  </div>
+                  <div class="field">
+                    <label>Priority</label>
+                    <select id="cmbSlotPriority" style="width: 300px;" required>
+                      <option value="0" selected>Low</option>
+                      <option value="1">Medium</option>
+                      <option value="2">High</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <button type="submit" id="btnSlotsSubmit"></button>
+                    <button type="button" id="btnSlotsCancel">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+          </details>
+
+          <details open>
+            <summary>Lemmas</summary>
+            <label><span class="addButton" id="btnAddLemma">Add</span></label>
+            <div id="lstLemmas" class="list"></div>
+            <div id="frmLemmas" class="form">
+              <form onsubmit="LemmasSubmit(); return false;">
+                <input type="hidden" id="LemmaId" />
+                <div class="field">
+                  <label>Dictionary Entry</label>
+                  <input type="text" id="txtLemmaEntry" name="entry" required />
+                </div>
+                <div class="field">
+                  <label>WordClass</label>
+                  <select id="cmbLemmaWordClass" style="width: 300px;" required></select>
+                </div>
+                <div class="field">
+                  <label>Stem1 <small>(optional)</small></label>
+                  <input type="text" id="txtLemmaStem1" name="Stem1" />
+                </div>
+                <div class="field">
+                  <label>Stem2 <small>(optional)</small></label>
+                  <input type="text" id="txtLemmaStem2" name="Stem2" />
+                </div>
+                <div class="field">
+                  <label>Priority</label>
+                  <select id="cmbLemmaPriority" style="width: 300px;" required>
+                    <option value="0" selected>Low</option>
+                    <option value="1">Medium</option>
+                    <option value="2">High</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Description <small>(optional)</small></label>
+                  <input type="text" id="txtLemmaDescription" name="Description" />
+                </div>
+                <div class="field">
+                  <button type="submit" id="btnLemmasSubmit"></button>
+                  <button type="button" id="btnLemmasCancel">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div id="tab2" class="tabcontent">
+        <div>
+          <label>Dialect</label>
+          <select id="cmbFormsDialect" style="width: 200px;"></select>
+          <span class="addButton" id="btnRefreshForms">Refresh</span>
+          <span class="addButton" id="btnExportData">Copy Data</span>
+          <table id="tableForms" class="forms"></table>
+          <table id="tableFormsAdded" class="forms"></table>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="loading"></div>
+      <div>© 2024 <a href="https://www.example.com/">CommonMorph</a></div>
+    </div>
+  </div>
+  <script src="UM_tags.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // ========= tab
+    function tab(id) {
+      $('.tabcontent').removeClass('active');
+      $('.tablink').removeClass('active');
+      $('#' + id).addClass('active');
+      $('#b' + id).addClass('active');
+    }
+
+    $(document).ready(function () {
+      $('#frmDialect').hide();
+      $('#frmWordClass').hide();
+      $('#frmLemmas').hide();
+      $('#detailsSlots').hide();
+      $('#frmSlots').hide();
+      tab('tab2');
+    });
+  </script>
+</body>
+
+</html>

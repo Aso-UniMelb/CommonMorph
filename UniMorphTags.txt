@@ -1,0 +1,315 @@
+ADJ	Adjective	_POS
+ADP	Adposition	_POS
+ADV	Adverb	_POS
+ART	Article	_POS
+AUX	Auxiliary	_POS
+CLF	Classifier	_POS
+COMP	Complementizer	_POS
+CONJ	Conjunction	_POS
+DET	Determiner	_POS
+INTJ	Interjection	_POS
+N	Noun	_POS
+NUM	Numeral	_POS
+PART	Particle	_POS
+PRO	Pronoun	_POS
+PROPN	Proper Name	_POS
+V	Verb	_POS
+V.CVB	Converb	_POS
+V.MSDR	Masdar	_POS
+V.PTCP	Participle	_POS
+ACCMP	Accomplishment	Aktionsart
+ACH	Achievement	Aktionsart
+ACTY	Activity	Aktionsart
+ATEL	Atelic	Aktionsart
+DUR	Durative	Aktionsart
+DYN	Dynamic	Aktionsart
+PCT	Punctual	Aktionsart
+SEMEL	Semelfactive	Aktionsart
+STAT	Stative	Aktionsart
+TEL	Telic	Aktionsart
+ANIM	Animate	Animacy
+HUM	Human	Animacy
+INAN	Inanimate	Animacy
+NHUM	Non-human	Animacy
+ARGNO1S	1.SG Nominative	Argument Marking
+ARGNO1P	1.PL Nominative	Argument Marking
+ARGNO2S	2.SG Nominative	Argument Marking
+ARGNO2P	2.PL Nominative	Argument Marking
+ARGNO3S	3.SG Nominative	Argument Marking
+ARGNO3P	3.PL Nominative	Argument Marking
+ARGAC1S	1.SG Accusative	Argument Marking
+ARGAC1P	1.PL Accusative	Argument Marking
+ARGAC2S	2.SG Accusative	Argument Marking
+ARGAC2P	2.PL Accusative	Argument Marking
+ARGAC3S	3.SG Accusative	Argument Marking
+ARGAC3P	3.PL Accusative	Argument Marking
+ARGAB1S	1.SG Absolutive	Argument Marking
+ARGAB1P	1.PL Absolutive	Argument Marking
+ARGAB2S	2.SG Absolutive	Argument Marking
+ARGAB2P	2.PL Absolutive	Argument Marking
+ARGAB3S	3.SG Absolutive	Argument Marking
+ARGAB3P	3.PL Absolutive	Argument Marking
+ARGER1S	1.SG Ergative	Argument Marking
+ARGER1P	1.PL Ergative	Argument Marking
+ARGER2S	2.SG Ergative	Argument Marking
+ARGER2P	2.PL Ergative	Argument Marking
+ARGER3S	3.SG Ergative	Argument Marking
+ARGER3P	3.PL Ergative	Argument Marking
+ARGDA1S	1.SG Dative	Argument Marking
+ARGDA1P	1.PL Dative	Argument Marking
+ARGDA2S	2.SG Dative	Argument Marking
+ARGDA2P	2.PL Dative	Argument Marking
+ARGDA3S	3.SG Dative	Argument Marking
+ARGDA3P	3.PL Dative	Argument Marking
+ARGBE1S	1.SG benefactive	Argument Marking
+ARGBE1P	1.PL benefactive	Argument Marking
+ARGBE2S	2.SG benefactive	Argument Marking
+ARGBE2P	2.PL benefactive	Argument Marking
+ARGBE3S	3.SG benefactive	Argument Marking
+ARGBE3P	3.PL benefactive	Argument Marking
+HAB	Habitual	Aspect
+IPFV	Imperfective	Aspect
+ITER	Iterative	Aspect
+PFV	Perfective	Aspect
+PRF	Perfect	Aspect
+PROG	Progressive	Aspect
+PROSP	Prospective	Aspect
+ABL	Ablative	Case
+ABS	Absolutive	Case
+ACC	Accusative	Case
+ALL	Allative	Case
+ANTE	Near, in front of	Case
+APPRX	Approximative	Case
+APUD	Next to	Case
+AT	At	Case
+AVR	Aversive	Case
+BEN	Benefactive	Case
+BYWAY	Essive-modal	Case
+CIRC	Near	Case
+COM	Comitative	Case
+COMPV	Comparative	Case
+DAT	Dative	Case
+EQTV	Equative	Case
+ERG	Ergative	Case
+ESS	Essive	Case
+FRML	Formal	Case
+GEN	Genitive	Case
+IN	In	Case
+INS	Instrumental	Case
+INTER	Among	Case
+NOM	Nominative	Case
+NOMS	Nominative, S-only	Case
+ON	On	Case
+ONHR	On (horizontal)	Case
+ONVR	On (vertical)	Case
+POST	Behind	Case
+PRIV	Privative	Case
+PROL	Prolative/translative	Case
+PROPR	Proprietive	Case
+PROX	Proximate	Case
+PRP	Purposive	Case
+PRT	Partitive	Case
+REL	Relative	Case
+REM	Distal	Case
+SUB	Under	Case
+TERM	Terminative	Case
+TRANS	Translative	Case
+VERS	Versative	Case
+VOC	Vocative	Case
+AB	Absolute	Comparison
+CMPR	Comparative	Comparison
+EQT	Equative	Comparison
+RL	Relative	Comparison
+SPRL	Superlative	Comparison
+DEF	Definite	Definiteness
+INDF	Indefinite	Definiteness
+NSPEC	Non-Specific	Definiteness
+SPEC	Specific	Definiteness
+ABV	Above	Deixis
+BEL	Below	Deixis
+EVEN	Even	Deixis
+MED	Medial	Deixis
+NOREF	No Reference Point, Distal	Deixis
+NVIS	Invisible	Deixis
+PHOR	Phoric, situated in discourse	Deixis
+PROX	Proximate	Deixis
+REF1	First Person Reference Point	Deixis
+REF2	Second Person Reference Point	Deixis
+REMT	Remote	Deixis
+VIS	Visible	Deixis
+ASSUM	Assumed	Evidentiality
+AUD	Auditory	Evidentiality
+DRCT	Direct	Evidentiality
+FH	Firsthand	Evidentiality
+HRSY	Hearsay	Evidentiality
+INFER	Inferred	Evidentiality
+NFH	Non-firsthand	Evidentiality
+NVSEN	Non-visual sensory	Evidentiality
+QUOT	Quotative	Evidentiality
+RPRT	Reported	Evidentiality
+SEN	Sensory	Evidentiality
+FIN	Finite	Finiteness
+NFIN	Nonfinite	Finiteness
+FEM	Feminine	Gender
+MASC	Masculine	Gender
+NEUT	Neuter	Gender
+BANTU01	Bantu Noun Classes	Gender
+BANTU02	Bantu Noun Classes	Gender
+BANTU03	Bantu Noun Classes	Gender
+BANTU04	Bantu Noun Classes	Gender
+BANTU05	Bantu Noun Classes	Gender
+BANTU06	Bantu Noun Classes	Gender
+BANTU07	Bantu Noun Classes	Gender
+BANTU08	Bantu Noun Classes	Gender
+BANTU09	Bantu Noun Classes	Gender
+BANTU10	Bantu Noun Classes	Gender
+BANTU11	Bantu Noun Classes	Gender
+BANTU12	Bantu Noun Classes	Gender
+BANTU13	Bantu Noun Classes	Gender
+BANTU14	Bantu Noun Classes	Gender
+BANTU15	Bantu Noun Classes	Gender
+BANTU16	Bantu Noun Classes	Gender
+BANTU17	Bantu Noun Classes	Gender
+BANTU18	Bantu Noun Classes	Gender
+BANTU19	Bantu Noun Classes	Gender
+BANTU20	Bantu Noun Classes	Gender
+BANTU21	Bantu Noun Classes	Gender
+BANTU22	Bantu Noun Classes	Gender
+BANTU23	Bantu Noun Classes	Gender
+NAKH1	Nakh-Daghestanian Noun Classes	Gender
+NAKH2	Nakh-Daghestanian Noun Classes	Gender
+NAKH3	Nakh-Daghestanian Noun Classes	Gender
+NAKH4	Nakh-Daghestanian Noun Classes	Gender
+NAKH5	Nakh-Daghestanian Noun Classes	Gender
+NAKH6	Nakh-Daghestanian Noun Classes	Gender
+NAKH7	Nakh-Daghestanian Noun Classes	Gender
+NAKH8	Nakh-Daghestanian Noun Classes	Gender
+FOC	Focus	Information Structure
+TOP	Topic	Information Structure
+DECL	Declarative	Interrogativity
+INT	Interrogative	Interrogativity
+ADM	Admirative	Mood
+AUNPRP	Australian Non-Purposive	Mood
+AUPRP	Australian Purposive	Mood
+COND	Conditional	Mood
+DEB	Debitive	Mood
+DED	Deductive	Mood
+IMP	Imperative-Jussive	Mood
+IND	Indicative	Mood
+INTEN	Intentive	Mood
+IRR	Irrealis	Mood
+LKLY	Likely	Mood
+OBLIG	Obligative	Mood
+OPT	Optative-Desiderative	Mood
+PERM	Permissive	Mood
+POT	Potential	Mood
+PURP	General Purposive	Mood
+REAL	Realis	Mood
+SBJV	Subjunctive	Mood
+SIM	Simulative	Mood
+DU	Dual	Number
+GPAUC	Greater paucal	Number
+GRPL	Greater plural	Number
+INVN	Inverse	Number
+PAUC	Paucal	Number
+PL	Plural	Number
+SG	Singular	Number
+TRI	Trial	Number
+0	Zero person	Person
+1	First person	Person
+2	Second person	Person
+3	Third person	Person
+4	Fourth person	Person
+EXCL	Exclusive	Person
+INCL	Inclusive	Person
+OBV	Obviative	Person
+PRX	Proximate	Person
+POS	Positive	Polarity
+NEG	Negative	Polarity
+AVOID	Avoidance style	Politeness
+COL	Colloquial	Politeness
+ELEV	Formal, Referent Elevating	Politeness
+FOREG	Formal register	Politeness
+FORM	Formal	Politeness
+HIGH	High status	Politeness
+HUMB	Formal, Speaker Humbling	Politeness
+INFM	Informal	Politeness
+LIT	Literary	Politeness
+LOW	Low status	Politeness
+POL	Polite	Politeness
+STELEV	High status, elevated	Politeness
+STSUPR	High status, supreme	Politeness
+ALN	Alienable possession	Possession
+NALN	Inalienable possession	Possession
+PSS1D	Possession by 1.DU	Possession
+PSS1DE	Possession by 1.DU.EXCL	Possession
+PSS1DI	Possession by 1.DU.INCL	Possession
+PSS1P	Possession by 1.PL	Possession
+PSS1PE	Possession by 1.PL.EXCL	Possession
+PSS1PI	Possession by 1.PL.INCL	Possession
+PSS1S	Possession by 1.SG	Possession
+PSS2D	Possession by 2.DU	Possession
+PSS2DF	Possession by 2.DU.FEM	Possession
+PSS2DM	Possession by 2.DU.MASC	Possession
+PSS2P	Possession by 2.PL	Possession
+PSS2PF	Possession by 2.PL.FEM	Possession
+PSS2PM	Possession by 2.PL.MASC	Possession
+PSS2S	Possession by 2.SG	Possession
+PSS2SF	Possession by 2.SG.FEM	Possession
+PSS2SFORM	Possession by 2.SG.FORM	Possession
+PSS2SINFM	Possession by 2.SG.INFM	Possession
+PSS2SM	Possession by 2.SG.MASC	Possession
+PSS3D	Possession by 3.DU	Possession
+PSS3DF	Possession by 3.DU.FEM	Possession
+PSS3DM	Possession by 3.DU.MASC	Possession
+PSS3P	Possession by 3.PL	Possession
+PSS3PF	Possession by 3.PL.FEM	Possession
+PSS3PM	Possession by 3.PL.MASC	Possession
+PSS3S	Possession by 3.SG	Possession
+PSS3SF	Possession by 3.SG.FEM	Possession
+PSS3SM	Possession by 3.SG.MASC	Possession
+PSSD	Possessed	Possession
+CN_R_MN	SR among NPs in any argument position	Switch-Reference
+DS	DS	Switch-Reference
+DSADV	DS Adverbial	Switch-Reference
+LOG	Logophoric	Switch-Reference
+OR	Open Reference	Switch-Reference
+SEQMA	Sequential Multiclausal Aspect	Switch-Reference
+SIMMA	Simultaneous Multiclausal Aspect	Switch-Reference
+SS	SS	Switch-Reference
+SSADV	SS Adverbial	Switch-Reference
+1DAY	Within 1 day	Tense
+FUT	Future	Tense
+HOD	Hodiernal	Tense
+IMMED	Immediate	Tense
+PRS	Present	Tense
+PST	Past	Tense
+RCT	Recent	Tense
+RMT	Remote	Tense
+APPL	Applicative	Valency
+CAUS	Causative	Valency
+DITR	Ditransitive	Valency
+IMPRS	Impersonal	Valency
+INTR	Intransitive	Valency
+RECP	Reciprocal	Valency
+REFL	Reflexive	Valency
+TR	Transitive	Valency
+ACFOC	Accompanier Focus	Voice
+ACT	Active	Voice
+AGFOC	Agent Focus	Voice
+ANTIP	Antipassive	Voice
+BFOC	Beneficiary Focus	Voice
+CFOC	Conveyed Focus	Voice
+DIR	Direct	Voice
+IFOC	Instrument Focus	Voice
+INV	Inverse	Voice
+LFOC	Location Focus	Voice
+MID	Middle	Voice
+PASS	Passive	Voice
+PFOC	Patient Focus	Voice
+LGSPEC1	varies by language	X_Language-Specific Features
+LGSPEC2	varies by language	X_Language-Specific Features
+LGSPEC3	varies by language	X_Language-Specific Features
+LGSPEC4	varies by language	X_Language-Specific Features
+LGSPEC5	varies by language	X_Language-Specific Features
+LGSPEC6	varies by language	X_Language-Specific Features
