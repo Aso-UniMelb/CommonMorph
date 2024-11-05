@@ -40,10 +40,12 @@ function getDialects() {
       }
       $('#lstDialects').html(html);
       $('#cmbDialects').select2({ data: options });
-      $('#cmbFormsDialect').select2({ data: options });
+      $('#cmbFormsEntryDialect').select2({ data: options });
+      $('#cmbFormsCheckDialect').select2({ data: options });
       getWordClasses(dialects[0].id);
       geLemmas(dialects[0].id);
-      getForms(dialects[0].id);
+      getFormsForEntry(dialects[0].id);
+      getFormsForCheck(dialects[0].id);
     },
     error: function (data) {
       console.log(data);
@@ -263,12 +265,14 @@ $('#btnWordClassCancel').click(function () {
 });
 // ========= Lemmas
 Lemmas = [];
-function geLemmas(DialectId) {  
+function geLemmas(DialectId) {
   let d = dialects.findIndex(function (item, i) { return item.id == DialectId });
-  validateInput(document.getElementById('txtLemmaEntry'), dialects[d].keyboardLayout);
-  validateInput(document.getElementById('txtLemmaStem1'), dialects[d].keyboardLayout);
-  validateInput(document.getElementById('txtLemmaStem2'), dialects[d].keyboardLayout);
-  $('#detailsSlots').hide();  
+  validateInput('#txtLemmaEnglish', 'abcdefghijklmnopqrstuvwxyz');
+  validateInput('#txtLemmaEntry', dialects[d].keyboardLayout);
+  validateInput('#txtLemmaStem1', dialects[d].keyboardLayout);
+  validateInput('#txtLemmaStem2', dialects[d].keyboardLayout);
+  validateInput('#txtLemmaStem3', dialects[d].keyboardLayout);
+  $('#detailsSlots').hide();
   $('#frmSlots').hide();
   $('.loading').show();
   $.ajax({
@@ -308,9 +312,11 @@ $('#btnAddLemma').click(function () {
   }
   else {
     $('#frmLemmas').show();
-    $('#txtLemmaEntry').val('');
+    $('#frmLemmas').show();
+    $('#txtLemmaEnglish').val('');
     $('#txtLemmaStem1').val('');
     $('#txtLemmaStem2').val('');
+    $('#txtLemmaStem3').val('');
     $('#txtLemmaDescription').val('');
     $('#LemmaId').val('');
     $('#cmbLemmaPriority').val('1');
@@ -327,8 +333,10 @@ function LemmasSubmit() {
 function insertLemma() {
   let entry = $('#txtLemmaEntry').val().trim();
   let wordClassId = $('#cmbLemmaWordClass').val();
+  let eng = $('#txtLemmaEnglish').val().trim();
   let stem1 = $('#txtLemmaStem1').val().trim();
   let stem2 = $('#txtLemmaStem2').val().trim();
+  let stem3 = $('#txtLemmaStem3').val().trim();
   let priority = $('#cmbLemmaPriority').val();
   let description = $('#txtLemmaDescription').val().trim();
   let dialectId = $('#cmbDialects').val();
@@ -338,8 +346,10 @@ function insertLemma() {
     data: {
       Entry: entry,
       WordClassId: wordClassId,
+      EngMeaning: eng,
       Stem1: stem1,
       Stem2: stem2,
+      Stem3: stem3,
       Priority: priority,
       Description: description
     },
@@ -355,8 +365,10 @@ function insertLemma() {
 function updateLemma() {
   let entry = $('#txtLemmaEntry').val().trim();
   let wordClassId = $('#cmbLemmaWordClass').val();
+  let eng = $('#txtLemmaEnglish').val().trim();
   let stem1 = $('#txtLemmaStem1').val().trim();
   let stem2 = $('#txtLemmaStem2').val().trim();
+  let stem3 = $('#txtLemmaStem3').val().trim();
   let description = $('#txtLemmaDescription').val().trim();
   let priority = $('#cmbLemmaPriority').val();
   let dialectId = $('#cmbDialects').val();
@@ -364,13 +376,15 @@ function updateLemma() {
     url: server + 'Lemma/update',
     type: 'POST',
     data: {
-      id: $('#LemmaId').val(),
-      entry: entry,
-      wordClassId: wordClassId,
-      stem1: stem1,
-      stem2: stem2,
-      priority: priority,
-      description: description
+      Id: $('#LemmaId').val(),
+      Entry: entry,
+      EngMeaning: eng,
+      WordClassId: wordClassId,
+      Stem1: stem1,
+      Stem2: stem2,
+      Stem3: stem3,
+      Priority: priority,
+      Description: description
     },
     success: function (data) {
       $('#frmLemmas').hide();
@@ -388,8 +402,10 @@ function EditLemma(id) {
   $('#frmLemmas').show();
   $('#btnLemmasSubmit').html('Save');
   $('#txtLemmaEntry').val(Lemmas[id].entry);
+  $('#txtLemmaEnglish').val(Lemmas[id].engMeaning);
   $('#txtLemmaStem1').val(Lemmas[id].stem1);
   $('#txtLemmaStem2').val(Lemmas[id].stem2);
+  $('#txtLemmaStem3').val(Lemmas[id].stem3);
   $('#txtLemmaDescription').val(Lemmas[id].description);
   $('#LemmaId').val(Lemmas[id].id);
   $('#cmbLemmaWordClass').val(Lemmas[id].wordClassID).trigger('change');
@@ -508,27 +524,79 @@ function EditSlot(id) {
 }
 //=========== Speaker Part
 Forms = [];
-$('#cmbFormsDialect').on('select2:select', function (e) {
+
+$('#cmbFormsEntryDialect').on('select2:select', function (e) {
   var selectedItem = e.params.data;
   dialectId = selectedItem.id;
-  refreshForms(dialectId);
+  getFormsForEntry(dialectId);
 });
 
-$('#btnRefreshForms').click(function () {
-  let dialectId = $('#cmbFormsDialect').val();
-  refreshForms(dialectId);
+$('#btnRefreshFormsEntry').click(function () {
+  let dialectId = $('#cmbFormsEntryDialect').val();
+  getFormsForEntry(dialectId);
 });
 
-function refreshForms(dialectId) {
-  getForms(dialectId);
-}
 
-function getForms(DialectId) {
-  $('#tableForms').html('');
-  $('#tableFormsAdded').html('');
+$('#cmbFormsCheckDialect').on('select2:select', function (e) {
+  var selectedItem = e.params.data;
+  dialectId = selectedItem.id;
+  getFormsForCheck(dialectId);
+});
+
+$('#btnRefreshFormsCheck').click(function () {
+  let dialectId = $('#cmbFormsCheckDialect').val();
+  getFormsForCheck(dialectId);
+});
+
+
+function getFormsForEntry(DialectId) {
+  $('#tableFormsEntry').html('');
   $('.loading').show();
   $.ajax({
-    url: server + 'Form/list',
+    url: server + 'Form/listForEntery',
+    type: 'GET',
+    data: {
+      DialectId: DialectId
+    },
+    success: function (data) {
+      $('.loading').hide();
+      Forms = data;
+      let d = dialects.findIndex(function (item, i) { return item.id == DialectId });
+      let langCode = dialects[d].code;
+      for (let i = 0; i < Forms.length; i++) {
+        let w = Forms[i].formula;
+        w = w.replace(/L/g, Forms[i].lemma);
+        w = w.replace(/S1/g, Forms[i].S1);
+        w = w.replace(/S2/g, Forms[i].S2);
+        w = w.replace(/\+/g, '');
+        $('#tableFormsEntry').append(`<div>
+            <div class="LemmaFeatures">
+              ${Forms[i].lemma}
+              <span class="features">${UM_tag2word(Forms[i].tags, langCode)}</span>
+            </div>
+            <div class="formInputs">
+              <input type="text" value="${w}" id="form${i}"/>
+              <span class="formSubmit" onclick="getPrompt(UM_tags2prompt('${Forms[i].Eng}', '${Forms[i].tags}', '${langCode}'))">🤖</span>
+              <span class="formSubmit" id="sForm${i}" onclick="SubmitForm(${i}, ${Forms[i].lemmaId}, ${Forms[i].slotId}, '${w}')">✅</span>
+            </div>
+          </div>`);
+        let d = dialects.findIndex(function (item, i) { return item.id == DialectId });
+        validateInput('#form' + i, dialects[d].keyboardLayout);
+      }
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+export_data = '';
+let shown_forms_checking = [];
+function getFormsForCheck(DialectId) {
+  $('#tableFormsCheck').html('');
+  $('.loading').show();
+  $.ajax({
+    url: server + 'Form/listForCheck',
     type: 'GET',
     data: {
       DialectId: DialectId
@@ -540,32 +608,48 @@ function getForms(DialectId) {
       let langCode = dialects[d].code;
       export_data = '';
       for (let i = 0; i < Forms.length; i++) {
-        let w = '';
-        if (!Forms[i].word) {
-          w = Forms[i].formula;
-          w = w.replace(/L/g, Forms[i].lemma);
-          w = w.replace(/S1/g, Forms[i].S1);
-          w = w.replace(/S2/g, Forms[i].S2);
-          w = w.replace(/\+/g, '');
+        let w = Forms[i].word;
+        shown_forms_checking.push(Forms[i].id);
+        export_data += `${Forms[i].lemma}\t${w}\t${Forms[i].tags}\n`;
+        $('#tableFormsCheck').append(`<div>
+          <div class="LemmaFeatures">
+            ${Forms[i].lemma}
+            <span class="features">${UM_tag2word(Forms[i].tags, langCode)}</span>
+          </div>
+          <div class="formInputs">
+            <span class="addedForm">${w}</span>
+            <span id="statYes${Forms[i].id}"></span>
+            <span class="formSubmit" onclick="VoteYes(${Forms[i].id})">👍</span>
+            <span class="formSubmit" onclick="VoteNo(${Forms[i].id})">👎</span>
+            <span id="statNo${Forms[i].id}"></span>
+            <span class="formSubmit" onclick="DeleteForm(${Forms[i].id})">❌</span>
+          </div>
+        </div>`);
+        getVotes();
+      }
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+function getVotes() {
+  $.ajax({
+    url: server + 'Form/getVotes',
+    type: 'GET',
+    data: {
+      Ids: shown_forms_checking.join(',')
+    },
+    success: function (data) {
+      for (let i = 0; i < data.length; i++) {
+        let id = data[i].FormId;
+        let type = data[i].type;
+        let num = data[i].num;
+        if (type == 0) {
+          $('#statYes' + id).html(num);
         } else {
-          w = Forms[i].word;
-        }
-        if (Forms[i].word) {
-          export_data += `${Forms[i].lemma}\t${w}\t${Forms[i].tags}\n`;
-          $('#tableFormsAdded').append(`<tr>
-          <td>${Forms[i].lemma}</td>
-          <td>${UM_tag2word(Forms[i].tags, langCode)}</td>
-          <td><input type="text" value="${w}" id="form${i}" style="color:green;" disabled/></td>
-          </tr>`);
-        } else {
-          $('#tableForms').append(`<tr>
-          <td>${Forms[i].lemma}</td>
-          <td>${UM_tag2word(Forms[i].tags, langCode)}</td>
-          <td><input type="text" value="${w}" id="form${i}"/></td>
-          <td><span class="formSubmit" id="sForm${i}" spellcheck="false" onclick="SubmitForm(${i}, ${Forms[i].lemmaId}, ${Forms[i].slotId}, '${w}')">✅</span></td>
-          </tr>`);
-          let d = dialects.findIndex(function (item, i) { return item.id == DialectId });
-          validateInput(document.getElementById('form' + i), dialects[d].keyboardLayout);
+          $('#statNo' + id).html(num);
         }
       }
     },
@@ -574,6 +658,7 @@ function getForms(DialectId) {
     }
   });
 }
+
 function SubmitForm(i, lemmaId, slotId, suggested) {
   let word = $('#form' + i).val().trim();
   $.ajax({
@@ -597,6 +682,82 @@ function SubmitForm(i, lemmaId, slotId, suggested) {
   });
 }
 
+function VoteNo(id) {
+  $.ajax({
+    url: server + 'Form/VoteNo',
+    type: 'GET',
+    data: {
+      formId: id
+    },
+    success: function (data) {
+      let dialectId = $('#cmbFormsCheckDialect').val();
+      getFormsForCheck(dialectId);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+function VoteYes(id) {
+  $.ajax({
+    url: server + 'Form/VoteYes',
+    type: 'GET',
+    data: {
+      formId: id
+    },
+    success: function (data) {
+      let dialectId = $('#cmbFormsCheckDialect').val();
+      getFormsForCheck(dialectId);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+function DeleteForm(id) {
+  console.log(id);
+  $.ajax({
+    url: server + 'Form/delete',
+    type: 'GET',
+    data: {
+      id: id
+    },
+    success: function (data) {
+      let dialectId = $('#cmbFormsEntryDialect').val();
+      refreshFormsCeck(dialectId);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+function getPrompt(prompt) {
+  $('.loading').show();
+  $.ajax({
+    type: 'POST',
+    url: 'https://api.groq.com/openai/v1/chat/completions',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + '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'
+    },
+    data: JSON.stringify({
+      'model': 'llama3-70b-8192',
+      'messages': [{
+        'role': 'user',
+        'content': prompt
+      }]
+    }),
+    success: function (data) {
+      $('.loading').hide();
+      alert(data.choices[0].message.content);
+    },
+    dataType: 'json'
+  });
+}
+
 $('#btnExportData').click(function () {
   const textArea = document.createElement('textarea');
   textArea.value = export_data;
@@ -606,16 +767,14 @@ $('#btnExportData').click(function () {
   textArea.remove();
   alert('Inserted Data copied to clipboard');
 });
-// validate user inputs
-function validateInput(field, chars) {
-  field.addEventListener("blur", () => removeInvalid(field, chars));
-  field.addEventListener("keyup", () => removeInvalid(field, chars));
-  field.addEventListener("paste", () => removeInvalid(field, chars));
-}
-function removeInvalid(field, chars) {
-  var text = field.value;
-  const validRegex = new RegExp(`^[ ${chars}]*$`);
-  if (!validRegex.test(text)) {
-    field.value = text.replace(new RegExp(`[^ ${chars}]`, "g"), '');
-  }
+
+function validateInput(selector, chars) {
+  $(selector).off();
+  $(selector).on('input', function () {
+    var inputVal = $(this).val();
+    var validChars = new RegExp(`^[ ${chars}]*$`);
+    if (!validChars.test(inputVal)) {
+      $(this).val(inputVal.replace(new RegExp(`[^ ${chars}]`, "g"), ''));
+    }
+  });
 }

@@ -11,6 +11,7 @@ namespace CommonMorphAPI.Model
     public DbSet<WordClass> WordClasses { get; set; }
     public DbSet<Slot> Slots { get; set; }
     public DbSet<Form> Forms { get; set; }
+    public DbSet<Vote> Votes { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -72,8 +73,11 @@ namespace CommonMorphAPI.Model
       public string Entry { get; set; }
       public string? Stem1 { get; set; }
       public string? Stem2 { get; set; }
+      public string? Stem3 { get; set; }
       [Required]
       public int WordClassID { get; set; }
+      [Required]
+      public string? EngMeaning { get; set; }
       public string? Description { get; set; }
       public Priority? priority { get; set; }
       public bool isDeleted { get; set; }
@@ -95,6 +99,24 @@ namespace CommonMorphAPI.Model
       public string? Word { get; set; }
       [Column(TypeName = "smalldatetime")]
       public DateTime? DateAdded { get; set; }
+      public bool isDeleted { get; set; }
+    }
+
+    public class Vote
+    {
+      [Key]
+      public int? Id { get; set; }
+      [Required]
+      public int FormId { get; set; }      
+      public VoteType type { get; set; }
+      [Column(TypeName = "smalldatetime")]
+      public DateTime? DateVoted { get; set; }
+      public int UserId { get; set; }
+    }
+
+    public enum VoteType{
+      Yes,
+      No
     }
 
     public enum Priority{
@@ -118,8 +140,6 @@ namespace CommonMorphAPI.Model
       public string? Username { get; set; }
       [Required]
       public byte[] passwordHash { get; set; }
-      [Required]
-      public byte[] passwordSalt { get; set; }
       [Required]
       [StringLength(50)]
       public string? Name { get; set; }

@@ -26,18 +26,43 @@ a {
 }
 
 h1 {
-  font-size: 18px;
+  font-size: 1.5rem;
   text-align: center;
 }
 
-table {
+.forms {
+  padding-top: 10px;
   border-collapse: collapse;
 }
 
-td {
-  padding: 5px 10px;
+.forms>div {
+  padding: 10px 0;
+  border-top: 1px solid var(--C0);
 }
 
+.LemmaFeatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.formInputs{
+  display: flex;
+  justify-content: space-between;  
+  align-items: center;
+}
+.addedForm{
+  color: #555;
+  min-width: 200px;
+}
+.features {
+  font-size: 0.8rem
+}
+
+.buttons {
+  display: flex;
+}
 
 /* main 3 rows */
 .wrapper {
@@ -58,7 +83,7 @@ td {
   max-width: var(--maxWidth);
   margin: auto;
   display: flex;
-  padding: 10px 20px;
+  padding: 5px 10px;
 }
 
 .main {
@@ -76,6 +101,7 @@ td {
   margin: 0 auto;
   padding: 0 10px;
   text-align: center;
+  box-shadow: inset #eee 0 5px 20px 0px;
 }
 
 .footer div {
@@ -87,6 +113,7 @@ td {
   max-width: var(--maxWidth);
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .list {
@@ -120,8 +147,8 @@ code {
   background: var(--C2);
   color: #fff;
   font-weight: normal;
-  font-size: 14px;
-  padding: 2px 5px;
+  font-size: 1rem;
+  padding: 5px 5px;
   border-radius: 5px;
 }
 
@@ -130,7 +157,7 @@ code {
   background: var(--C0);
   color: #fff;
   font-weight: normal;
-  font-size: 14px;
+  font-size: 1rem;
   padding: 2px 5px;
   border-radius: 5px;
 }
@@ -141,35 +168,38 @@ code {
 }
 
 .LemmaWClass {
-  font-size: 12px;
+  font-size: 0.8rem;
   background: var(--C3);
   padding: 2px;
 }
 
 .formSubmit {
+  font-size: 1rem;
   cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
 }
 
 .formSubmit:hover {
-  font-size: 20px;
+  background: var(--C0);
 }
 
 .priority0::before {
   content: "●";
   color: #999;
-  font-size: 12px;
+  font-size: 0.8rem;
 }
 
 .priority1::before {
   content: "●";
   color: #555;
-  font-size: 12px;
+  font-size: 0.8rem;
 }
 
 .priority2::before {
   content: "●";
   color: #222;
-  font-size: 16px;
+  font-size: 1.2rem;
 }
 
 /* forms */
@@ -181,15 +211,18 @@ button {
   box-sizing: border-box;
 }
 
-.form{
-  display: flex; /* Hidden by default */
+.form {
+  display: flex;
+  /* Hidden by default */
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  z-index: 1000; /* Ensures it’s on top */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent background */
+  z-index: 1000;
+  /* Ensures it’s on top */
   justify-content: center;
   align-items: center;
 }
@@ -223,6 +256,7 @@ textarea {
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  unicode-bidi: plaintext;
 }
 
 textarea {
@@ -249,16 +283,18 @@ label small {
 .tab {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .tab a {
   padding: 5px 20px;
   cursor: pointer;
   color: #000;
-  font-size: 16px;
+  font-size: 1.2rem;
   transition: color 0.3s ease;
   font-weight: bold;
   user-select: none;
+  text-align: center;
 }
 
 .tab a.active {
@@ -270,23 +306,26 @@ label small {
 .tabcontent {
   display: none;
   transition: display 0.3s ease;
+  padding: 5px;
 }
 
 .tabcontent.active {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Loading */
 div.loading {
-  width: 20px;
-  height: 20px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid var(--C0);
+  width: 15px;
+  height: 15px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid red;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 20px auto;
+  margin: 10px auto;
   display: block;
+  padding: 0;
 }
 
 @keyframes spin {

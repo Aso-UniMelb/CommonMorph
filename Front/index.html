@@ -15,10 +15,13 @@
   <div class="wrapper">
     <div class="header">
       <div>
-        <h1>CommonMorph</h1>
+        <div>
+          <h1>CommonMorph</h1>
+        </div>        
         <div class="tab">
           <a class="tablink" id="btab1" onclick="tab('tab1')">Linguist</a>
-          <a class="tablink" id="btab2" onclick="tab('tab2')">Speaker</a>
+          <a class="tablink" id="btab2" onclick="tab('tab2')">Speaker: Entery</a>
+          <a class="tablink" id="btab3" onclick="tab('tab3')">Speaker: Check</a>
         </div>
       </div>
     </div>
@@ -132,12 +135,20 @@
                   <select id="cmbLemmaWordClass" style="width: 300px;" required></select>
                 </div>
                 <div class="field">
+                  <label>English Meaning</label>
+                  <input type="text" id="txtLemmaEnglish" name="EngMeaning" required />
+                </div>
+                <div class="field">
                   <label>Stem1 <small>(optional)</small></label>
                   <input type="text" id="txtLemmaStem1" name="Stem1" />
                 </div>
                 <div class="field">
                   <label>Stem2 <small>(optional)</small></label>
                   <input type="text" id="txtLemmaStem2" name="Stem2" />
+                </div>
+                <div class="field">
+                  <label>Stem3 <small>(optional)</small></label>
+                  <input type="text" id="txtLemmaStem3" name="Stem3" />
                 </div>
                 <div class="field">
                   <label>Priority</label>
@@ -164,13 +175,22 @@
       <div id="tab2" class="tabcontent">
         <div>
           <label>Dialect</label>
-          <select id="cmbFormsDialect" style="width: 200px;"></select>
-          <span class="addButton" id="btnRefreshForms">Refresh</span>
-          <span class="addButton" id="btnExportData">Copy Data</span>
-          <table id="tableForms" class="forms"></table>
-          <table id="tableFormsAdded" class="forms"></table>
+          <select id="cmbFormsEntryDialect" style="width: 200px;"></select>
+          <span class="addButton" id="btnRefreshFormsEntry">Refresh</span>
+          <div id="tableFormsEntry" class="forms"></div>
         </div>
       </div>
+
+      <div id="tab3" class="tabcontent">
+        <div>
+          <label>Dialect</label>
+          <select id="cmbFormsCheckDialect" style="width: 200px;"></select>
+          <span class="addButton" id="btnRefreshFormsCheck">Refresh</span>
+          <span class="addButton" id="btnExportData">Copy Data</span>
+          <div id="tableFormsCheck" class="forms"></div>
+        </div>
+      </div>
+
     </div>
     <div class="footer">
       <div class="loading"></div>

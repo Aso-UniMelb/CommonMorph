@@ -351,3 +351,23 @@ function UM_tag2word(strTags, langCode) {
   }
   return words.join(', ');
 }
+
+function UM_tags2prompt(lemma, strTags, langCode) {
+  let tags = strTags.split(';');
+  let prompt = [];
+  for (let i = 0; i < tags.length; i++) {
+    let tag = tags[i];
+    let dimension = UM.find(item => item.l === tag).d;
+    let feature = UM.find(item => item.l === tag).f;
+    if (tag.startsWith('LGSPEC') && LGSPEC.some(item => item.hasOwnProperty(langCode))) {
+      let items = LGSPEC.find(item => item.hasOwnProperty(langCode))[langCode];
+      let LGSPEC_N = Number(tag.match(/\d+$/)[0]) - 1;
+      feature = items[LGSPEC_N];
+    }
+    prompt.push(dimension + '=' + feature);
+  }
+  let before = `Please, make a short simple sentence with lemma "${lemma}" and these features: `;
+  let after = ` and then translate it into Persian. Do not describe it, just show the translation.`;
+
+  return before + prompt.join(', ') + after;
+}

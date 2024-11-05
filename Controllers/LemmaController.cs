@@ -23,8 +23,10 @@ namespace CommonMorphAPI.Controllers
           {
               l.Id,
               l.Entry,
+              l.EngMeaning,
               l.Stem1,
               l.Stem2,
+              l.Stem3,
               l.Description,
               l.WordClassID,
               l.priority,

@@ -4,6 +4,7 @@ using CommonMorphAPI.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommonMorphAPI.Migrations
 {
     [DbContext(typeof(_DbContext))]
-    partial class _DbContextModelSnapshot : ModelSnapshot
+    [Migration("20241103231332_init3")]
+    partial class init3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,7 +169,7 @@ namespace CommonMorphAPI.Migrations
                     b.ToTable("Slots");
                 });
 
-            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Vote", b =>
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Verification", b =>
                 {
                     b.Property<int?>("Id")
                         .ValueGeneratedOnAdd()
@@ -174,7 +177,7 @@ namespace CommonMorphAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
 
-                    b.Property<DateTime?>("DateVoted")
+                    b.Property<DateTime?>("DateVerified")
                         .HasColumnType("smalldatetime");
 
                     b.Property<int?>("FormId")
@@ -184,12 +187,9 @@ namespace CommonMorphAPI.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("type")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.ToTable("Votes");
+                    b.ToTable("Verifications");
                 });
 
             modelBuilder.Entity("CommonMorphAPI.Model._DbContext+WordClass", b =>
