@@ -69,6 +69,20 @@ namespace CommonMorphAPI.Controllers
       form.DateAdded = DateTime.Now;
       using (var context = new _DbContext())
       {
+        if (context.Forms.Any(x => x.LemmaId == form.LemmaId && x.SlotId == form.SlotId && x.isDeleted == true))
+        {
+          // update if already deleted 
+          var old = context.Forms.FirstOrDefault(x => x.LemmaId == form.LemmaId && x.SlotId == form.SlotId && x.isDeleted == true);
+          if (old == null)
+            return BadRequest("not exist");
+          context.Entry(old).State = EntityState.Detached;
+          old.isDeleted = false;
+          old.Word = form.Word;
+          old.DateAdded = form.DateAdded;
+          context.Forms.Update(old);
+          context.SaveChanges();
+          return Ok(form.Id.ToString());
+        }
         context.Forms.Add(form);
         context.SaveChanges();
         var id = form.Id;
@@ -139,6 +153,6 @@ namespace CommonMorphAPI.Controllers
       }
     }
 
-    
+
   }
 }

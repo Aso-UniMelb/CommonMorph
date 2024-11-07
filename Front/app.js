@@ -726,7 +726,8 @@ function DeleteForm(id) {
     },
     success: function (data) {
       let dialectId = $('#cmbFormsEntryDialect').val();
-      refreshFormsCeck(dialectId);
+      getFormsForCheck(dialectId);
+      getFormsForEntry(dialectId);
     },
     error: function (data) {
       console.log(data);
