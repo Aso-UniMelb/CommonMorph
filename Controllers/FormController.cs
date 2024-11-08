@@ -18,12 +18,16 @@ namespace CommonMorphAPI.Controllers
       // using dapper
       using var connection = new SqlConnection(_M.ConStr);
       var result = connection.Query(@$"
-      SELECT lemmaId = L.Id, lemma = L.Entry, S1 = L.Stem1, S2 = L.Stem2, S3 = L.Stem3, Eng= L.EngMeaning, formula = S.Formula, tags = S.UniMorphTags, slotId = S.Id 
+      SELECT lemmaId = L.Id, lemma = L.Entry, slotId = S.Id, agreementId = A.Id,
+        S1 = L.Stem1, S2 = L.Stem2, S3 = L.Stem3, A = A.Formula,
+        Eng= L.EngMeaning, formula = S.Formula, tags = S.UniMorphTags + ';' + A.UniMorphTags
       FROM Lemmas L 
-      INNER JOIN WordClasses W ON W.Id = L.WordClassID
-      INNER JOIN Slots S ON S.WordClassID = L.WordClassID
-      LEFT  JOIN Forms F ON F.LemmaId = L.Id AND F.SlotId = S.Id
-      WHERE DialectID = {dialectID} AND (F.Word IS NULL OR F.isDeleted = 1)
+      INNER JOIN ParadigmClasses P ON P.Id = L.ParadigmClassID
+      INNER JOIN Slots S ON S.ParadigmClassID = L.ParadigmClassID
+			INNER JOIN AgreementGroups AG ON AG.Id = S.AgreementGroupID
+			INNER JOIN Agreements A ON A.AgreementGroupID = AG.Id
+      LEFT  JOIN Forms F ON F.LemmaId = L.Id AND F.SlotId = S.Id AND F.AgreementID = A.Ids
+      WHERE P.DialectID = {dialectID} AND (F.Word IS NULL OR F.isDeleted = 1)
       ORDER BY L.priority DESC, L.Entry, S.priority DESC, S.UniMorphTags
       OFFSET 20*({page}-1) ROWS FETCH NEXT 20 ROWS ONLY");
       return Ok(result);
@@ -35,12 +39,13 @@ namespace CommonMorphAPI.Controllers
       // using dapper
       using var connection = new SqlConnection(_M.ConStr);
       var result = connection.Query(@$"
-      SELECT id = F.Id , lemmaId = L.Id, lemma = L.Entry, tags = S.UniMorphTags, word = F.Word, slotId = S.Id 
+      SELECT id = F.Id , lemma = L.Entry, word = F.Word,
+				tags = S.UniMorphTags + ';' + (SELECT UniMorphTags FROM Agreements WHERE Id = F.AgreementID)
       FROM Lemmas L 
-      INNER JOIN WordClasses W ON W.Id = L.WordClassID
-      INNER JOIN Slots S ON S.WordClassID = L.WordClassID
+      INNER JOIN ParadigmClasses P ON P.Id = L.ParadigmClassID
+      INNER JOIN Slots S ON S.ParadigmClassID = L.ParadigmClassID
       LEFT  JOIN Forms F ON F.LemmaId = L.Id AND F.SlotId = S.Id
-      WHERE DialectID = {dialectID} AND (F.Word IS NOT NULL AND F.isDeleted=0)
+      WHERE P.DialectID = {dialectID} AND (F.Word IS NOT NULL AND F.isDeleted=0)
       ORDER BY L.priority DESC, L.Entry, S.priority DESC, S.UniMorphTags
       OFFSET 20*({page}-1) ROWS FETCH NEXT 20 ROWS ONLY");
       return Ok(result);

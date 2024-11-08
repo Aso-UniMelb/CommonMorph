@@ -8,7 +8,9 @@ namespace CommonMorphAPI.Model
   {
     public DbSet<Dialect> Dialects { get; set; }
     public DbSet<Lemma> Lemmas { get; set; }
-    public DbSet<WordClass> WordClasses { get; set; }
+    public DbSet<ParadigmClass> ParadigmClasses { get; set; }
+    public DbSet<AgreementGroup> AgreementGroups { get; set; }
+    public DbSet<Agreement> Agreements { get; set; }
     public DbSet<Slot> Slots { get; set; }
     public DbSet<Form> Forms { get; set; }
     public DbSet<Vote> Votes { get; set; }
@@ -31,10 +33,9 @@ namespace CommonMorphAPI.Model
       public string? Description { get; set; }
       public string? KeyboardLayout { get; set; }
       public bool isDeleted { get; set; }
-      public ICollection<WordClass>? WordClasses { get; set; }
     }
 
-    public class WordClass
+    public class ParadigmClass
     {
       [Key]
       public int? Id { get; set; }
@@ -43,11 +44,10 @@ namespace CommonMorphAPI.Model
       public string Title { get; set; }
       public string? Description { get; set; }
       public bool isDeleted { get; set; }
-      // Foreign key to the Dialect table
-      [ForeignKey("Dialect")]
+      // Foreign key
+      [ForeignKey("ParadigmClass-Dialect")]
       public int DialectID { get; set; }
       public Dialect? Dialect { get; set; } 
-      // public ICollection<Slot>? Slots { get; set; }
     }
 
     public class Slot
@@ -58,29 +58,61 @@ namespace CommonMorphAPI.Model
       public string? Formula { get; set; }
       public Priority? priority { get; set; }
       public bool isDeleted { get; set; }
-      // Foreign key to the WordClass table
-      [ForeignKey("WordClass")]
-      public int WordClassID { get; set; }
-      // public WordClass? WordClass { get; set; }
+      // Foreign key
+      // [ForeignKey("Slot-ParadigmClass")]
+      public int ParadigmClassID { get; set; }
+      // public ParadigmClass? ParadigmClass { get; set; }
+      // Foreign key
+      // [ForeignKey("Slot-AgreementGroup")]
+      public int AgreementGroupID { get; set; }
+      // public AgreementGroup? AgreementGroup { get; set; }
+    }
+
+    public class AgreementGroup
+    {
+      [Key]
+      public int? Id { get; set; }
+      public string? Title { get; set; }
+      // Foreign key
+      // [ForeignKey("AgreementGroup-Dialect")]
+      public int DialectID { get; set; }
+      // public Dialect? Dialect { get; set; } 
+    }
+
+    public class Agreement
+    {
+      [Key]
+      public int? Id { get; set; }
+
+      public string? UniMorphTags { get; set; }
+      public string? Formula { get; set; }
+      public Priority? priority { get; set; }
+      public bool isDeleted { get; set; }
+      // Foreign key
+      // [ForeignKey("Agreement-AgreementGroup")]
+      public int AgreementGroupID { get; set; }
+      // public AgreementGroup? AgreementGroup { get; set; }
+
     }
 
     public class Lemma
     {
       [Key]
       public int? Id { get; set; }
-      [Required]
       [StringLength(25)]
       public string Entry { get; set; }
       public string? Stem1 { get; set; }
       public string? Stem2 { get; set; }
       public string? Stem3 { get; set; }
-      [Required]
-      public int WordClassID { get; set; }
-      [Required]
       public string? EngMeaning { get; set; }
       public string? Description { get; set; }
       public Priority? priority { get; set; }
       public bool isDeleted { get; set; }
+      // Foreign key
+      // [ForeignKey("Lemma-ParadigmClass")]
+      public int ParadigmClassID { get; set; }
+      // public ParadigmClass? ParadigmClass { get; set; }
+
     }
 
     public class Form
@@ -88,30 +120,43 @@ namespace CommonMorphAPI.Model
       [Key]
       public int? Id { get; set; }
       public int UserId { get; set; }
-      [Required]
-      public int? LemmaId { get; set; }
-      [Required]
-      public int? SlotId { get; set; }
+      [StringLength(50)]
       public string? Suggested { get; set; }
       public SuggestionSource Source { get; set; }
-      [Required]
       [StringLength(50)]
       public string? Word { get; set; }
       [Column(TypeName = "smalldatetime")]
       public DateTime? DateAdded { get; set; }
       public bool isDeleted { get; set; }
+      // Foreign key
+      // [ForeignKey("Form-Lemmas")]
+      public int LemmaId { get; set; }
+      // public Lemma? Lemma { get; set; }
+      // Foreign key
+      // [ForeignKey("Form-Slots")]
+      public int SlotId { get; set; }
+      // public Slot? Slot { get; set; }
+      // Foreign key
+      // [ForeignKey("Form-Agreement")]
+      public int AgreementID { get; set; }
+      // public Agreement? Agreement { get; set; }
     }
 
     public class Vote
     {
       [Key]
-      public int? Id { get; set; }
-      [Required]
-      public int FormId { get; set; }      
+      public int? Id { get; set; }    
       public VoteType type { get; set; }
       [Column(TypeName = "smalldatetime")]
       public DateTime? DateVoted { get; set; }
+      // Foreign key
+      // [ForeignKey("Vote-Form")]
+      public int FormId { get; set; }
+      // public Form? Form { get; set; }
+      // Foreign key
+      // [ForeignKey("Vote-User")]
       public int UserId { get; set; }
+      // public User? User { get; set; }
     }
 
     public enum VoteType{
@@ -135,12 +180,9 @@ namespace CommonMorphAPI.Model
     {
       [Key]
       public int? id { get; set; }
-      [Required]
       [StringLength(50)]
       public string? Username { get; set; }
-      [Required]
       public byte[] passwordHash { get; set; }
-      [Required]
       [StringLength(50)]
       public string? Name { get; set; }
       public userRole role { get; set; }
@@ -149,7 +191,8 @@ namespace CommonMorphAPI.Model
     public enum userRole
     {
       admin,
-      editor
+      linguist,
+      speaker
     }
   }
 }

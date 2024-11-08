@@ -16,8 +16,8 @@ namespace CommonMorphAPI.Controllers
       using (var context = new _DbContext())
       {
         var result = from l in context.Lemmas
-          join w in context.WordClasses
-          on l.WordClassID equals w.Id
+          join w in context.ParadigmClasses
+          on l.ParadigmClassID equals w.Id
           where w.DialectID == dialectID
           select new 
           {
@@ -28,7 +28,7 @@ namespace CommonMorphAPI.Controllers
               l.Stem2,
               l.Stem3,
               l.Description,
-              l.WordClassID,
+              l.ParadigmClassID,
               l.priority,
               wClass = w.Title
           };
@@ -52,7 +52,7 @@ namespace CommonMorphAPI.Controllers
     {
       using (var context = new _DbContext())
       {
-        if (context.Lemmas.Any(x => x.Entry == lem.Entry && x.WordClassID == lem.WordClassID))
+        if (context.Lemmas.Any(x => x.Entry == lem.Entry && x.ParadigmClassID == lem.ParadigmClassID))
           return BadRequest("duplicate");
 
         context.Lemmas.Add(lem);

@@ -8,14 +8,14 @@ namespace CommonMorphAPI.Controllers
 {
 	[Route("[controller]")]
 	[ApiController]
-	public class WordClassController : Controller
+	public class ParadigmClassController : Controller
 	{
 		[HttpGet("list")]
 		public IActionResult list(int DialectId)
 		{
 			using (var context = new _DbContext())
 			{
-				return Ok(context.WordClasses
+				return Ok(context.ParadigmClasses
 				.Where(x => x.DialectID == DialectId)
 				.Select(x => new { x.Id, x.DialectID, x.Title }).ToList());
 			}
@@ -27,37 +27,37 @@ namespace CommonMorphAPI.Controllers
 		{
 			using (var context = new _DbContext())
 			{
-				return Ok(context.WordClasses.FirstOrDefault(x => x.Id == id));
+				return Ok(context.ParadigmClasses.FirstOrDefault(x => x.Id == id));
 			}
 		}
 
 		[HttpPost("insert")]
-		public IActionResult insert([FromForm] WordClass wClass)
+		public IActionResult insert([FromForm] ParadigmClass pClass)
 		{
 			using (var context = new _DbContext())
 			{
-				if (context.WordClasses.Any(x => x.Title == wClass.Title && x.DialectID == wClass.DialectID))
+				if (context.ParadigmClasses.Any(x => x.Title == pClass.Title && x.DialectID == pClass.DialectID))
 					return BadRequest("duplicate");
 
-				context.WordClasses.Add(wClass);
+				context.ParadigmClasses.Add(pClass);
 				context.SaveChanges();
-				var id = wClass.Id;
+				var id = pClass.Id;
 				return Ok(id.ToString());
 			}
 		}
 
 		[HttpPost("update")]
-		public IActionResult update([FromForm] WordClass wClass)
+		public IActionResult update([FromForm] ParadigmClass pClass)
 		{
 			using (var context = new _DbContext())
 			{
-				var old = context.WordClasses.FirstOrDefault(x => x.Id == wClass.Id);
+				var old = context.ParadigmClasses.FirstOrDefault(x => x.Id == pClass.Id);
 				if (old == null)
 					return BadRequest("not exist");
 				context.Entry(old).State = EntityState.Detached;
-				context.WordClasses.Update(wClass);
+				context.ParadigmClasses.Update(pClass);
 				context.SaveChanges();
-				return Ok(wClass.Id.ToString());
+				return Ok(pClass.Id.ToString());
 			}
 		}
 	}

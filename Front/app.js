@@ -1,5 +1,5 @@
-let server = 'https://morphAPI.kurdinus.com/';
-// let server = 'https://localhost:7242/';
+// let server = 'https://morphAPI.kurdinus.com/';
+let server = 'https://localhost:7242/';
 let export_data = '';
 // ========= Custom Sort
 const customOrder = 'AaBbCcÇçDdEeÊêFfGgHhIiÎîJjKkLlMmNnOoPpQqRrSsŞşTtUuÛûVvWwXxYyZz';
@@ -42,7 +42,8 @@ function getDialects() {
       $('#cmbDialects').select2({ data: options });
       $('#cmbFormsEntryDialect').select2({ data: options });
       $('#cmbFormsCheckDialect').select2({ data: options });
-      getWordClasses(dialects[0].id);
+      getParadigmClasses(dialects[0].id);
+      getAgreementGroups(dialects[0].id);
       geLemmas(dialects[0].id);
       getFormsForEntry(dialects[0].id);
       getFormsForCheck(dialects[0].id);
@@ -139,90 +140,91 @@ function updateDialect() {
 $('#btnDialectCancel').click(function () {
   $('#frmDialect').hide();
 });
-// ========= Word Classes
+// ========= ParadigmClasses
 $(document).ready(function () {
   getDialects();
 });
-wordClasses = [];
+ParadigmClasses = [];
 $('#cmbDialects').on('select2:select', function (e) {
   var selectedItem = e.params.data;
   dialectId = selectedItem.id;
   $('#frmLemmas').hide();
-  $('#cmbLemmaWordClass option').remove().trigger('change');
-  getWordClasses(dialectId);
+  $('#cmbLemmaParadigmClass option').remove().trigger('change');
+  getParadigmClasses(dialectId);
+  getAgreementGroups(dialectId);
   geLemmas(dialectId);
 });
 
-function getWordClasses(DialectId) {
+function getParadigmClasses(DialectId) {
   $('#detailsSlots').hide();
   $('.loading').show();
   $.ajax({
-    url: server + 'WordClass/list',
+    url: server + 'ParadigmClass/list',
     type: 'GET',
     data: {
       DialectId: DialectId
     },
     success: function (data) {
       $('.loading').hide();
-      wordClasses = data;
+      ParadigmClasses = data;
       var options = [];
       let html = '';
-      for (let i = 0; i < wordClasses.length; i++) {
-        options.push({ id: wordClasses[i].id, text: wordClasses[i].title });
-        html += `<div class="wordClass">        
-        ${wordClasses[i].title}
-        <span class="smallButton" onclick="ShowSlots(${wordClasses[i].id}, '${wordClasses[i].title}')">Slots</span>
-        <span class="smallButton" onclick="EditWordClass(${wordClasses[i].id})">✏️</span>
+      for (let i = 0; i < ParadigmClasses.length; i++) {
+        options.push({ id: ParadigmClasses[i].id, text: ParadigmClasses[i].title });
+        html += `<div class="ParadigmClass">        
+        <span class="smallButton" onclick="ShowSlots(${ParadigmClasses[i].id}, '${ParadigmClasses[i].title}')">Slots</span>
+        <span class="smallButton" onclick="EditParadigmClass(${ParadigmClasses[i].id})">✏️</span>        
+        ${ParadigmClasses[i].title}
         </div>`;
       }
-      $('#cmbLemmaWordClass').select2({ data: options });
-      $('#lstWordClasses').html(html);
+      $('#cmbLemmaParadigmClass').select2({ data: options });
+      $('#lstParadigmClasses').html(html);
     },
     error: function (data) {
       console.log(data);
     }
   });
 }
-$('#btnAddWordClass').click(function () {
-  $('#frmWordClass').show();
-  $('#txtWordClassTitle').val('');
-  $('#txtWordClassDescription').val('');
-  $('#WordClassId').val('');
-  $('#btnWordClassSubmit').html('Add');
+$('#btnAddParadigmClass').click(function () {
+  $('#frmParadigmClass').show();
+  $('#txtParadigmClassTitle').val('');
+  $('#txtParadigmClassDescription').val('');
+  $('#ParadigmClassId').val('');
+  $('#btnParadigmClassSubmit').html('Add');
 });
-function EditWordClass(id) {
-  $('#btnWordClassSubmit').html('Edit');
+function EditParadigmClass(id) {
+  $('#btnParadigmClassSubmit').html('Edit');
   $('#detailsSlots').hide();
-  $('#WordClassId').val(id);
+  $('#ParadigmClassId').val(id);
   $.ajax({
-    url: server + 'WordClass/get',
+    url: server + 'ParadigmClass/get',
     type: 'GET',
     data: {
       id: id
     },
     success: function (data) {
-      $('#frmWordClass').show();
-      $('#txtWordClassTitle').val(data.title);
-      $('#txtWordClassDescription').val(data.description);
+      $('#frmParadigmClass').show();
+      $('#txtParadigmClassTitle').val(data.title);
+      $('#txtParadigmClassDescription').val(data.description);
     },
     error: function (data) {
       console.log(data);
     }
   });
 }
-function WordClassSubmit() {
-  if ($('#btnWordClassSubmit').html() == 'Add') {
-    insertWordClass();
+function ParadigmClassSubmit() {
+  if ($('#btnParadigmClassSubmit').html() == 'Add') {
+    insertParadigmClass();
   } else {
-    updateWordClass();
+    updateParadigmClass();
   }
 }
-function insertWordClass() {
-  let title = $('#txtWordClassTitle').val().trim();
-  let description = $('#txtWordClassDescription').val().trim();
+function insertParadigmClass() {
+  let title = $('#txtParadigmClassTitle').val().trim();
+  let description = $('#txtParadigmClassDescription').val().trim();
   let dialectId = $('#cmbDialects').val();
   $.ajax({
-    url: server + 'WordClass/insert',
+    url: server + 'ParadigmClass/insert',
     type: 'POST',
     data: {
       Title: title,
@@ -230,39 +232,267 @@ function insertWordClass() {
       Description: description
     },
     success: function (data) {
-      $('#frmWordClass').hide();
-      getWordClasses(dialectId);
+      $('#frmParadigmClass').hide();
+      getParadigmClasses(dialectId);
     },
     error: function (data) {
       alert('Error');
     }
   });
 }
-function updateWordClass() {
-  let title = $('#txtWordClassTitle').val().trim();
-  let description = $('#txtWordClassDescription').val().trim();
+function updateParadigmClass() {
+  let title = $('#txtParadigmClassTitle').val().trim();
+  let description = $('#txtParadigmClassDescription').val().trim();
   let dialectId = $('#cmbDialects').val();
   $.ajax({
-    url: server + 'WordClass/update',
+    url: server + 'ParadigmClass/update',
     type: 'POST',
     data: {
-      Id: $('#WordClassId').val(),
+      Id: $('#ParadigmClassId').val(),
       Title: title,
       DialectID: dialectId,
       Description: description
     },
     success: function (data) {
-      $('#frmWordClass').hide();
-      getWordClasses(dialectId);
+      $('#frmParadigmClass').hide();
+      getParadigmClasses(dialectId);
     },
     error: function (data) {
       alert('Error');
     }
   });
 }
-$('#btnWordClassCancel').click(function () {
-  $('#frmWordClass').hide();
+$('#btnParadigmClassCancel').click(function () {
+  $('#frmParadigmClass').hide();
 });
+// ========= Agreement Groups
+AgreementGroups = [];
+
+function getAgreementGroups(DialectId) {
+  $('.loading').show();
+  $.ajax({
+    url: server + 'Agreement/listGroups',
+    type: 'GET',
+    data: {
+      DialectId: DialectId
+    },
+    success: function (data) {
+      $('.loading').hide();
+      AgreementGroups = data;
+      let html = '';
+      $('#cmbSlotAgreementGroup').empty();
+      $('#cmbSlotAgreementGroup').append(`<option value="0">-</option>`);
+      for (let i = 0; i < AgreementGroups.length; i++) {
+        $('#cmbSlotAgreementGroup').append(`<option value="${AgreementGroups[i].id}">${AgreementGroups[i].title}</option>`);
+        html += `<div class="">
+        <span class="smallButton" onclick="ShowAgreementItems(${AgreementGroups[i].id}, '${AgreementGroups[i].title}')">Items</span>
+        <span class="smallButton" onclick="EditAgreementGroup(${AgreementGroups[i].id})">✏️</span>
+        ${AgreementGroups[i].title}
+        </div>`;
+      }
+      
+      $('#lstAgreementGroups').html(html);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+$('#btnAddAgreementGroup').click(function () {
+  $('#frmAgreementGroup').show();
+  $('#txtAgreementGTitle').val('');
+  $('#AgreementGroupId').val('');
+  $('#btnAgreementGroupSubmit').html('Add');
+});
+function EditAgreementGroup(id) {
+  $('#btnAgreementGroupSubmit').html('Edit');
+  $('#detailsAgreementItems').hide();
+  $('#AgreementGroupId').val(id);
+  $.ajax({
+    url: server + 'Agreement/getGroup',
+    type: 'GET',
+    data: {
+      id: id
+    },
+    success: function (data) {
+      $('#frmAgreementGroup').show();
+      $('#txtAgreementGroupTitle').val(data.title);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+
+function AgreementGroupSubmit() {
+  if ($('#btnAgreementGroupSubmit').html() == 'Add') {
+    insertAgreementGroup();
+  } else {
+    updateAgreementGroup();
+  }
+}
+
+function insertAgreementGroup() {
+  let title = $('#txtAgreementGroupTitle').val().trim();
+  let dialectId = $('#cmbDialects').val();
+  $.ajax({
+    url: server + 'Agreement/insertGroup',
+    type: 'POST',
+    data: {
+      Title: title,
+      DialectID: dialectId
+    },
+    success: function (data) {
+      $('#frmAgreementGroup').hide();
+      getAgreementGroups(dialectId);
+    },
+    error: function (data) {
+      alert('Error');
+    }
+  });
+}
+
+function updateAgreementGroup() {
+  let title = $('#txtAgreementGroupTitle').val().trim();
+  let dialectId = $('#cmbDialects').val();
+  $.ajax({
+    url: server + 'Agreement/updateGroup',
+    type: 'POST',
+    data: {
+      id: $('#AgreementGroupId').val(),
+      title: title,
+      dialectId: dialectId
+    },
+    success: function (data) {
+      $('#frmAgreementGroup').hide();
+      getAgreementGroups(dialectId);
+    },
+    error: function (data) {
+      alert('Error');
+    }
+  });
+}
+
+$('#btnAgreementGroupCancel').click(function () {
+  $('#frmAgreementGroup').hide();
+});
+
+// ========= Agreement Items
+AgreementItems = [];
+
+function ShowAgreementItems(AgreementGroupId, AgreementGroupTitle) {
+  $('#detailsAgreementItems').show();
+  $('#lstAgreementItems').html('');
+  $('#frmAgreementItem').hide();
+  $('#txtAgreementGTitle').html(AgreementGroupTitle);
+  $('#AgreementGroupId').val(AgreementGroupId);
+  $('#AgreementItemGroupId').val(AgreementGroupId);
+  $('.loading').show();
+  $.ajax({
+    url: server + 'Agreement/listItems',
+    type: 'GET',
+    data: {
+      AgreementGroupId: AgreementGroupId
+    },
+    success: function (data) {
+      $('.loading').hide();
+      AgreementItems = data;
+      var options = [];
+      let html = '';
+      for (let i = 0; i < AgreementItems.length; i++) {
+        html += `<div class="" onclick="EditAgreementItem(${i})">
+        <span class="priority${AgreementItems[i].priority}"></span>
+        ${AgreementItems[i].formula} (${AgreementItems[i].uniMorphTags})
+        </div>`;
+      }
+      $('#lstAgreementItems').html(html);
+    },
+    error: function (data) {
+      console.log(data);
+    }
+  });
+}
+$('#btnAddAgreementItem').click(function () {
+  $('#frmAgreementItem').show();
+  $('#txtAgreementItemUniMorphTags').val('');
+  $('#txtAgreementItemFormula').val('');
+  $('#AgreementItemId').val('');
+  $('#cmbAgreementItemPriority').val('1');
+  $('#btnAgreementItemSubmit').html('Add');
+});
+$('#btnAgreementItemCancel').click(function () {
+  $('#frmAgreementItem').hide();
+});
+
+function AgreementItemSubmit() {
+  if ($('#btnAgreementItemSubmit').html() == 'Add') {
+    insertAgreementItem();
+  } else {
+    updateAgreementItem();
+  }
+}
+
+function insertAgreementItem() {
+  let UniMorphTags = $('#txtAgreementItemUniMorphTags').val().trim();
+  UniMorphTags = UM_Sort(UniMorphTags);
+  let Formula = $('#txtAgreementItemFormula').val().trim();
+  let AgreementGroupId = $('#AgreementItemGroupId').val();
+  let priority = $('#cmbAgreementItemPriority').val();
+  $.ajax({
+    url: server + 'Agreement/insertItem',
+    type: 'POST',
+    data: {
+      UniMorphTags: UniMorphTags,
+      Formula: Formula,
+      priority: priority,
+      AgreementGroupId: AgreementGroupId
+    },
+    success: function (data) {
+      $('#frmAgreementItem').hide();
+      ShowAgreementItems(AgreementGroupId);
+    },
+    error: function (data) {
+      alert('Error');
+    }
+  });
+}
+
+function updateAgreementItem() {
+  let UniMorphTags = $('#txtAgreementItemUniMorphTags').val().trim();
+  UniMorphTags = UM_Sort(UniMorphTags);
+  let Formula = $('#txtAgreementItemFormula').val().trim();
+  let AgreementGroupId = $('#AgreementItemGroupId').val();
+  let priority = $('#cmbAgreementItemPriority').val();
+  $.ajax({
+    url: server + 'Agreement/updateItem',
+    type: 'POST',
+    data: {
+      id: $('#AgreementItemId').val(),
+      uniMorphTags: UniMorphTags,
+      formula: Formula,
+      priority: priority,
+      AgreementGroupID: AgreementGroupId
+    },
+    success: function (data) {
+      $('#frmAgreementItem').hide();
+      ShowAgreementItems(AgreementGroupId);
+    },
+    error: function (data) {
+      alert('Error');
+    }
+  }); 
+}
+
+function EditAgreementItem(id) {
+  $('#frmAgreementItem').show();
+  $('#txtAgreementItemUniMorphTags').val(AgreementItems[id].uniMorphTags);
+  $('#txtAgreementItemFormula').val(AgreementItems[id].formula);
+  $('#AgreementItemId').val(AgreementItems[id].id);
+  $('#cmbAgreementItemPriority').val(AgreementItems[id].priority);
+  $('#AgreementItemGroupId').val(AgreementItems[id].agreementGroupID);
+  $('#btnAgreementItemSubmit').html('Edit');
+}
 // ========= Lemmas
 Lemmas = [];
 function geLemmas(DialectId) {
@@ -306,7 +536,7 @@ function geLemmas(DialectId) {
   });
 }
 $('#btnAddLemma').click(function () {
-  if (wordClasses.length == 0) {
+  if (ParadigmClasses.length == 0) {
     alert('No word classes! Please add word classes first.');
     return;
   }
@@ -332,7 +562,7 @@ function LemmasSubmit() {
 }
 function insertLemma() {
   let entry = $('#txtLemmaEntry').val().trim();
-  let wordClassId = $('#cmbLemmaWordClass').val();
+  let ParadigmClassId = $('#cmbLemmaParadigmClass').val();
   let eng = $('#txtLemmaEnglish').val().trim();
   let stem1 = $('#txtLemmaStem1').val().trim();
   let stem2 = $('#txtLemmaStem2').val().trim();
@@ -345,7 +575,7 @@ function insertLemma() {
     type: 'POST',
     data: {
       Entry: entry,
-      WordClassId: wordClassId,
+      ParadigmClassId: ParadigmClassId,
       EngMeaning: eng,
       Stem1: stem1,
       Stem2: stem2,
@@ -364,7 +594,7 @@ function insertLemma() {
 }
 function updateLemma() {
   let entry = $('#txtLemmaEntry').val().trim();
-  let wordClassId = $('#cmbLemmaWordClass').val();
+  let ParadigmClassId = $('#cmbLemmaParadigmClass').val();
   let eng = $('#txtLemmaEnglish').val().trim();
   let stem1 = $('#txtLemmaStem1').val().trim();
   let stem2 = $('#txtLemmaStem2').val().trim();
@@ -379,7 +609,7 @@ function updateLemma() {
       Id: $('#LemmaId').val(),
       Entry: entry,
       EngMeaning: eng,
-      WordClassId: wordClassId,
+      ParadigmClassId: ParadigmClassId,
       Stem1: stem1,
       Stem2: stem2,
       Stem3: stem3,
@@ -408,32 +638,32 @@ function EditLemma(id) {
   $('#txtLemmaStem3').val(Lemmas[id].stem3);
   $('#txtLemmaDescription').val(Lemmas[id].description);
   $('#LemmaId').val(Lemmas[id].id);
-  $('#cmbLemmaWordClass').val(Lemmas[id].wordClassID).trigger('change');
+  $('#cmbLemmaParadigmClass').val(Lemmas[id].ParadigmClassID).trigger('change');
   $('#cmbLemmaPriority').val(Lemmas[id].priority);
   $('#btnLemmasSubmit').html('Edit');
 }
 // ========= Slots
 Slots = [];
-function ShowSlots(WordClassID, WordClassTitle) {
+function ShowSlots(ParadigmClassID, ParadigmClassTitle) {
   $('#detailsSlots').show();
   $('#lstSlots').html('');
   $('#frmSlots').hide();
-  $('#frmWordClass').hide();
-  $('#txtSlotWClass').html(WordClassTitle);
-  $('#SlotWClassId').val(WordClassID);
+  $('#frmParadigmClass').hide();
+  $('#txtSlotWClass').html(ParadigmClassTitle);
+  $('#SlotPClassId').val(ParadigmClassID);
   $('.loading').show();
   $.ajax({
     url: server + 'Slot/list',
     type: 'GET',
     data: {
-      wordClassID: WordClassID
+      ParadigmClassID: ParadigmClassID
     },
     success: function (data) {
       $('.loading').hide();
       Slots = data.sort((a, b) => a.uniMorphTags.localeCompare(b.uniMorphTags));
       let html = '';
       for (let i = 0; i < Slots.length; i++) {
-        html += `<div class="lemma" onclick="EditSlot(${i})">        
+        html += `<div class="lemma" onclick="EditSlot(${i})">
         <span class="priority${Slots[i].priority}"></span>
         ${Slots[i].uniMorphTags}</div>`;
       }
@@ -465,20 +695,22 @@ function insertSlot() {
   let UniMorphTags = $('#txtSlotUniMorphTags').val().trim();
   UniMorphTags = UM_Sort(UniMorphTags);
   let Formula = $('#txtSlotFormula').val().trim();
-  let WordClassId = $('#SlotWClassId').val();
+  let ParadigmClassId = $('#SlotPClassId').val();
   let priority = $('#cmbSlotPriority').val();
+  let AgreementGroupId = $('#cmbSlotAgreementGroup').val();
   $.ajax({
     url: server + 'Slot/insert',
     type: 'POST',
     data: {
       UniMorphTags: UniMorphTags,
       Formula: Formula,
+      AgreementGroupID: AgreementGroupId,
       priority: priority,
-      WordClassId: WordClassId
+      ParadigmClassId: ParadigmClassId
     },
     success: function (data) {
       $('#frmSlots').hide();
-      ShowSlots(WordClassId);
+      ShowSlots(ParadigmClassId);
     },
     error: function (data) {
       alert('Error');
@@ -490,8 +722,9 @@ function updateSlot() {
   let UniMorphTags = $('#txtSlotUniMorphTags').val().trim();
   UniMorphTags = UM_Sort(UniMorphTags);
   let Formula = $('#txtSlotFormula').val().trim();
-  let WordClassId = $('#SlotWClassId').val();
+  let ParadigmClassId = $('#SlotPClassId').val();
   let priority = $('#cmbSlotPriority').val();
+  let AgreementGroupId = $('#cmbSlotAgreementGroup').val();
   $.ajax({
     url: server + 'Slot/update',
     type: 'POST',
@@ -500,11 +733,12 @@ function updateSlot() {
       uniMorphTags: UniMorphTags,
       formula: Formula,
       priority: priority,
-      wordClassID: WordClassId
+      AgreementGroupID: AgreementGroupId,
+      ParadigmClassID: ParadigmClassId
     },
     success: function (data) {
       $('#frmSlots').hide();
-      ShowSlots(WordClassId);
+      ShowSlots(ParadigmClassId);
     },
     error: function (data) {
       alert('Error');
@@ -519,7 +753,8 @@ function EditSlot(id) {
   $('#txtSlotFormula').val(Slots[id].formula);
   $('#SlotId').val(Slots[id].id);
   $('#cmbSlotPriority').val(Slots[id].priority);
-  $('#cmbSlotWordClass').val(Slots[id].wordClassID).trigger('change');
+  $('#cmbSlotParadigmClass').val(Slots[id].ParadigmClassID).trigger('change');
+  $('#cmbSlotAgreementGroup').val(Slots[id].agreementGroupID).change();;
   $('#btnSlotsSubmit').html('Edit');
 }
 //=========== Speaker Part
@@ -568,6 +803,8 @@ function getFormsForEntry(DialectId) {
         w = w.replace(/L/g, Forms[i].lemma);
         w = w.replace(/S1/g, Forms[i].S1);
         w = w.replace(/S2/g, Forms[i].S2);
+        w = w.replace(/S3/g, Forms[i].S3);
+        w = w.replace(/(\+A|A\+)/g, Forms[i].A);
         w = w.replace(/\+/g, '');
         $('#tableFormsEntry').append(`<div>
             <div class="LemmaFeatures">
@@ -577,7 +814,7 @@ function getFormsForEntry(DialectId) {
             <div class="formInputs">
               <input type="text" value="${w}" id="form${i}"/>
               <span class="formSubmit" onclick="getPrompt(UM_tags2prompt('${Forms[i].Eng}', '${Forms[i].tags}', '${langCode}'))">🤖</span>
-              <span class="formSubmit" id="sForm${i}" onclick="SubmitForm(${i}, ${Forms[i].lemmaId}, ${Forms[i].slotId}, '${w}')">✅</span>
+              <span class="formSubmit" id="sForm${i}" onclick="SubmitForm(${i}, ${Forms[i].lemmaId}, ${Forms[i].slotId}, ${Forms[i].agreementId}, '${w}')">✅</span>
             </div>
           </div>`);
         let d = dialects.findIndex(function (item, i) { return item.id == DialectId });
@@ -659,7 +896,7 @@ function getVotes() {
   });
 }
 
-function SubmitForm(i, lemmaId, slotId, suggested) {
+function SubmitForm(i, lemmaId, slotId, agreementId, suggested) {
   let word = $('#form' + i).val().trim();
   $.ajax({
     url: server + 'Form/insert',
@@ -667,6 +904,7 @@ function SubmitForm(i, lemmaId, slotId, suggested) {
     data: {
       LemmaId: lemmaId,
       SlotId: slotId,
+      AgreementId : agreementId,
       Suggested: suggested,
       Source: 1,
       Word: word

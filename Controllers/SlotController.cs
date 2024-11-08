@@ -11,13 +11,13 @@ namespace CommonMorphAPI.Controllers
   public class SlotController : Controller
   {
     [HttpGet("list")]
-    public IActionResult list(int wordClassID)
+    public IActionResult list(int ParadigmClassID)
     {
       using (var context = new _DbContext())
       {
         return Ok(context.Slots
-        .Where(s => s.WordClassID == wordClassID)
-        .Select(x => new { x.Id, x.UniMorphTags, x.Formula, x.priority }).ToList());
+        .Where(s => s.ParadigmClassID == ParadigmClassID)
+        .Select(x => new { x.Id, x.UniMorphTags, x.Formula, x.priority, x.AgreementGroupID }).ToList());
       }
     }
 
@@ -36,7 +36,7 @@ namespace CommonMorphAPI.Controllers
     {
       using (var context = new _DbContext())
       {
-        if (context.Slots.Any(x => x.UniMorphTags == slot.UniMorphTags && x.WordClassID == slot.WordClassID))
+        if (context.Slots.Any(x => x.UniMorphTags == slot.UniMorphTags && x.ParadigmClassID == slot.ParadigmClassID))
           return BadRequest("duplicate");
 
         context.Slots.Add(slot);

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CommonMorphAPI.Migrations
 {
     [DbContext(typeof(_DbContext))]
-    [Migration("20241026232340_init")]
-    partial class init
+    [Migration("20241108054416_db6")]
+    partial class db6
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,53 @@ namespace CommonMorphAPI.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Agreement", b =>
+                {
+                    b.Property<int?>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
+
+                    b.Property<int>("AgreementGroupID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Formula")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UniMorphTags")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("priority")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Agreements");
+                });
+
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+AgreementGroup", b =>
+                {
+                    b.Property<int?>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
+
+                    b.Property<int>("DialectID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AgreementGroups");
+                });
 
             modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Dialect", b =>
                 {
@@ -49,6 +96,9 @@ namespace CommonMorphAPI.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("Dialects");
@@ -62,9 +112,11 @@ namespace CommonMorphAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
 
+                    b.Property<int>("AgreementID")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("DateAdded")
-                        .IsRequired()
-                        .HasColumnType("datetime2");
+                        .HasColumnType("smalldatetime");
 
                     b.Property<int>("LemmaId")
                         .HasColumnType("int");
@@ -76,15 +128,18 @@ namespace CommonMorphAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Suggested")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.Property<string>("Word")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
@@ -102,10 +157,16 @@ namespace CommonMorphAPI.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EngMeaning")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Entry")
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
+
+                    b.Property<int>("ParadigmClassID")
+                        .HasColumnType("int");
 
                     b.Property<string>("Stem1")
                         .HasColumnType("nvarchar(max)");
@@ -113,7 +174,13 @@ namespace CommonMorphAPI.Migrations
                     b.Property<string>("Stem2")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("WordClassID")
+                    b.Property<string>("Stem3")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("priority")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -121,29 +188,7 @@ namespace CommonMorphAPI.Migrations
                     b.ToTable("Lemmas");
                 });
 
-            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Slot", b =>
-                {
-                    b.Property<int?>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
-
-                    b.Property<string>("Formula")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UniMorphTags")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("WordClassID")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Slots");
-                });
-
-            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+WordClass", b =>
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+ParadigmClass", b =>
                 {
                     b.Property<int?>("Id")
                         .ValueGeneratedOnAdd()
@@ -162,27 +207,81 @@ namespace CommonMorphAPI.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("nvarchar(25)");
 
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DialectID");
 
-                    b.ToTable("WordClasses");
+                    b.ToTable("ParadigmClasses");
                 });
 
-            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+WordClass", b =>
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Slot", b =>
+                {
+                    b.Property<int?>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
+
+                    b.Property<int>("AgreementGroupID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Formula")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ParadigmClassID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UniMorphTags")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("priority")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Slots");
+                });
+
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Vote", b =>
+                {
+                    b.Property<int?>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"));
+
+                    b.Property<DateTime?>("DateVoted")
+                        .HasColumnType("smalldatetime");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Votes");
+                });
+
+            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+ParadigmClass", b =>
                 {
                     b.HasOne("CommonMorphAPI.Model._DbContext+Dialect", "Dialect")
-                        .WithMany("WordClasses")
+                        .WithMany()
                         .HasForeignKey("DialectID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Dialect");
-                });
-
-            modelBuilder.Entity("CommonMorphAPI.Model._DbContext+Dialect", b =>
-                {
-                    b.Navigation("WordClasses");
                 });
 #pragma warning restore 612, 618
         }
