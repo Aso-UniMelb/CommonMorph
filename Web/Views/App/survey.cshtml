@@ -1,0 +1,85 @@
+@{
+  ViewData["Title"] = "Survey";
+  Layout = "~/Views/Shared/_App.cshtml";
+}
+<div class="survey">
+  <h1>User Survey</h1>
+  <p><b>Note:</b> Please complete the following survey after you have finished all assigned tasks for the project, as it
+    can only be submitted once.</p>
+
+  <form onsubmit="SurveySubmit(); return false;">
+    <input type="hidden" id="Role" name="Role" value="@ViewBag.Role">
+    <input type="hidden" id="LangId" name="LangId" disabled>
+
+    <div class="question">Your role in the Common Morph project: <b>@ViewBag.RoleTitle</b></div>
+
+    <div class="question">You contributed in: <b id="langDisplay"></b></div>
+
+    <div class="question">How much time (minutes) did it take you to learn how to use the project interface?</div>
+    <div class="answer">
+      <input type="number" step="1" min="0" id="LearningTime" name="LearningTime" required> minutes
+    </div>
+
+    <div class="question">How much time (hours) did you spend working on the project?</div>
+    <div class="answer">
+      <input type="number" step="any" min="0" id="ContributingTime" name="ContributingTime" required> hours
+    </div>
+
+    <div class="question">How would you describe your level of knowledge in linguistics?</div>
+    <div class="answer" style="flex-direction: column;">
+      <label><input type="radio" name="ExpertLevel" value="1" required> None at all</label>
+      <label><input type="radio" name="ExpertLevel" value="2"> Basic <small>(high school grammar)</small></label>
+      <label><input type="radio" name="ExpertLevel" value="3"> Moderate <small>(studied linguistics books as a
+          hobby)</small></label>
+      <label><input type="radio" name="ExpertLevel" value="4"> Advanced <small>(studied linguistics at
+          university)</small></label>
+      <label><input type="radio" name="ExpertLevel" value="5"> Expert <small>(professional fieldwork
+          linguist)</small></label>
+    </div>
+
+    <div class="question">How much did the system help you learn more about your language?</div>
+    <div class="answer">
+      <label>(Not at all) <input type="radio" name="PedagogicalScore" value="1" required> 1</label>
+      <label><input type="radio" name="PedagogicalScore" value="2"> 2</label>
+      <label><input type="radio" name="PedagogicalScore" value="3"> 3</label>
+      <label><input type="radio" name="PedagogicalScore" value="4"> 4</label>
+      <label><input type="radio" name="PedagogicalScore" value="5"> 5 (Very much)</label>
+    </div>
+
+    <div class="question">How efficient was the project in collecting data for your language?</div>
+    <div class="answer">
+      <label>(Not efficient at all) <input type="radio" name="EfficiencyScore" value="1" required> 1 </label>
+      <label><input type="radio" name="EfficiencyScore" value="2"> 2</label>
+      <label><input type="radio" name="EfficiencyScore" value="3"> 3</label>
+      <label><input type="radio" name="EfficiencyScore" value="4"> 4</label>
+      <label><input type="radio" name="EfficiencyScore" value="5"> 5 (Extremely efficient)</label>
+    </div>
+
+    <div class="question">How satisfied are you with your experience as a contributor?</div>
+    <div class="answer">
+      <label><input type="radio" name="SatisfactionScore" value="1" required> 1 😠</label>
+      <label><input type="radio" name="SatisfactionScore" value="2"> 2 🙁</label>
+      <label><input type="radio" name="SatisfactionScore" value="3"> 3 😐</label>
+      <label><input type="radio" name="SatisfactionScore" value="4"> 4 🙂</label>
+      <label><input type="radio" name="SatisfactionScore" value="5"> 5 😄</label>
+    </div>
+
+    <div class="question">How easy was it to contribute to the project?</div>
+    <div class="answer">
+      <label>(Very difficult) <input type="radio" name="EaseScore" value="1" required> 1</label>
+      <label><input type="radio" name="EaseScore" value="2"> 2</label>
+      <label><input type="radio" name="EaseScore" value="3"> 3</label>
+      <label><input type="radio" name="EaseScore" value="4"> 4</label>
+      <label><input type="radio" name="EaseScore" value="5"> 5 (Very easy)</label>
+    </div>
+
+
+    <div class="question">Do you have any additional feedback or suggestions?</div>
+    <div class="answer"><textarea id="feedback" name="feedback" rows="5"></textarea></div>
+
+
+    <button type="submit">Submit</button>
+  </form>
+</div>
+<script src="/js/myLang.js" asp-append-version="true"></script>
+<script src="/js/survey.js" asp-append-version="true"></script>

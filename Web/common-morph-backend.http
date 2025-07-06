@@ -1,0 +1,6 @@
+@common_morph_backend_HostAddress = http://localhost:5139
+
+GET {{common_morph_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

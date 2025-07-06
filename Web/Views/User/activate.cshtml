@@ -1,0 +1,61 @@
+@{
+  ViewData["Title"] = "Activate/Set Password | Common Morph";
+  Layout = "~/Views/Shared/_User.cshtml";
+}
+<h2>Activate/Set Password</h2>
+<form method="post">
+  @if (ViewBag.Error != null)
+  {
+    <div class="form-section">
+      <div class="form-error">@ViewBag.Error</div>
+    </div>
+  }
+  <div class="form-section">
+    <input type="hidden" id="Code" name="Code" value="@ViewBag.Code" required>
+    <input type="email" id="username" name="username" value="@ViewBag.Username" required>
+  </div>
+  <div class="form-section">
+    <input type="password" id="password" name="password" placeholder="Password" required>
+  </div>
+  <div class="form-section">
+    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+  </div>
+  <div class="form-section">
+    <input type="text" id="name" name="name" placeholder="Name" required>
+  </div>
+  @* terms of used to be checked by user before registering *@
+  <div class="terms-box">
+    <p><strong>Terms of Use</strong></p>
+    <p>By participating in this project, I confirm that I understand the following:</p>
+    <ul>
+      <li>My participation involves submitting or verifying linguistic data about my language.</li>
+      <li>My identity, personal data, or background will not be collected or shared in CommonMorph project.</li>
+      <li>The data I contribute will be used for scientific and academic purposes, including language preservation,
+        documentation, and the development of natural language processing tools.</li>
+      <li>I'm an adult and I voluntarily agree to participate in this project.</li>
+    </ul>
+  </div>
+  <div class="terms">
+    <input type="checkbox" id="terms" name="terms" required>
+    <label for="terms">I accept the terms of use</label>
+  </div>
+  <div class="form-section">
+    <button class="form-submit" id="submitBtn" onclick="return validate();">Start!</button>
+  </div>
+</form>
+<script>
+  $(document).ready(function () {
+    $('#terms').change(function () {
+      $('#submitBtn').prop('disabled', !this.checked);
+    });
+  });
+  function validate() {
+    var password = $("#password").val();
+    var confirmPassword = $("#confirmPassword").val();
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
+      return false;
+    }
+    return true;
+  }
+</script>

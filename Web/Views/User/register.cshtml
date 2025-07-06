@@ -1,0 +1,54 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@using Microsoft.AspNetCore.Html
+@{
+  ViewData["Title"] = "Register | Common Morph";
+  Layout = "~/Views/Shared/_User.cshtml";
+}
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<h2>Register</h2>
+<div>
+  <div class="loginOr"><span>with Google account</span></div>
+
+  <form id="googleform" method="post" action="@Url.Action("GoogleLogin")">
+    <div id="g_id_onload" data-client_id="@Configuration["GoogleClientId"]" data-context="signin" data-ux_mode="popup"
+      data-login_uri="/user/GoogleLogin" data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+      data-text="continue_with" data-size="large" data-logo_alignment="left">
+    </div>
+  </form>
+  <script>
+    function handleCredentialResponse(credentialResponse) {
+      $('<input />').attr('type', 'hidden').attr('credential', 'credential').attr('value', credentialResponse.credential).appendTo('#googleform');
+      $('#googleform').submit();
+    }
+  </script>
+
+  <div class="loginOr"><span>or CommonMorph account</span></div>
+
+  <form method="post">
+    @if (ViewBag.Error != null)
+    {
+      <div class="form-section">
+        <div class="form-error">@ViewBag.Error</div>
+      </div>
+    }
+    <div class="form-section">
+      <label>Your valid email address:</label>
+      <input type="email" id="username" name="username" placeholder="Email" required>
+    </div>
+    <div class="form-section">
+      <label>Preferred Role:</label>
+      <select id="cmbUserRole" name="desiredRole" style="width: 300px;">
+        <option value="1">Linguist (managing the data of a language variety)</option>
+        <option value="2">Speaker (submitting and validating inflected forms)</option>
+        <option value="3">Viewer (just browsing the project)</option>
+      </select>
+    </div>
+    <div class="form-section"><button type="submit" class="form-submit">Send registration code to my email</button>
+    </div>
+    <div class="form-section"><a href="/user/login">Login</a></div>
+    <div class="form-section"><a href="/user/forgot">Forgot Password</a></div>
+  </form>
+</div>
