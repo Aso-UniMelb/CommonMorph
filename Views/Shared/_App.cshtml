@@ -1,0 +1,112 @@
+@using Microsoft.AspNetCore.Html
+@{
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>@Html.Raw(ViewData["Title"])</title>
+  <link rel='icon' href='/favicon.ico' type='image/x-icon' />
+  <link rel="shortcut icon" sizes="196x196" href="/logo196.png" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.css" />
+  <link rel="stylesheet" href="/css/app.css" asp-append-version="true">
+  <script src="/js/i18n.js"></script>
+</head>
+
+<body dir="ltr">
+  <div class="loading"></div>
+  <div class="wrapper">
+    <div class="header">
+      <div class="nav">
+        <div>
+          <span class="toggle-drawer"><span class="material-icons">menu</span></span>
+          <div class="logo"><a href="/">Common Morph</a></div>
+        </div>
+        <div id="myLang" class="myLang"></div>
+        <div class="tutor"><span class="material-icons">tips_and_updates</span></div>
+      </div>
+    </div>
+    <div class="drawer" id="drawer-panel">
+      <ul>
+        <li><a href="/tutorials"><span class="material-icons">assistant</span>Tutorials</a></li>
+        <li><a href="/app/dashboard"><span class="material-icons">dashboard</span> Dashboard</a>
+        </li>
+        @if (User.IsInRole("admin"))
+        {
+          <li><a href="/app/admin">Admin</a></li>
+        }
+        @if (User.IsInRole("admin") || User.IsInRole("linguist"))
+        {
+          <li class="forlinguists"><a href="/app/linguist"><span class="material-icons">manage_accounts</span>
+              Linguist</a></li>
+          <li class="forlinguists"><a href="/app/qtemplates"><span class="material-icons">contact_support</span>Question
+              Templates</a></li>
+        }
+        @if (User.IsInRole("admin") || User.IsInRole("linguist") || User.IsInRole("speaker"))
+        {
+          <li class="forspeakers"><a href="/app/elicit"><span class="material-icons">question_answer</span>Elicit</a></li>
+          <li class="forspeakers"><a href="/app/check"><span class="material-icons">how_to_reg</span>
+              Check</a></li>
+        }
+        @if (User.IsInRole("admin") || User.IsInRole("linguist") || User.IsInRole("speaker"))
+        {
+          <li><a href="/app/survey"><span class="material-icons">rate_review</span>User Survey</a></li>
+        }
+        <li><a href="/datasets"><span class="material-icons">download</span> Datasets</a></li>
+        <li><a href="/user/logout"><span class="material-icons">logout</span>Logout</a></li>
+      </ul>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="main">
+      <div class="sidepanel">
+        <ul>
+          <li><a href="/tutorials"><span class="material-icons">assistant</span>Tutorials</a></li>
+          <li id="drawer-dashboard"><a href="/app/dashboard"><span class="material-icons">dashboard</span> Dashboard</a>
+          </li>
+          @if (User.IsInRole("admin"))
+          {
+            <li id="drawer-admin"><a href="/app/admin">Admin</a></li>
+          }
+          @if (User.IsInRole("admin") || User.IsInRole("linguist"))
+          {
+            <li id="drawer-Linguist" class="forlinguists"><a href="/app/linguist"><span
+                  class="material-icons">manage_accounts</span>
+                Linguist</a></li>
+            <li id="drawer-questions" class="forlinguists"><a href="/app/qtemplates"><span
+                  class="material-icons">contact_support</span>Question
+                Templates</a></li>
+          }
+          @if (User.IsInRole("admin") || User.IsInRole("linguist") || User.IsInRole("speaker"))
+          {
+            <li id="drawer-elicit" class="forspeakers"><a href="/app/elicit"><span
+                  class="material-icons">question_answer</span>Elicit</a>
+            </li>
+            <li id="drawer-check" class="forspeakers"><a href="/app/check"><span class="material-icons">how_to_reg</span>
+                Check</a></li>
+          }
+          @if (User.IsInRole("admin") || User.IsInRole("linguist") || User.IsInRole("speaker"))
+          {
+            <li id="drawer-survey"><a href="/app/survey"><span class="material-icons">rate_review</span>User Survey</a>
+            </li>
+          }
+          <li><a href="/datasets"><span class="material-icons">download</span> Datasets</a></li>
+          <li><a href="/user/logout"><span class="material-icons">logout</span>Logout</a></li>
+        </ul>
+      </div>
+      @RenderBody()
+    </div>
+    <div class="footer">
+      <div>© 2025 Common Morph</div>
+    </div>
+  </div>
+  <script src="/js/app.js" asp-append-version="true"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+</body>
+
+</html>

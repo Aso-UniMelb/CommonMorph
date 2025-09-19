@@ -1,0 +1,41 @@
+@{
+  ViewData["Title"] = "Dashboard";
+  Layout = "~/Views/Shared/_App.cshtml";
+}
+
+<div class="dashboard">
+  <p>Welcome dear <b>@ViewBag.Name</b>!</p>
+  <p>
+    You are contributing in Common Morph as a <b>@ViewBag.Role</b>.
+    <button type="button" id="btnChangeRole">Change Role</button>
+  </p>
+  <div id="frmChangeRole" class="form">
+    <form onsubmit="ChangeRole(); return false;">
+      <label>Change my role to:</label>
+      <div class="field">
+        <select id="cmbUserRoleToChange" name="role">
+          <option value="1">Linguist</option>
+          <option value="2">Speaker</option>
+        </select>
+      </div>
+      <div class="field-end">
+        <button type="button" id="btnChangeRoleCancel">Cancel</button>
+        <button type="submit" id="btnChangeRoleSubmit">Change Role!</button>
+      </div>
+    </form>
+  </div>
+  <div class="field">
+    <label>My language variety:</label>
+    <select id="cmbLangs" style="width: 300px;"></select>
+  </div>
+  <div id="langstats" class="progress-container"></div>
+  <div class="field">
+    <label>My grammar knowledge:</label>
+    <select id="cmbLevel" style="width: 300px;"></select>
+  </div>
+  <div class="field">
+    <label>My prefered elicitation language (meta-language):</label>
+    <select id="cmbMetalang" style="width: 300px;"></select>
+  </div>
+</div>
+<script src="/js/dashboard.js" asp-append-version="true"></script>

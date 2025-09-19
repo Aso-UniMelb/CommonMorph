@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "common-morph-backend", "common-morph-backend.csproj", "{4BBC7365-7D77-6A6A-D9A4-85653B17791B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4BBC7365-7D77-6A6A-D9A4-85653B17791B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BBC7365-7D77-6A6A-D9A4-85653B17791B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BBC7365-7D77-6A6A-D9A4-85653B17791B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BBC7365-7D77-6A6A-D9A4-85653B17791B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C1AFADFE-8935-4183-A912-4513C248517D}
+	EndGlobalSection
+EndGlobal

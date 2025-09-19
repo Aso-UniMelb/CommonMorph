@@ -1,0 +1,17 @@
+@{
+  ViewData["Title"] = "Password Reset | Common Morph";
+  Layout = "~/Views/Shared/_User.cshtml";
+}
+<h2>Password Reset</h2>
+<form method="post">
+  @if (ViewBag.Error != null)
+  {
+    <div class="form-section">
+      <div class="form-error">@ViewBag.Error</div>
+    </div>
+  }
+  <div class="form-section">
+    <input type="email" id="username" name="username" placeholder="Email" required>
+  </div>
+  <div class="form-section"><button type="submit" class="form-submit">Email me the reset code!</button></div>
+</form>
