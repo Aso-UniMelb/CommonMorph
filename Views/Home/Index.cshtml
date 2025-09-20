@@ -1,45 +1,66 @@
 @{
-  ViewData["Title"] = "Common Morph";
+  ViewData["Title"] = "CommonMorph";
 }
 
 <div class="hero">
-  <h1>Welcome to CommonMorph</h1>
-  <p>
-    CommonMorph is an AI-powered assistant designed to help linguists efficiently gather morphological data from
-    informants.
-  </p>
+  <div class="hero-left">
+    <h1>Expanding Morphological Resources for Every Language</h1>
+    <p>
+      CommonMorph is an open platform for collecting and validating morphological data—powered by linguists,
+      communities, and AI.
+    </p>
+    <div class="buttons">
+      <a class="button" href="#actions">Get started <span class="material-icons">arrow_downward</span></a>
+    </div>
+  </div>
+  <div class="hero-right">
+
+  </div>
+</div>
+<div class="mainpage-box" id="actions">
+  <div class="tiers">
+    <h3>How does CommonMorph work?</h3>
+    <p>CommonMorph uses a three-step process where linguists and community members work together to
+      develop resources for under-resourced languages.</p>
+    <div class="tier">
+      <div class="icon">1</div>
+      <div>
+        <h4>Expert Initialization</h4>
+        <p>Linguists create empty morphological paradigms and assign morphosyntactic tags.
+          They can import shared structures from related languages.</p>
+      </div>
+    </div>
+    <div class="tier">
+      <div class="icon">2</div>
+      <div>
+        <h4>Remote elicitation with AI Assistance</h4>
+        <p>Community contributors provide the correct word forms with suggestions from AI models that improve with each
+          submission.
+        </p>
+      </div>
+    </div>
+    <div class="tier">
+      <div class="icon">3</div>
+      <div>
+        <h4>Community Validation</h4>
+        <p>All data is reviewed collaboratively to ensure accuracyand cultural appropriateness.
+        </p>
+      </div>
+    </div>
+    <div class="buttons">
+      <a class="button" href="/tutorials">Explore the Platform</a>
+      <a class="button" href="/user">Contribute!</a>
+    </div>
+  </div>
 </div>
 
 <div class="mainpage-box">
-  <h2>What is CommonMorph?</h2>
-  <p>
-    Collecting and annotating morphological data presents significant challenges, requiring linguistic expertise,
-    methodological rigour, and substantial resources--barriers particularly acute for low-resourced languages and
-    varieties. To address these challenges, we introduce CommonMorph, a comprehensive platform that streamlines
-    morphological data collection development through a three-tiered approach: expert linguistic definition, contributor
-    elicitation, and community validation.
-    CommonMorph enhances rule-based linguistics with artificial intelligence to enable semi-automated morphological form
-    generation through a human-in-the-loop architecture. It also increases interoperability by exporting resources in
-    multiple standardized formats that seamlessly integrate with existing computational morphology ecosystems and
-    formats such as UniMorph. Our platform provides an open infrastructure for expanding morphological resources in
-    computational linguistics.
-  </p>
+  <div class="tiers">
+    <h3>NLP-ready Datasets</h3>
+    <p>Open-source datasets in UniMorph and CLDF formats support multilingual morphological analysis.</p>
+    <div class="buttons"><a class="button" href="/datasets">Explore the Datasets</a></div>
+    <div class="map" style="min-width:350px;"></div>
+  </div>
 </div>
 
-
-<div class="mainpage-box">
-  <h2>Traditional language documentation</h2>
-  <p>
-    According to UNESCO, around 2,000 languages are currently classified as endangered and over half of the languages
-    spoken today might disappear by the end of the century. In 2022, the organisation has declared the start of the
-    decade of indigenous languages, and many linguists increased their efforts in documentation and revitalisation. But
-    language documentation is a drawn-out, iterative, and exhausting process. A linguist would normally visit a language
-    community several times to interview speakers and collect the data. During each visit, she or he would focus on
-    tasks such as elicitation of words and language rules by offering them questionnaires or asking them to tell
-    stories. Between visits, the linguist would focus on processing, revising the data, and forming working linguistic
-    hypotheses that will be further revised during the next face-to-face sessions.
-  </p>
-</div>
-
-<div class="map" style="min-width:350px;"></div>
 <script src="/js/map.js" asp-append-version="true"></script>

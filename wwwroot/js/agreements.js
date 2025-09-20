@@ -332,6 +332,8 @@ $('#btnAgreementImportCancel').click(function () {
 });
 // submit import form
 function AgreementImportSubmit() {
+  // disable the button
+  $('#btnAgreementImportSubmit').attr('disabled', true);
   $('.loading').show();
   $.ajax({
     url: '/Agreement/import',
@@ -343,6 +345,7 @@ function AgreementImportSubmit() {
     success: function (data) {
       $('.loading').hide();
       $('#frmImportAgreement').hide();
+      $('#btnAgreementImportSubmit').attr('disabled', false);
       getAgreementGroups(myLang.id);
     },
     error: function (data) {
@@ -378,7 +381,7 @@ $('#btnExportAgreements').click(async function () {
   const blob = new Blob([file], { type: 'text/plain' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = myLang.title + '_Slots.tsv';
+  link.download = myLang.title + '_Agreements.tsv';
   link.click();
 });
 

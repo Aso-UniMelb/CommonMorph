@@ -1,4 +1,5 @@
-$('.map').html(`<h2>Languages</h2>
+$('.map').html(`
+  <p>The following language varieties are now included in the CommonMorph database.</p>
   <div id="mapid" style="height: 500px; z-index: 2;"></div>`);
 
 var map = L.map('mapid', { minZoom: 1, maxZoom: 9 });
@@ -7,7 +8,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
-
+$('.map').hide();
 $.ajax({
   url: '/Lang/mapdata',
   type: 'GET',
@@ -23,4 +24,6 @@ $.ajax({
   },
 });
 
-$(document).ready(function () {});
+$(document).ready(function () {
+  $('.map').show();
+});

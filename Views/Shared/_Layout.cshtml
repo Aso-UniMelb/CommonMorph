@@ -35,13 +35,19 @@
 	<div class="wrapper">
 		<div class="header">
 			<div class="nav">
-				<div class="logo"><a href="/">Common Morph</a></div>
+				<a href="/" class="brand">
+					<div class="logo">CM</div>
+					<div>
+						<div class="title">CommonMorph</div>
+						<div class="slogan">Participatory Morphological Documentation</div>
+					</div>
+				</a>
 				<div>
 					<a href="/about">About</a>
 					<a href="/datasets">Datasets</a>
 					@if (!User.Identity.IsAuthenticated)
 					{
-						<a href="/user/login">Get Started</a>
+						<a class="button" href="/user/login">Log In</a>
 					}
 					else
 					{
@@ -54,9 +60,14 @@
 			@RenderBody()
 		</div>
 		<div class="footer">
-			<div><a href="/tutorials">Tutorials</a></div>
-			<div><a href="/privacy">Privacy</a></div>
-			<div>© 2025 Common Morph</div>
+			<div>
+				<div class="footer-left">© 2025 CommonMorph</div>
+				<div class="footer-right">
+					<div><a href="/tutorials">Tutorials</a></div>
+					<div><a href="/about">About</a></div>
+					<div><a href="/privacy">Privacy</a></div>
+				</div>
+			</div>
 		</div>
 	</div>
 </body>
