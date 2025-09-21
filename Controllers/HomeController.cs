@@ -14,7 +14,7 @@ namespace common_morph_backend.Controllers
       _context = context;
       _configuration = configuration;
       // For the complex query used in this controller, we need Dapper to connect to DB
-      connectionString = _configuration.GetConnectionString("DefaultConnection");
+      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
     public IActionResult Index()
     {

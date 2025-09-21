@@ -27,8 +27,7 @@ namespace common_morph_backend.Controllers
     {
       _context = context;
       _configuration = configuration;
-      // connectionString = Environment.GetEnvironmentVariable("MYSQL_CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
-      connectionString = _configuration.GetConnectionString("DefaultConnection");
+      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
 
     [Authorize(Roles = "admin, linguist")]

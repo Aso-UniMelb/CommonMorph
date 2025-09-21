@@ -26,10 +26,26 @@ namespace common_morph_backend.Controllers
       _configuration = configuration;
       providedBy = new Dictionary<string, Provider>
       {
-        { "OpenAI", new Provider { Url = "https://api.openai.com/v1/chat/completions", APIKey = _configuration["OpenAI"] } },
-        { "Groq", new Provider { Url = "https://api.groq.com/openai/v1/chat/completions", APIKey = _configuration["Groq"] } },
-        { "OpenRouter", new Provider { Url = "https://openrouter.ai/api/v1/chat/completions", APIKey = _configuration["OpenRouter"] } },
-        { "GoogleAIStudio", new Provider { Url = "https://generativelanguage.googleapis.com/v1beta/models/", APIKey = _configuration["GoogleAIStudio"] } }
+        { "OpenAI", new Provider {
+            Url = "https://api.openai.com/v1/chat/completions",
+            APIKey = Environment.GetEnvironmentVariable("OpenAI") ??  _configuration["OpenAI"]
+           }
+        },
+        { "Groq", new Provider {
+            Url = "https://api.groq.com/openai/v1/chat/completions",
+            APIKey = Environment.GetEnvironmentVariable("Groq") ?? _configuration["Groq"]
+          }
+        },
+        { "OpenRouter", new Provider {
+            Url = "https://openrouter.ai/api/v1/chat/completions",
+            APIKey = Environment.GetEnvironmentVariable("OpenRouter") ??_configuration["OpenRouter"]
+          }
+          },
+        { "GoogleAIStudio", new Provider {
+            Url = "https://generativelanguage.googleapis.com/v1beta/models/",
+            APIKey = Environment.GetEnvironmentVariable("GoogleAIStudio") ?? _configuration["GoogleAIStudio"]
+          }
+        }
       };
     }
 

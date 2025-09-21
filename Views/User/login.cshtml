@@ -4,13 +4,14 @@
 @{
   ViewData["Title"] = "Login | CommonMorph";
   Layout = "~/Views/Shared/_User.cshtml";
+  string googleClientId = Environment.GetEnvironmentVariable("GoogleClientId") ?? Configuration["GoogleClientId"];
 }
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <h2>Login</h2>
 <div>
   <div class="loginOr"><span>Login in With Google Account</span></div>
   <form id="googleform" class="form" method="post" action="@Url.Action("GoogleLogin")">
-    <div id="g_id_onload" data-client_id="@Configuration["GoogleClientId"]" data-context="signin" data-ux_mode="popup"
+    <div id="g_id_onload" data-client_id="@googleClientId" data-context="signin" data-ux_mode="popup"
       data-login_uri="/user/GoogleLogin" data-auto_prompt="false">
     </div>
     <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"

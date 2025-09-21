@@ -20,7 +20,7 @@ namespace common_morph_backend.Controllers
     {
       _context = context;
       _configuration = configuration;
-      connectionString = _configuration.GetConnectionString("DefaultConnection");
+      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
 
     [HttpGet("list")]
