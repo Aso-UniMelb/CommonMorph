@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Cryptography.X509Certificates;
 
 namespace common_morph_backend
 {
@@ -17,9 +18,9 @@ namespace common_morph_backend
     public DbSet<Slot> slots { get; set; }
     public DbSet<Cell> cells { get; set; }
     public DbSet<Suggestion> suggestions { get; set; }
+    public DbSet<MorphophonemicRule> morphophonemicrules { get; set; }
     public DbSet<CellRating> cellratings { get; set; }
     public DbSet<QuestionTemplate> questions { get; set; }
-    public DbSet<QTemplate> qtemplates { get; set; }
     public DbSet<Survey> surveys { get; set; }
 
     // ======================================================================
@@ -168,7 +169,6 @@ namespace common_morph_backend
       public bool isdeleted { get; set; }
     }
 
-
     public class Suggestion
     {
       [Key]
@@ -180,6 +180,17 @@ namespace common_morph_backend
       public DateTime datesubmitted { get; set; }
     }
 
+    public class MorphophonemicRule
+    {
+      [Key]
+      public int id { get; set; }
+      public int langid { get; set; }
+      public string title { get; set; }
+      public string replacefrom { get; set; }
+      public string replaceto { get; set; }
+      public bool isdeleted { get; set; }
+    }
+
     public class CellRating // rating of a cell, if rated OK by two users then it is verified
     {
       [Key]
@@ -189,6 +200,7 @@ namespace common_morph_backend
       public int userid { get; set; }
       public DateTime daterated { get; set; }
     }
+
     public class QuestionTemplate
     {
       [Key]
@@ -200,22 +212,6 @@ namespace common_morph_backend
       public bool isdeleted { get; set; }
     }
 
-    public class QTemplate // for storing the elicitation question templates
-    {
-      [Key]
-      public int id { get; set; }
-      public string questionlang { get; set; }
-      public string unimorphtags { get; set; }
-      public string question { get; set; }
-      // public int SlotId { get; set; }
-      // public int AgreementID { get; set; }
-      public string llm { get; set; }
-      public string prompt { get; set; }
-      public DateTime dategenerated { get; set; }
-      public TemplateFeedbackResponse? response { get; set; }
-      public int userid { get; set; }
-      public bool isdeleted { get; set; }
-    }
     public enum TemplateFeedbackResponse
     {
       Correct,

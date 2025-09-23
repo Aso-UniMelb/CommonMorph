@@ -231,6 +231,38 @@
       </div>
     </div>
   </div>
+
+  <div class="accordion-item" id="morphophonemics-accordion">
+    <div class="accordion-header">Morphophonological Rules</div>
+    <div class="accordion-content">
+      <label>
+        <span class="addButton" id="btnAddMorphophonemicRule"><span class="material-icons">add</span>Add</span>
+      </label>
+      <ul id="lstMorphophonemicRules" class="list"></ul>
+      <div id="frmMorphophonemicRule" class="form">
+        <form onsubmit="MorphophonemicRuleSubmit(); return false;">
+          <input type="hidden" id="MorphophonemicRuleId" />
+          <div class="field">
+            <label for="txtMorphophonemicRuleTitle">Title</label>
+            <input type="text" id="txtMorphophonemicRuleTitle" name="title" required />
+          </div>
+          <div class="field">
+            <label for="txtMorphophonemicRuleReplaceFrom">Replace From</label>
+            <input type="text" id="txtMorphophonemicRuleReplaceFrom" name="replacefrom" required />
+          </div>
+          <div class="field">
+            <label for="txtMorphophonemicRuleReplaceTo">Replace To</label>
+            <input type="text" id="txtMorphophonemicRuleReplaceTo" name="replaceto" required />
+          </div>
+          <div class="field-end">
+            <button type="button" id="btnMorphophonemicRuleCancel">Cancel</button>
+            <button type="submit" id="btnMorphophonemicRuleSubmit"></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div id="popup" class="popup">
@@ -245,6 +277,7 @@
 <script src="/js/lemmas.js" asp-append-version="true"></script>
 <script src="/js/slots.js" asp-append-version="true"></script>
 <script src="/js/agreements.js" asp-append-version="true"></script>
+<script src="/js/morphophonology.js" asp-append-version="true"></script>
 <script>
   $(document).ready(function () {
     $('#frmLang').hide();

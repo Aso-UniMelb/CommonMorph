@@ -2,6 +2,30 @@ let lemmaPage = 0;
 let slotPage = 0;
 let nnPage = 0;
 let dir = 'ltr';
+let rules = [];
+
+function getRules(langid) {
+  $('.loading').show();
+  $.ajax({
+    url: '/Morphophonology/list',
+    type: 'GET',
+    data: {
+      LangId: langid,
+    },
+    success: function (data) {
+      $('.loading').hide();
+      rules = data;
+      let html = '<option value="0"></option>';
+      for (let i = 0; i < rules.length; i++) {
+        html += `<option value="${rules[i].id}">${rules[i].title}</option>`;
+      }
+      $('#cmbMorphophonemicRule').html(html);
+    },
+    error: function (data) {
+      console.log(data);
+    },
+  });
+}
 
 function getLangStats(langid) {
   $('.loading').show();
@@ -339,7 +363,11 @@ details summary {list-style: none;}
 details summary::-webkit-details-marker {display: none;}
 </style>
 <details id="findReplace">
-  <summary><span class="material-icons">find_replace</span> Find and Replace </summary>
+  <summary><span class="material-icons">find_replace</span> Morphophonemic Rules </summary>
+  <div>
+    <label>Rule:</label>
+    <select id="cmbMorphophonemicRule"></select>
+  </div>
   <label for="find">Find:</label>
   <input type="text" id="find" name="find" />
   <label for="replace">Replace with:</label>
@@ -366,4 +394,11 @@ details summary::-webkit-details-marker {display: none;}
   $('#cmbElicitOrder').change();
   $('#findReplace').hide();
   getLangStats(myLang.id);
+  getRules(myLang.id);
+
+  $('#cmbMorphophonemicRule').change(function () {
+    let rule = rules.filter((x) => x.id == $(this).val())[0];
+    $('#find').val(rule.replacefrom);
+    $('#replace').val(rule.replaceto);
+  });
 });
