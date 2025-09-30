@@ -393,7 +393,6 @@ details summary::-webkit-details-marker {display: none;}
   });
   $('#cmbElicitOrder').change();
   $('#findReplace').hide();
-  getLangStats(myLang.id);
   getRules(myLang.id);
 
   $('#cmbMorphophonemicRule').change(function () {
@@ -401,4 +400,6 @@ details summary::-webkit-details-marker {display: none;}
     $('#find').val(rule.replacefrom);
     $('#replace').val(rule.replaceto);
   });
+
+  getNextPage('Lemma');
 });

@@ -41,15 +41,15 @@ function CheckGetTable(myLangId, pg, type) {
     ${title} | 
     <small>${UM_tag2word(C.tags, myLang.code)}</small>
   </label>            
-  <div class="field-nowrap" style="max-width: 300px;">
+  <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}">
     <input type="text" 
-      id="${i + 1}" data-attr="${C.cellid}" value=${C.submitted} disabled />
-    <button type="button" id="btnApprove${i + 1}" 
+       data-attr="${C.cellid}" value=${C.submitted} disabled />
+    <button type="button" id="btnApprove${C.cellid}" 
       class="smallButton approve"
       onclick="RateThisCell(${C.cellid}, 'approve')" >
       <span class="material-icons">done</span>
     </button>
-    <button type="button" id="btnDisapprove${i + 1}" 
+    <button type="button" id="btnDisapprove${C.cellid}" 
       class="smallButton disapprove"
       onclick="RateThisCell(${C.cellid}, 'disapprove')" >
       <span class="material-icons">close</span>
@@ -76,9 +76,9 @@ function CheckGetTable(myLangId, pg, type) {
     ${title} | 
     <small>${UM_tag2word(C.tags, myLang.code)}</small>
   </label>            
-  <div class="field-nowrap" style="max-width: 300px;">
+  <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}" >
     <input type="text" 
-      id="${i + 1}" data-attr="${C.cellid}" value=${C.submitted} disabled />
+      data-attr="${C.cellid}" value=${C.submitted} disabled />
     <button type="button" id="btnApprove${i + 1}" 
       class="smallButton approve"
       onclick="RateThisCell(${C.cellid}, 'approve')" >
@@ -142,18 +142,20 @@ function ApproveAll(nextType) {
   });
 }
 
-function RateThisCell(id, rate) {
+function RateThisCell(cellid, rate) {
+  $('#btnDisapprove' + cellid).disabled = true;
+  $('#btnApprove' + cellid).disabled = true;
   $.ajax({
     url: '/Cell/' + rate,
     type: 'POST',
     data: {
-      cellid: id,
+      cellid: cellid,
     },
     success: function (data) {
       // remove input
-      $('#' + id).remove();
-      $('#btnApprove' + id).remove();
-      $('#btnDisapprove' + id).remove();
+      $('#' + cellid).remove();
+      $('#btnApprove' + cellid).remove();
+      $('#btnDisapprove' + cellid).remove();
     },
     error: function (data) {
       alert(data);
@@ -196,8 +198,8 @@ $(document).ready(function () {
   <div class="field">
     <lable>Chcking order:</lable>
     <select id="cmbElicitOrder">
-        <option value="Slot">By Slot</option>
         <option value="Lemma">By Lemma</option>
+        <option value="Slot">By Slot</option>
     </select>
     <span id="pageButtons"></span>
   </div>
@@ -220,4 +222,5 @@ $(document).ready(function () {
     }
   });
   $('#cmbElicitOrder').change();
+  getNextPage('Lemma');
 });

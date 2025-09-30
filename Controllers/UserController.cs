@@ -54,7 +54,7 @@ namespace common_morph_backend.Controllers
             admin.username,
             "New Common Morph User Registration via Google",
             @$"<h2>New User Registration</h2>
-            <p><a href=""https://morph.kurdinus.com/app/admin"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to check this registration</a></p>",
+            <p><a href=""https://common-morph.com/app/admin"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to check this registration</a></p>",
             isHtml: true);
         }
       }
@@ -150,7 +150,7 @@ namespace common_morph_backend.Controllers
         usr.username,
         "You are invited to the CommonMorph!",
         @$"<h2>You are invited to contribute to the CommonMorph Project!</h2>
-          <p><a href=""https://morph.kurdinus.com/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
+          <p><a href=""https://common-morph.com/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
         isHtml: true);
       ViewBag.Error = "Please check your email for the registration code.";
       // email admins to notify
@@ -161,7 +161,7 @@ namespace common_morph_backend.Controllers
           admin.username,
           "New CommonMorph User Registration via Form",
           @$"<h2>New User Registration</h2>
-          <p><a href=""https://morph.kurdinus.com/app/admin"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to check this registration</a></p>",
+          <p><a href=""https://common-morph.com/app/admin"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to check this registration</a></p>",
           isHtml: true);
       }
       return View();
@@ -226,7 +226,7 @@ namespace common_morph_backend.Controllers
         user.username,
         "CommonMorph: Password reset",
         @$"<h2>Please click this link to reset your password in the CommonMorph Project!</h2>
-          <p><a href=""https://morph.kurdinus.com/user/activate?username={user.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
+          <p><a href=""https://common-morph.com/user/activate?username={user.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
         isHtml: true);
       user.registrationcode = code;
       _context.Entry(user).State = EntityState.Detached;
@@ -263,7 +263,7 @@ namespace common_morph_backend.Controllers
         usr.username,
         "You are invited to the CommonMorph!",
         @$"<h2>You are invited to contribute to the CommonMorph Project!</h2>
-          <p><a href=""https://morph.kurdinus.com/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
+          <p><a href=""https://common-morph.com/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
         isHtml: true);
       var user = new User
       {

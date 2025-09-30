@@ -348,7 +348,7 @@ WHERE cell NOT IN (SELECT cell FROM xx WHERE userid ={userId})");
       var slt = _context.slots.FirstOrDefault(l => l.id == slotId);
       // If the slots contain agreement:
       var results1 = connection.Query(@$"
-SELECT l.entry AS lemma, a.title AS atitle, a.unimorphtags AS tags, c.submitted AS submitted
+SELECT c.id AS cellid, l.entry AS lemma, a.title AS atitle, a.unimorphtags AS tags, c.submitted AS submitted
 FROM lemmas l 
 INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
 INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
@@ -359,7 +359,7 @@ WHERE s.id= {slotId} AND c.byuserid != {userId} AND  (c.submitted IS NOT NULL OR
 ORDER BY a.unimorphtags, l.priority DESC, l.entry");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
-SELECT  l.entry AS lemma, c.submitted AS submitted
+SELECT  c.id AS cellid, l.entry AS lemma, c.submitted AS submitted
 FROM lemmas l 
 INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
 INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
