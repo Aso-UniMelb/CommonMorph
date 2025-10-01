@@ -364,7 +364,7 @@ var AggrementDimensions = [
 ];
 
 function UM_Sort(strTags) {
-  let tags = strTags.split(';');
+  let tags = strTags.split(/[;+]/);
   tags.sort((a, b) => {
     // Find the index of each item in the UM array based on the "l" property
     const indexA = UM.findIndex((item) => item.l === a);
@@ -372,11 +372,25 @@ function UM_Sort(strTags) {
     // Sort values based on their index in UM
     return indexA - indexB;
   });
-  return tags.join(';');
+  let bundle = '';
+  // join the sorted array with semicolons for different dimensions and plus for same dimension
+  if (tags.length > 0) {
+    for (let i = 0; i < tags.length - 1; i++) {
+      let dim_i = UM.find((item) => item.l === tags[i]).d;
+      let dim_next = UM.find((item) => item.l === tags[i + 1]).d;
+      if (dim_i !== dim_next) {
+        bundle += tags[i] + ';';
+      } else {
+        bundle += tags[i] + '+';
+      }
+    }
+    bundle += tags[tags.length - 1];
+  }
+  return bundle.replace(/;+$/, '');
 }
 
 function UM_tag2word(strTags, langCode) {
-  let tags = strTags.split(';');
+  let tags = strTags.split(/[;+]/);
   let words = [];
   for (let i = 0; i < tags.length; i++) {
     let tag = tags[i];

@@ -279,47 +279,119 @@ function updateAgreementGroup() {
 }
 
 // UMtagSelector
+$('#AgreementUMtagSelector').append(
+  `<div>
+    <label>Dimension:</label>
+    <select class="UMtagSelector" id="dimensionA"></select>
+    <br />
+    <label>Feature:</label>
+    <select class="UMtagSelector" id="featureA"></select>
+    <button type="button" id="btnAddUMtagA">+ Add</button>
+  </div>
+  <div id="addedUMtagsA" class="addedUMtags"></div>
+  `
+);
 AggrementDimensions.forEach((dim) => {
-  let dim_id = 'aDim_' + dim.replace(' ', '_');
-  $('#AgreementUMtagSelector').append(
-    `<select class="UMtagSelector aggrement" id="${dim_id}"><option value="">--${dim}--</option></select>`
-  );
+  $('#dimensionA').append(`<option value="${dim}">${dim}</option>`);
 });
 
-UM.forEach((tag) => {
-  let dim = tag.d;
-  let feat = tag.f;
-  $('#aDim_' + dim.replace(' ', '_')).append(
-    `<option value="${tag.l}">${feat}</option>`
-  );
-});
-
-$('.UMtagSelector.aggrement').change(function () {
-  tagset = [];
-  $('.UMtagSelector.aggrement').css('background', '');
-  for (let i = 0; i < Dimensions.length; i++) {
-    let dim_id = '#aDim_' + Dimensions[i].replace(' ', '_');
-    if ($(dim_id).val()) {
-      $(dim_id).css('background', '#4f0');
-      tagset.push($(dim_id).val());
+$('#dimensionA').change(function () {
+  $('#featureA').html(' ');
+  UM.forEach((tag) => {
+    let dim = tag.d;
+    if (dim == $('#dimensionA').val()) {
+      let feat = tag.f;
+      $('#featureA').append(
+        `<option value="${tag.l}" title="${feat}">${feat}</option>`
+      );
     }
-  }
-  $('#txtAgreementItemUniMorphTags').val(tagset.join(';'));
+  });
 });
+$('#dimensionA').change();
+
+$('#btnAddUMtagA').click(function () {
+  let dim = $('#dimensionA').val();
+  let feat = $('#featureA').val();
+  let feat_title = $('#featureA  option:selected').attr('title');
+  if ($('#F_' + feat).length == 0 && dim && feat) {
+    $('#addedUMtagsA').append(
+      `<div class="UMtag" id="F_${feat}">${dim}: ${feat_title} <span class="remove" onclick="RemoveFeatA('${feat}')">&times;</span></div>`
+    );
+  }
+  UpdateUniMorphTagSetA();
+});
+
+function RemoveFeatA(feat) {
+  $('#F_' + feat).remove();
+  UpdateUniMorphTagSetA();
+}
+
+function UpdateUniMorphTagSetA() {
+  tagset = [];
+  let added = $('#addedUMtagsA').children();
+  console.log(added);
+  for (let i = 0; i < added.length; i++) {
+    console.log(added[i]);
+    let feat = $(added[i]).attr('id').replace('F_', '');
+    tagset.push(feat);
+  }
+  $('#txtAgreementItemUniMorphTags').val(UM_Sort(tagset.join(';')));
+}
 
 function updateAggrementUMselects(tagset) {
-  $('.UMtagSelector.aggrement').val('');
-  $('.UMtagSelector.aggrement').css('background', '');
-  tagset.forEach((tag) => {
-    if (tag) {
-      let dimension = UM.find((item) => item.l === tag).d;
-      let label = UM.find((item) => item.l === tag).l;
-      let dim_id = '#aDim_' + dimension.replace(' ', '_');
-      $(dim_id).val(label);
-      $(dim_id).css('background', '#4f0');
+  $('#addedUMtagsA').html('');
+  tagset.forEach((feat) => {
+    if (feat) {
+      let vec = UM.find((item) => item.l === feat);
+      $('#addedUMtagsA').append(
+        `<div class="UMtag" id="F_${feat}">${vec.d}: ${vec.f} <span class="remove" onclick="RemoveFeatA('${feat}')">&times;</span></div>`
+      );
     }
   });
 }
+
+//
+// AggrementDimensions.forEach((dim) => {
+//   let dim_id = 'aDim_' + dim.replace(' ', '_');
+//   $('#AgreementUMtagSelector').append(
+//     `<select class="UMtagSelector aggrement" id="${dim_id}"><option value="">--${dim}--</option></select>`
+//   );
+// });
+
+// UM.forEach((tag) => {
+//   let dim = tag.d;
+//   let feat = tag.f;
+//   $('#aDim_' + dim.replace(' ', '_')).append(
+//     `<option value="${tag.l}">${feat}</option>`
+//   );
+// });
+
+// $('.UMtagSelector.aggrement').change(function () {
+//   tagset = [];
+//   $('.UMtagSelector.aggrement').css('background', '');
+//   for (let i = 0; i < Dimensions.length; i++) {
+//     let dim_id = '#aDim_' + Dimensions[i].replace(' ', '_');
+//     if ($(dim_id).val()) {
+//       $(dim_id).css('background', '#4f0');
+//       tagset.push($(dim_id).val());
+//     }
+//   }
+//   $('#txtAgreementItemUniMorphTags').val(tagset.join(';'));
+// });
+
+// function updateAggrementUMselects(tagset) {
+//   $('.UMtagSelector.aggrement').val('');
+//   $('.UMtagSelector.aggrement').css('background', '');
+//   tagset.forEach((tag) => {
+//     if (tag) {
+//       let dimension = UM.find((item) => item.l === tag).d;
+//       let label = UM.find((item) => item.l === tag).l;
+//       let dim_id = '#aDim_' + dimension.replace(' ', '_');
+//       $(dim_id).val(label);
+//       $(dim_id).css('background', '#4f0');
+//     }
+//   });
+// }
 
 // ========= import agreements
 // show import form

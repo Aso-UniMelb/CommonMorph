@@ -160,6 +160,8 @@ ul.list {
   flex-direction: column;
   padding-inline-start: 5px;
   list-style: none;
+  max-height: 600px;
+  overflow: auto;
 }
 
 .sublist {
@@ -322,7 +324,7 @@ form .field-end {
   text-align: end;
 }
 
-.field label {
+.field>label {
   padding-block-start: 10px;
   display: block;
   font-size: 0.9rem;
@@ -980,11 +982,31 @@ button.disapprove {
   margin: 3px;
 }
 
+.tagSelection button {
+  background: var(--C2);
+}
+
+.addedUMtags {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.UMtag {
+  padding: 5px;
+  margin: 5px;
+  border-radius: 3px;
+  background: var(--C0);
+}
+
+.UMtag span {
+  cursor: pointer;
+  color: var(--C1);
+}
+
 .tagSelection {
   background: #eee;
   padding: 5px 10px;
   border-radius: 3px;
-  max-height: 150px;
   overflow: auto;
 }
 
@@ -998,6 +1020,7 @@ details {
 
 summary {
   cursor: pointer;
+  font-size: 14px;
 }
 
 /* tour */

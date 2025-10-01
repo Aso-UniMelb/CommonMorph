@@ -283,44 +283,73 @@ function updateParadigmClass() {
 }
 
 // UMtagSelector
+$('#SlotUMtagSelector').append(
+  `<div>
+    <label>Dimension:</label>
+    <select class="UMtagSelector" id="dimension"></select>
+    <br />
+    <label>Feature:</label>
+    <select class="UMtagSelector" id="feature"></select>
+    <button type="button" id="btnAddUMtag">+ Add</button>
+  </div>
+  <div id="addedUMtags" class="addedUMtags"></div>
+  `
+);
 Dimensions.forEach((dim) => {
-  let dim_id = 'sDim_' + dim.replace(' ', '_');
-  $('#SlotUMtagSelector').append(
-    `<select class="UMtagSelector slot" id="${dim_id}"><option value="">--${dim}--</option></select>`
-  );
+  $('#dimension').append(`<option value="${dim}">${dim}</option>`);
 });
 
-UM.forEach((tag) => {
-  let dim = tag.d;
-  let feat = tag.f;
-  $('#sDim_' + dim.replace(' ', '_')).append(
-    `<option value="${tag.l}">${feat}</option>`
-  );
-});
-
-$('.UMtagSelector.slot').change(function () {
-  tagset = [];
-  $('.UMtagSelector.slot').css('background', '');
-  for (let i = 0; i < Dimensions.length; i++) {
-    let dim_id = '#sDim_' + Dimensions[i].replace(' ', '_');
-    if ($(dim_id).val()) {
-      $(dim_id).css('background', '#4f0');
-      tagset.push($(dim_id).val());
+$('#dimension').change(function () {
+  $('#feature').html(' ');
+  UM.forEach((tag) => {
+    let dim = tag.d;
+    if (dim == $('#dimension').val()) {
+      let feat = tag.f;
+      $('#feature').append(
+        `<option value="${tag.l}" title="${feat}">${feat}</option>`
+      );
     }
-  }
-  $('#txtSlotUniMorphTags').val(tagset.join(';'));
+  });
 });
+$('#dimension').change();
+
+$('#btnAddUMtag').click(function () {
+  let dim = $('#dimension').val();
+  let feat = $('#feature').val();
+  let feat_title = $('#feature  option:selected').attr('title');
+  if ($('#F_' + feat).length == 0 && dim && feat) {
+    $('#addedUMtags').append(
+      `<div class="UMtag" id="F_${feat}">${dim}: ${feat_title} <span class="remove" onclick="RemoveFeat('${feat}')">&times;</span></div>`
+    );
+  }
+  UpdateUniMorphTagSet();
+});
+
+function RemoveFeat(feat) {
+  $('#F_' + feat).remove();
+  UpdateUniMorphTagSet();
+}
+
+function UpdateUniMorphTagSet() {
+  tagset = [];
+  let added = $('#addedUMtags').children();
+  console.log(added);
+  for (let i = 0; i < added.length; i++) {
+    console.log(added[i]);
+    let feat = $(added[i]).attr('id').replace('F_', '');
+    tagset.push(feat);
+  }
+  $('#txtSlotUniMorphTags').val(UM_Sort(tagset.join(';')));
+}
 
 function updateSlotUMselects(tagset) {
-  $('.UMtagSelector.slot').val('');
-  $('.UMtagSelector.slot').css('background', '');
-  tagset.forEach((tag) => {
-    if (tag) {
-      let dimension = UM.find((item) => item.l === tag).d;
-      let label = UM.find((item) => item.l === tag).l;
-      let dim_id = '#sDim_' + dimension.replace(' ', '_');
-      $(dim_id).val(label);
-      $(dim_id).css('background', '#4f0');
+  $('#addedUMtags').html('');
+  tagset.forEach((feat) => {
+    if (feat) {
+      let vec = UM.find((item) => item.l === feat);
+      $('#addedUMtags').append(
+        `<div class="UMtag" id="F_${feat}">${vec.d}: ${vec.f} <span class="remove" onclick="RemoveFeat('${feat}')">&times;</span></div>`
+      );
     }
   });
 }

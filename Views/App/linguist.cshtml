@@ -5,8 +5,89 @@
 
 <div class="accordion">
 
+  <div class="accordion-item" id="paradigm-accordion">
+    <div class="accordion-header">Paradigm Structures</div>
+    <div class="accordion-content">
+      <label>
+        <span class="addButton" id="btnAddParadigmClass"><span class="material-icons">add</span>Add</span>
+      </label>
+      <label>
+        <span class="addButton" id="btnImportSlot"> <span class="material-icons">download</span> Import</span>
+      </label>
+      <label>
+        <span class="addButton" id="btnExportSlot"> <span class="material-icons">upload</span> Export</span>
+      </label>
+      <ul id="lstParadigmClasses" class="list"></ul>
+      <div id="frmParadigmClass" class="form">
+        <form onsubmit="ParadigmClassSubmit(); return false;">
+          <input type="hidden" id="ParadigmClassId" />
+          <div class="field">
+            <label for="txtParadigmClassTitle">Title</label>
+            <input type="text" id="txtParadigmClassTitle" name="title" required />
+          </div>
+          <div class="field">
+            <label for="txtParadigmClassDescription">Description</label>
+            <textarea id="txtParadigmClassDescription" name="description"></textarea>
+          </div>
+          <div class="field-end">
+            <button type="button" id="btnParadigmClassCancel">Cancel</button>
+            <button type="submit" id="btnParadigmClassSubmit"></button>
+          </div>
+        </form>
+      </div>
+      <div id="frmImportSlots" class="form">
+        <form onsubmit="SlotImportSubmit(); return false;">
+          <div class="field">
+            <label>Import Script</label>
+            <textarea id="txtSlotImport" rows="15"></textarea>
+          </div>
+          <div class="field-end">
+            <button type="button" id="btnSlotImportCancel">Cancel</button>
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+      </div>
+      <div id="frmSlots" class="form">
+        <form onsubmit="SlotsSubmit(); return false;">
+          <input type="hidden" id="SlotId" />
+          <input type="hidden" id="SlotPClassId" />
+          <div class="field">
+            <label for="txtSlotTitle">Title</label>
+            <input type="text" id="txtSlotTitle" name="Title" />
+          </div>
+          <div class="field">
+            <label for="txtSlotUniMorphTags">Morphosyntactic Feature</label>
+            <div id="SlotUMtagSelector" class="tagSelection"></div>
+            <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" />
+          </div>
+          <div class="field">
+            <label for="txtSlotFormula">Formula <small>(optional)</small></label>
+            <input type="text" id="txtSlotFormula" name="formula" placeholder="S1+A" />
+            <small>S1=Stem1, S2=Stem2, A=Agreement, L=Lemma</small>
+          </div>
+          <div class="field">
+            <label>Reusable Layer</label>
+            <select id="cmbSlotAgreementGroup" style="width: 300px;"></select>
+          </div>
+          <div class="field">
+            <label>Priority</label>
+            <select id="cmbSlotPriority" style="width: 300px;" required>
+              <option value="0" selected>Low</option>
+              <option value="1">Medium</option>
+              <option value="2">High</option>
+            </select>
+          </div>
+          <div class="field-end">
+            <button type="button" id="btnSlotsCancel">Cancel</button>
+            <button type="submit" id="btnSlotsSubmit"></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <div class="accordion-item" id="agreement-accordion">
-    <div class="accordion-header">Agreement Groups</div>
+    <div class="accordion-header">Reusable Layers</div>
     <div class="accordion-content">
       <label>
         <span class="addButton" id="btnAddAgreementGroup"><span class="material-icons">add</span> Add</span>
@@ -77,90 +158,8 @@
     </div>
   </div>
 
-  <div class="accordion-item" id="paradigm-accordion">
-    <div class="accordion-header">Paradigm Classes</div>
-    <div class="accordion-content">
-      <label>
-        <span class="addButton" id="btnAddParadigmClass"><span class="material-icons">add</span>Add</span>
-      </label>
-      <label>
-        <span class="addButton" id="btnImportSlot"> <span class="material-icons">download</span> Import</span>
-      </label>
-      <label>
-        <span class="addButton" id="btnExportSlot"> <span class="material-icons">upload</span> Export</span>
-      </label>
-      <ul id="lstParadigmClasses" class="list"></ul>
-      <div id="frmParadigmClass" class="form">
-        <form onsubmit="ParadigmClassSubmit(); return false;">
-          <input type="hidden" id="ParadigmClassId" />
-          <div class="field">
-            <label for="txtParadigmClassTitle">Title</label>
-            <input type="text" id="txtParadigmClassTitle" name="title" required />
-          </div>
-          <div class="field">
-            <label for="txtParadigmClassDescription">Description</label>
-            <textarea id="txtParadigmClassDescription" name="description"></textarea>
-          </div>
-          <div class="field-end">
-            <button type="button" id="btnParadigmClassCancel">Cancel</button>
-            <button type="submit" id="btnParadigmClassSubmit"></button>
-          </div>
-        </form>
-      </div>
-      <div id="frmImportSlots" class="form">
-        <form onsubmit="SlotImportSubmit(); return false;">
-          <div class="field">
-            <label>Import Script</label>
-            <textarea id="txtSlotImport" rows="15"></textarea>
-          </div>
-          <div class="field-end">
-            <button type="button" id="btnSlotImportCancel">Cancel</button>
-            <button type="submit">Submit</button>
-          </div>
-        </form>
-      </div>
-      <div id="frmSlots" class="form">
-        <form onsubmit="SlotsSubmit(); return false;">
-          <input type="hidden" id="SlotId" />
-          <input type="hidden" id="SlotPClassId" />
-          <div class="field">
-            <label for="txtSlotTitle">Title</label>
-            <input type="text" id="txtSlotTitle" name="Title" />
-          </div>
-          <div class="field">
-            <label for="txtSlotUniMorphTags">Morphosyntactic Feature</label>
-            <div id="SlotUMtagSelector" class="tagSelection"></div>
-            <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" />
-          </div>
-          <div class="field">
-            <label for="txtSlotFormula">Formula <small>(optional)</small></label>
-            <input type="text" id="txtSlotFormula" name="formula" placeholder="S1+A" />
-            <small>S1=Stem1, S2=Stem2, A=Agreement, L=Lemma</small>
-          </div>
-          <div class="field">
-            <label>Agreement Group</label>
-            <select id="cmbSlotAgreementGroup" style="width: 300px;"></select>
-          </div>
-          <div class="field">
-            <label>Priority</label>
-            <select id="cmbSlotPriority" style="width: 300px;" required>
-              <option value="0" selected>Low</option>
-              <option value="1">Medium</option>
-              <option value="2">High</option>
-            </select>
-          </div>
-          <div class="field-end">
-            <button type="button" id="btnSlotsCancel">Cancel</button>
-            <button type="submit" id="btnSlotsSubmit"></button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-
   <div class="accordion-item" id="lemma-accordion">
-    <div class="accordion-header">Lemmas</div>
+    <div class="accordion-header">Lexicon</div>
     <div class="accordion-content">
       <label>
         <span class="addButton" id="btnAddLemma"><span class="material-icons">add</span>Add</span>
