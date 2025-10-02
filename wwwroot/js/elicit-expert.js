@@ -217,7 +217,12 @@ function WordFromFormula(formula, lemma, stem1, stem2, stem3, stem4, agg) {
   w = w.replace(/S2/g, stem2);
   w = w.replace(/S3/g, stem3);
   w = w.replace(/S4/g, stem4);
-  w = w.replace(/(\+A|A\+)/g, agg);
+  // circumfix agreement
+  if (/A.+A/.test(w)) {
+    w = w.replace(/A\+(.+)\+A/g, agg.split('#')[0] + '$1' + agg.split('#')[1]);
+  } else {
+    w = w.replace(/(\+A|A\+)/g, agg);
+  }
   w = w.replace(/\+/g, '');
   w = w.replace(/0/g, '');
   return w;
