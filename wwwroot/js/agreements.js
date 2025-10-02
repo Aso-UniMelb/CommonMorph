@@ -86,7 +86,7 @@ function EditAgreementItem(id) {
     },
     success: function (data) {
       $('#txtAgreementItemUniMorphTags').val(data.unimorphtags);
-      updateAggrementUMselects(data.unimorphtags.split(';'));
+      updateAggrementUMselects(data.unimorphtags.split(/[;+]/));
       $('#txtAgreementItemTitle').val(data.title);
       $('#txtAgreementItemRealization').val(data.realization);
       $('#AgreementItemId').val(data.id);
@@ -280,7 +280,8 @@ function updateAgreementGroup() {
 
 // UMtagSelector
 $('#AgreementUMtagSelector').append(
-  `<div>
+  `<div id="addedUMtagsA" class="addedUMtags"></div>
+  <div>
     <label>Dimension:</label>
     <select class="UMtagSelector" id="dimensionA"></select>
     <br />
@@ -288,7 +289,7 @@ $('#AgreementUMtagSelector').append(
     <select class="UMtagSelector" id="featureA"></select>
     <button type="button" id="btnAddUMtagA">+ Add</button>
   </div>
-  <div id="addedUMtagsA" class="addedUMtags"></div>
+  
   `
 );
 AggrementDimensions.forEach((dim) => {

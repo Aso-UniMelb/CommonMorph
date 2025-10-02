@@ -86,7 +86,7 @@ function EditSlot(id) {
     success: function (data) {
       $('#txtSlotTitle').val(data.title);
       $('#txtSlotUniMorphTags').val(data.unimorphtags);
-      updateSlotUMselects(data.unimorphtags.split(';'));
+      updateSlotUMselects(data.unimorphtags.split(/[;+]/));
       $('#txtSlotFormula').val(data.formula);
       $('#SlotId').val(data.id);
       $('#cmbSlotAgreementGroup').val(data.agreementgroupid).change();
@@ -284,7 +284,8 @@ function updateParadigmClass() {
 
 // UMtagSelector
 $('#SlotUMtagSelector').append(
-  `<div>
+  `<div id="addedUMtags" class="addedUMtags"></div>
+  <div>
     <label>Dimension:</label>
     <select class="UMtagSelector" id="dimension"></select>
     <br />
@@ -292,7 +293,6 @@ $('#SlotUMtagSelector').append(
     <select class="UMtagSelector" id="feature"></select>
     <button type="button" id="btnAddUMtag">+ Add</button>
   </div>
-  <div id="addedUMtags" class="addedUMtags"></div>
   `
 );
 Dimensions.forEach((dim) => {
@@ -344,6 +344,7 @@ function UpdateUniMorphTagSet() {
 
 function updateSlotUMselects(tagset) {
   $('#addedUMtags').html('');
+  console.log(tagset);
   tagset.forEach((feat) => {
     if (feat) {
       let vec = UM.find((item) => item.l === feat);
