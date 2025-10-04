@@ -4,6 +4,7 @@ function getLemmas(id) {
   validateInput('#txtLemmaStem1', myLang.validchars);
   validateInput('#txtLemmaStem2', myLang.validchars);
   validateInput('#txtLemmaStem3', myLang.validchars);
+  validateInput('#txtLemmaStem4', myLang.validchars);
   $('#detailsSlots').hide();
   $('#frmSlots').hide();
   $('.loading').show();
@@ -50,6 +51,7 @@ $('#btnAddLemma').click(function () {
     $('#txtLemmaStem1').val('');
     $('#txtLemmaStem2').val('');
     $('#txtLemmaStem3').val('');
+    $('#txtLemmaStem4').val('');
     $('#txtLemmaDescription').val('');
     $('#LemmaId').val('');
     $('#cmbLemmaPriority').val('1');
@@ -76,6 +78,7 @@ function insertLemma() {
       Stem1: $('#txtLemmaStem1').val().trim(),
       Stem2: $('#txtLemmaStem2').val().trim(),
       Stem3: $('#txtLemmaStem3').val().trim(),
+      Stem4: $('#txtLemmaStem4').val().trim(),
       Priority: $('#cmbLemmaPriority').val(),
       Description: $('#txtLemmaDescription').val().trim(),
     },
@@ -101,6 +104,7 @@ function updateLemma() {
       Stem1: $('#txtLemmaStem1').val().trim(),
       Stem2: $('#txtLemmaStem2').val().trim(),
       Stem3: $('#txtLemmaStem3').val().trim(),
+      Stem4: $('#txtLemmaStem4').val().trim(),
       Priority: $('#cmbLemmaPriority').val(),
       Description: $('#txtLemmaDescription').val().trim(),
     },
@@ -126,6 +130,7 @@ function EditLemma(id) {
   $('#txtLemmaStem1').val(Lemmas[id].stem1);
   $('#txtLemmaStem2').val(Lemmas[id].stem2);
   $('#txtLemmaStem3').val(Lemmas[id].stem3);
+  $('#txtLemmaStem4').val(Lemmas[id].stem4);
   $('#txtLemmaDescription').val(Lemmas[id].description);
   $('#LemmaId').val(Lemmas[id].id);
   $('#cmbLemmaParadigmClass').val(Lemmas[id].paradigmclassid).trigger('change');
@@ -166,7 +171,9 @@ function LemmaImportSubmit() {
 // export lemmas
 $('#btnExportLemmas').click(function () {
   let file = Lemmas.map((lemma) => {
-    const stems = [lemma.stem1, lemma.stem2, lemma.stem3].filter(Boolean);
+    const stems = [lemma.stem1, lemma.stem2, lemma.stem3, lemma.stem4].filter(
+      Boolean
+    );
     return [lemma.wClass, lemma.entry, lemma.engmeaning, ...stems].join('\t');
   }).join('\n');
   var blob = new Blob([file], { type: 'text/plain' });

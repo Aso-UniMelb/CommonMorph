@@ -1,13 +1,14 @@
 @{
   ViewData["Title"] = "Datasets | CommonMorph";
+  var infl = ViewBag.submittedByLang;
 }
 <div class="loading"></div>
 <div class="container">
-  <h1>Download CommonMorph Datasets</h1>
+  <h1>CommonMorph's Datasets</h1>
   <div class="tabs">
     <div class="tab active" data-tab="tab1">Morphological Datasets</div>
-    <div class="tab" data-tab="tab2">Lexicons</div>
     <div class="tab" data-tab="tab3">Elicitation Template Prompts</div>
+    @* <div class="tab" data-tab="tab4">Universal Morpological Ananlyser</div> *@
   </div>
 
   <div id="tab1" class="tab-content active">
@@ -17,47 +18,22 @@
       sub-word models. These datasets also play a vital role in documenting and preserving languages.
       The datasets are available in the <a href="https://unimorph.github.io/">Unimorph</a> Format.
     </p>
-    <table class="downloadList">
-      <tr>
-        <th>Language Varitey</th>
-        <th># Forms</th>
-        <th>Get</th>
-      </tr>
-      @foreach (var lang in ViewBag.submittedByLang)
-      {
-        <tr>
-          <td><code>@lang.code</code> @lang.title</td>
-          <td>@lang.cnt</td>
-          <td><span data-langid="@lang.langid" data-langTitle="@lang.title" class="downloadLink downloadForms"></span>
-          </td>
-        </tr>
-      }
-    </table>
 
-    <div class="download"></div>
-  </div>
-
-  <div id="tab2" class="tab-content">
-    <h2>Linguists Datasets</h2>
-    <p></p>
-    <table class="downloadList">
-      <tr>
-        <th>Language Varitey</th>
-        <th># Lemmas</th>
-        <th>Get</th>
-      </tr>
+    <div class="downloadList">
       @foreach (var lang in ViewBag.lexiconStats)
       {
-        <tr>
-          <td><code>@lang.code</code> @lang.title</td>
-          <td>@lang.cnt</td>
-          <td><span data-langid="@lang.langid" data-langTitle="@lang.title" class="downloadLink downloadLemmas"></span>
-          </td>
-        </tr>
+        <a href="/dataset/@lang.langid" class="card">
+          <div class="title"><code>@lang.code</code> @lang.title</div>
+          @if (infl.ContainsKey(lang.langid))
+          {
+            <div class="stat">@infl[lang.langid] inflected forms</div>
+          }
+          <div class="stat">@lang.cnt lemmas</div>
+        </a>
       }
-    </table>
-    <div class="download-lexicon"></div>
+    </div>
   </div>
+
 
   <div id="tab3" class="tab-content">
     <h2>Elicitation Template Prompts <small>(for field linguists)</small></h2>

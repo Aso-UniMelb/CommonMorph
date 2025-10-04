@@ -286,26 +286,6 @@ img.logo {
   gap: 15px;
 }
 
-/* download */
-.download {
-  display: flex;
-  justify-content: center;
-  padding: 5px;
-}
-
-.download table {
-  border-collapse: collapse;
-}
-
-.download table th {
-  padding: 5px;
-  border: 1px solid #ccc;
-}
-
-.download table td {
-  padding: 5px;
-  border: 1px solid #ccc;
-}
 
 .warning {
   color: #663c00;
@@ -604,22 +584,41 @@ figcaption {
   display: block;
 }
 
+
+/* Datasets */
 .downloadList {
-  background: #f5f5f5;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+
+.downloadList .card {
   padding: 10px;
-  margin-left: auto;
-  margin-right: auto;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  width: 200px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.15);
 }
 
-.downloadList td {
-  padding: 5px;
-  background: #fff;
+.downloadList .card:hover {
+  box-shadow: 0px 6px 10px rgba(100, 0, 0, 0.15);
 }
 
-ul.downloadList li:hover {
-  background: #eee;
+.downloadList .card .title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
+.downloadList .card .stat {
+  color: #777;
+}
+
+.downloadList .card .links {}
 
 .downloadList code {
   background: var(--C);
@@ -628,12 +627,36 @@ ul.downloadList li:hover {
   font-size: 0.8rem;
 }
 
-.downloadLink>span {
-  cursor: pointer;
-  padding: 2px;
-  margin: 0 5px;
+/* download */
+.datasetdesc {
+  display: flex;
+  gap: 20px;
+  padding: 10px;
+  justify-content: center;
+  color: #555;
 }
 
-.downloadLink>span:hover {
-  color: var(--C2);
+.datasetdesc div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.downloadlinks {
+  padding-block: 20px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.downloadlinks a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+  background: var(--C3);
+  color: #fff;
+  border-radius: 5px;
 }

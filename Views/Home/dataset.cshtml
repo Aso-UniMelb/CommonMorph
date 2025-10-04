@@ -1,0 +1,41 @@
+@{
+  ViewData["Title"] = "Dataset | CommonMorph";
+}
+<h1>@ViewBag.lang.title</h1>
+@if (ViewBag.lang.description != null)
+{
+  <div class="langdesc">
+    <span class="material-icons">description</span>
+    <b>Description:</b> @ViewBag.lang.description
+  </div>
+}
+<div class="datasetdesc">
+  <div><span class="material-icons">language</span> <b>Locale:</b> @ViewBag.lang.code</div>
+  <div><span class="material-icons">check_circle</span> <b>Inflected forms:</b> @ViewBag.submitted</div>
+  <div><span class="material-icons">copyright</span> <b>License:</b> CC BY</div>
+</div>
+<div class="downloadlinks">
+  <a href="/downlaod/lexicon/@ViewBag.lang.id">
+    <span class="material-icons">book</span> Download Lexicon
+  </a>
+  <a href="/downlaod/unimorph/@ViewBag.lang.id">
+    <span class="material-icons">download</span>Download inflection data in UniMorph Format
+  </a>
+  <a href="/downlaod/extended/@ViewBag.lang.id">
+    <span class="material-icons">download</span> Download inflection data in Extended Format
+  </a>
+</div>
+<div class="map" style="min-width:350px;">
+  <div id="mapid" style="height: 500px; z-index: 2;"></div>
+</div>
+<script>
+  var map = L.map('mapid', { minZoom: 1, maxZoom: 9 });
+  map.setView([@ViewBag.lang.latitude, @ViewBag.lang.longitude], 3);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+  L.marker([@ViewBag.lang.latitude, @ViewBag.lang.longitude])
+    .addTo(map)
+    .bindPopup('@ViewBag.lang.title');
+</script>
