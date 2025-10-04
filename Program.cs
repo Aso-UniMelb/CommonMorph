@@ -13,6 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Database connection string
 var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
+builder.Services.AddSingleton<IMyCacheService, MyCacheService>();
+
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Dapper;
 using System.Text;
+using common_morph_backend;
 
 namespace common_morph_backend.Controllers
 {
@@ -10,10 +11,12 @@ namespace common_morph_backend.Controllers
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
     private string connectionString;
-    public HomeController(AppDbContext context, IConfiguration configuration)
+    private readonly IMyCacheService _cacheService;
+    public HomeController(AppDbContext context, IConfiguration configuration, IMyCacheService cacheService)
     {
       _context = context;
       _configuration = configuration;
+      _cacheService = cacheService;
       // For the complex query used in this controller, we need Dapper to connect to DB
       connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
@@ -85,7 +88,7 @@ ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
             var tags = record.stags;
             if (!string.IsNullOrEmpty(record.atags))
               tags += ";" + record.atags;
-            sb.AppendLine($"{record.lemma}\t{record.form}\t{tags}"); // TODO: UM_sort(tags)
+            sb.AppendLine($"{record.lemma}\t{record.form}\t{_cacheService.UM_Sort(tags)}");
           }
           break;
         // ==================================
@@ -115,7 +118,7 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
             var tags = form.stags;
             if (!string.IsNullOrEmpty(form.atags))
               tags += ";" + form.atags;
-            var line = $"{l.entry}\t{form.form}\t{tags}\t{l.pcalss}\t";
+            var line = $"{l.entry}\t{form.form}\t{_cacheService.UM_Sort(tags)}\t{l.pcalss}\t";
             line += $"{l.stem1 ?? ""}\t{l.stem2 ?? ""}\t{l.stem3 ?? ""}\t{l.stem4 ?? ""}";
             sb.AppendLine(line);
           }
