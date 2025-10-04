@@ -69,16 +69,15 @@ namespace common_morph_backend.Controllers
     {
       var results = await GetFromLLM(prompt, new Dictionary<string, Provider>
       {
-        {"gemini-2.0-flash", providedBy["GoogleAIStudio"] },
+        {"gemini-flash-lite-latest", providedBy["GoogleAIStudio"] },
         // {"gemini-2.5-flash-preview-04-17", providedBy["GoogleAIStudio"] }, // SLOW
+        { "gpt-5-mini", providedBy["OpenAI"] },
         { "gpt-4.1-mini", providedBy["OpenAI"] },
         // { "gpt-4o-2024-11-20", providedBy["OpenAI"] }, //"chatgpt-4o-latest",
-        { "meta-llama/llama-4-maverick-17b-128e-instruct", providedBy["Groq"] },
-        // { "llama-3.3-70b-versatile", providedBy["Groq"] },
-        { "deepseek-r1-distill-llama-70b", providedBy["Groq"] },
+        { "llama-3.3-70b-versatile", providedBy["Groq"] },
+        { "moonshotai/kimi-k2-instruct-0905", providedBy["Groq"] },
+        { "groq/compound", providedBy["Groq"] },
         // { "qwen-qwq-32b", providedBy["Groq"] }, //"qwen-2.5-32b",
-        // { "gemma2-9b-it", providedBy["Groq"] },
-        // { "google/gemini-2.5-pro-exp-03-25:free", providedBy["OpenRouter"] },
       });
       return Ok(results);
     }
