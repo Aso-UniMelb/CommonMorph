@@ -192,25 +192,5 @@ namespace common_morph_backend.Controllers
       var results = await Task.WhenAll(tasks);
       return results.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
-
-    // [HttpPost("getQuestionFromGemini")]
-    // public async Task<string> getQuestionFromGemini(string prompt)
-    // {
-    //   string apiKey = _configuration["GoogleAIStudio"];
-    //   string apiUrl = "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-    //   using (HttpClient client = new HttpClient())
-    //   {
-    //     var requestBody = new
-    //     {
-    //       contents = new[] { new { parts = new[] { new { text = prompt } } } }
-    //     };
-
-    //     var jsonContent = JsonSerializer.Serialize(requestBody);
-    //     var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-    //     var response = await client.PostAsync(apiUrl, httpContent);
-    //     return await response.Content.ReadAsStringAsync();
-    //   }
-    // }
   }
 }

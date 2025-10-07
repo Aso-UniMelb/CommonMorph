@@ -893,8 +893,9 @@ ul.slots li {
 
 .suggestions button {
   font-size: 1.1rem;
-  background: var(--C1);
+  background: var(--C);
   color: #fff;
+  font-weight: bold;
 }
 
 .samples {

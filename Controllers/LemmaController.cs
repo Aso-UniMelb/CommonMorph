@@ -88,11 +88,11 @@ namespace common_morph_backend.Controllers
       _context.lemmas.Update(lem);
 
       // delete all cells with this lemma
-      var cells = _context.cells.Where(x => x.lemmaid == lem.id).ToList();
-      foreach (var cell in cells)
-      {
-        _context.cells.Remove(cell);
-      }
+      // var cells = _context.cells.Where(x => x.lemmaid == lem.id).ToList();
+      // foreach (var cell in cells)
+      // {
+      //   _context.cells.Remove(cell);
+      // }
 
       // log
       var userLog = new UserLog()

@@ -22,7 +22,7 @@ namespace common_morph_backend
 
     public MyCacheService(IWebHostEnvironment env)
     {
-      var path = Path.Combine(env.ContentRootPath, "services/UM.json");
+      var path = Path.Combine(env.ContentRootPath, "Services/UM.json");
       _umList = LoadUIMessages(path);
     }
 

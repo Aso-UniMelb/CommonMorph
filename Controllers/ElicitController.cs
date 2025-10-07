@@ -5,12 +5,8 @@ using common_morph_backend;
 using static common_morph_backend.AppDbContext;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-// using MySqlConnector;
-// using Microsoft.Data.SqlClient;
 using Npgsql;
 using Dapper;
-using System.Text.Json;
-using System.Text;
 
 namespace common_morph_backend.Controllers
 {
@@ -31,13 +27,8 @@ namespace common_morph_backend.Controllers
       _httpClientFactory = httpClientFactory;
     }
 
-    public class NNresult
-    {
-      public int poolorder { get; set; }
-      public string pred { get; set; }
-      public float conf { get; set; }
-    }
-
+    // =====================================================================
+    // Called by dashboard.js and elicit-expert.js
     [HttpGet("GetStats")]
     public IActionResult GetStats(int langid)
     {
@@ -87,91 +78,7 @@ FROM c1, c2;").First();
     }
 
     // =====================================================================
-    [HttpGet("EntryGetTableByNN")]
-    public async Task<IActionResult> EntryGetTableByNNAsync(int langid, int page = 1)
-    {
-      var server = "http://3.107.48.91";
-      using var connection = new NpgsqlConnection(connectionString);
-      var pool = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, a.id AS agreementid, (l.priority + s.priority) AS priority,
-  s.title AS stitle, a.title AS atitle, a.realization AS a, s.formula AS formula,
-  l.stem1, l.stem2, l.stem3, l.stem4,
-  l.entry lemma, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
-WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY priority DESC, lemmaid").ToList();
-
-      var pool2 = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, (l.priority + s.priority) AS priority,
-  s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4,
-  l.entry lemma, s.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id 
-WHERE s.formula NOT LIKE '%A%' AND p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY priority DESC, lemmaid").ToList();
-      pool.AddRange(pool2);
-      // check if the model is trained using GET endpoint of API
-      var httpClient = _httpClientFactory.CreateClient();
-      string url = server + "/is_model_trained?langid=" + langid;
-      var responseget = httpClient.GetAsync(url).Result;
-      if (!responseget.IsSuccessStatusCode)
-      {
-        // take 100 samples randomly from first 500 of the pool
-        Random rand = new Random();
-        var randomPool = pool.Take(100).OrderBy(x => rand.Next()).Take(80).ToList();
-        return Ok(new { pool = randomPool });
-      }
-      else
-      {
-        httpClient = _httpClientFactory.CreateClient();
-        var httpContent = new StringContent("");
-        url = server + "/listpredict";
-        var words = new List<string>();
-        foreach (var record in pool)
-          words.Add(record.lemma + "_" + record.tags);
-
-        var requestBody = new { langid = langid.ToString(), words = words.ToArray() };
-        httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        try
-        {
-          HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
-          if (response.IsSuccessStatusCode)
-          {
-            string responseBody = await response.Content.ReadAsStringAsync();
-            var results = JsonSerializer.Deserialize<List<NNresult>>(responseBody);
-            for (int i = 0; i < results.Count; i++)
-              results[i].poolorder = i;
-            // order by confidence
-            var newpool = results.OrderBy(x => x.conf).Take(80).ToList();
-            var bIndexes = new HashSet<int>(newpool.Select(b => b.poolorder));
-            var filteredpool = pool.Where(a => bIndexes.Contains(a.Id)).ToList();
-
-            // add 
-            return Ok(new { pool = filteredpool });
-          }
-          else
-          {
-            // Console.WriteLine($"Error: {(int)response.StatusCode} {response.StatusCode}");
-            string errorBody = await response.Content.ReadAsStringAsync();
-          }
-        }
-        catch (HttpRequestException e)
-        {
-          //
-        }
-      }
-      return Ok("No more Cells");
-    }
-
-
-    // =====================================================================
+    // Called by elicit-expert.js
     [HttpGet("EntryGetTableByLemma")]
     public IActionResult EntryGetTableByLemma(int langid, int page = 1)
     {
@@ -229,6 +136,7 @@ ORDER BY l.priority DESC, l.entry, s.priority DESC, s.unimorphtags");
       return Ok(new { lemma = lemma, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
+    // Called by check-expert.js
     [HttpGet("CheckGetTableByLemma")]
     public IActionResult CheckGetTableByLemma(int langid, int page = 1)
     {
@@ -276,6 +184,7 @@ ORDER BY s.priority DESC, s.unimorphtags");
       return Ok(new { lemma = lemma, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
+    // Called by elicit-expert.js
     [HttpGet("EntryGetTableBySlot")]
     public IActionResult EntryGetTableBySlot(int langid, int page = 1)
     {
@@ -322,6 +231,7 @@ ORDER BY l.priority DESC, l.entry");
       return Ok(new { slot = slt, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
+    // Called by check-expert.js
     [HttpGet("CheckGetTableBySlot")]
     public IActionResult CheckGetTableBySlot(int langid, int page = 1)
     {
@@ -370,6 +280,7 @@ ORDER BY l.priority DESC, l.entry");
       return Ok(new { slot = slt, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
+    // Called by elicit.js
     [HttpGet("listForEntry")]
     public IActionResult listForEntry(int langid, int page = 1, string metalang = "en")
     {
@@ -461,6 +372,7 @@ LIMIT 5").ToList();
       return Ok("No more Cells");
     }
     // =====================================================================
+    // Called by check.js
     [HttpGet("listForCheck")]
     public IActionResult listForCheck(int langid, int page = 1, string metalang = "en")
     {

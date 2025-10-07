@@ -83,6 +83,8 @@ function getForEntry(myLangId, pg) {
           };
           // 3. API call
           getSuggestionFromLLM(curLemma, samples);
+          // 4. suggestion from NN
+          getSuggestionFromNN(C.lemma, UM_Sort(C.tags));
         }
 
         $('#frm-elicit').append(`
@@ -90,7 +92,6 @@ function getForEntry(myLangId, pg) {
             <div class="lemma"><b>${C.lemma}</b> | ${features}</div>  
             <div class="features">${UM_tag2word(C.tags, myLang.code)}</div>     
           </div>`);
-        // TODO: suggestion from NN
       } else {
         $('#frm-elicit').slideDown();
         $('#frm-elicit').html(
@@ -102,6 +103,36 @@ function getForEntry(myLangId, pg) {
     },
     error: function (data) {
       alert(data);
+    },
+  });
+}
+
+function getSuggestionFromNN(lemma, tags) {
+  $('.loading').show();
+  $.ajax({
+    url: '/ActiveLearning/suggest',
+    type: 'POST',
+    data: {
+      langid: myLang.id,
+      lemma: lemma,
+      tags: tags,
+    },
+    success: function (data) {
+      console.log(data);
+      let R = JSON.parse(data);
+      let pr = '';
+      for (let i = 0; i < R.confidence.length; i++) {
+        let sahde = Math.ceil(R.confidence[i] * 200);
+        pr += `<span style="background:rgb(${
+          200 - sahde
+        }, ${sahde}, 0);padding: 3px 0;">${R.predicted[i]}</span>`;
+      }
+      $('#suggestions').append(
+        `<button type="button" class="suggestedForm" onclick="acceptSuggestion('${R.predicted}')"><div>${pr}</div></button>`
+      );
+    },
+    error: function (data) {
+      console.log(data);
     },
   });
 }

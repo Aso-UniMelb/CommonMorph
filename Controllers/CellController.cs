@@ -5,8 +5,6 @@ using common_morph_backend;
 using static common_morph_backend.AppDbContext;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-// using MySqlConnector;
-// using Microsoft.Data.SqlClient;
 using Npgsql;
 using Dapper;
 
@@ -24,7 +22,7 @@ namespace common_morph_backend.Controllers
       _context = context;
       _configuration = configuration;
       // For the complex query used in this controller, we need Dapper to connect to DB
-      connectionString =Environment.GetEnvironmentVariable("CONNECTION_STRING") ??  _configuration.GetConnectionString("DefaultConnection");
+      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
 
     [HttpPost("batchApprove")]
@@ -130,7 +128,7 @@ namespace common_morph_backend.Controllers
       _context.SaveChanges();
 
       var id = cell.id;
-      // TODO: store the suggestions in the database
+      // store the suggestions in the database
       foreach (var suggestion in suggestions)
       {
         var sug = new Suggestion()

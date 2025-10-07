@@ -58,7 +58,61 @@ function getLangStats(langid) {
       console.log(data);
     },
   });
+  $.ajax({
+    url: '/ActiveLearning/checkModelTrained',
+    type: 'GET',
+    data: {
+      langid: langid,
+    },
+    success: function (data) {
+      $('#modelTrainedTime').html(
+        `<span style="color:green;">The model was last trained on: ${
+          JSON.parse(data).message
+        }</span>`
+      );
+    },
+    error: function (data) {
+      $('#modelTrainedTime').html(
+        `<span style="color:red;">Not trained</span>`
+      );
+    },
+  });
 }
+$('#btnTrainModel').click(function () {
+  this.disabled = true;
+  $.ajax({
+    url: '/ActiveLearning/train',
+    type: 'POST',
+    data: {
+      langid: $('#cmbLangs').val(),
+    },
+    success: function (data) {
+      $('#modelTrainedTime').html(
+        `<span style="color:green;">The model was trained</span>`
+      );
+      // refresh the page
+      window.location.href = '/app/dashboard';
+      this.disabled = false;
+    },
+    error: function (data) {
+      $('#modelTrainedTime').html(
+        `<span style="color:red;">Not trained</span>`
+      );
+    },
+  });
+  let progress = 0;
+  const duration = 120000; // 2 minutes
+  const intervalTime = 1000; // update every 1 second
+  const increment = 100 / (duration / intervalTime);
+  const interval = setInterval(() => {
+    progress += increment;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+    }
+    $('#modelTrainedTime').html(Math.floor(progress) + '%');
+  }, intervalTime);
+});
 
 $('#cmbLangs').on('select2:select', function (e) {
   var selectedItem = e.params.data;
