@@ -57,13 +57,14 @@
           </div>
           <div class="field">
             <label for="txtSlotUniMorphTags">Morphosyntactic Feature</label>
+            <div id="addedUMtags" class="addedUMtags"></div>
+            <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" required disabled />
             <div id="SlotUMtagSelector" class="tagSelection"></div>
-            <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" required />
           </div>
           <div class="field">
             <label for="txtSlotFormula">Formula <small>(optional)</small></label>
             <input type="text" id="txtSlotFormula" name="formula" placeholder="S1+A" />
-            <small>S1=Stem1, S2=Stem2, A=Agreement, L=Lemma</small>
+            <small>You can use: S1 (stem1), S2 (stem2), A (reusable layer), L (lemma)</small>
           </div>
           <div class="field">
             <label>Reusable Layer</label>
@@ -138,8 +139,9 @@
           </div>
           <div class="field">
             <label for="txtAgreementItemUniMorphTags">Morphosyntactic Feature</label>
+            <div id="addedUMtagsA" class="addedUMtags"></div>
+            <input type="text" id="txtAgreementItemUniMorphTags" name="UniMorphTags" required disabled />
             <div id="AgreementUMtagSelector" class="tagSelection"></div>
-            <input type="text" id="txtAgreementItemUniMorphTags" name="UniMorphTags" placeholder="SG;1" required />
           </div>
           <div class="field">
             <label>Priority</label>
@@ -252,13 +254,15 @@
             <label for="txtMorphophonemicRuleTitle">Title</label>
             <input type="text" id="txtMorphophonemicRuleTitle" name="title" required />
           </div>
-          <div class="field">
-            <label for="txtMorphophonemicRuleReplaceFrom">Replace From</label>
-            <input type="text" id="txtMorphophonemicRuleReplaceFrom" name="replacefrom" required />
-          </div>
-          <div class="field">
-            <label for="txtMorphophonemicRuleReplaceTo">Replace To</label>
-            <input type="text" id="txtMorphophonemicRuleReplaceTo" name="replaceto" required />
+          <div class="field2cols">
+            <div class="field">
+              <label for="txtMorphophonemicRuleReplaceFrom">Replaces From</label>
+              <textarea id="txtMorphophonemicRuleReplaceFrom" name="replacefrom" required></textarea>
+            </div>
+            <div class="field">
+              <label for="txtMorphophonemicRuleReplaceTo">Replaces To</label>
+              <textarea id="txtMorphophonemicRuleReplaceTo" name="replaceto" required></textarea>
+            </div>
           </div>
           <div class="field-end">
             <button type="button" id="btnMorphophonemicRuleCancel">Cancel</button>

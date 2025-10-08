@@ -28,7 +28,7 @@ function getLemmas(id) {
         }
         html += `<li class="lemma" onclick="EditLemma(${i})">
         <span class="priority${Lemmas[i].priority}"></span>
-        ${Lemmas[i].entry + (stems ? ' (' + stems + ')' : '')}
+        ${Lemmas[i].entry}
         <span class="LemmaWClass">${Lemmas[i].wClass}</span>
         </li>`;
       }

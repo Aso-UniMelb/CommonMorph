@@ -227,12 +227,14 @@ code {
   margin-inline-start: 5px;
 }
 
-li.lemma {
+li.lemma,
+li.rule {
   padding: 6px;
   cursor: pointer;
 }
 
-li.lemma:hover {
+li.lemma:hover,
+li.rule:hover {
   background: #eee;
 }
 
@@ -316,7 +318,7 @@ form {
 }
 
 form .field {
-  padding: 5px;
+  padding: 0 5px;
 }
 
 form .field-end {
@@ -325,7 +327,7 @@ form .field-end {
 }
 
 .field>label {
-  padding-block-start: 10px;
+  padding-block-start: 5px;
   display: block;
   font-size: 0.9rem;
   font-weight: bold;
@@ -339,6 +341,16 @@ form .field-end {
   justify-content: center;
   gap: 5px;
   flex-wrap: nowrap;
+}
+
+.field2cols {
+  display: flex;
+}
+
+.field2cols textarea {
+  min-height: 200px;
+  overflow-x: auto;
+  white-space: pre;
 }
 
 input[type="text"] {
@@ -365,11 +377,12 @@ input[type="text"]#txtSlotFormula {
 
 select {
   color: #333;
-  padding: 0.6em 1em;
+  padding: 0.3em;
   border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
   outline: none;
+  font-size: 1rem;
 }
 
 select::after {
@@ -990,26 +1003,32 @@ button.disapprove {
 .addedUMtags {
   display: flex;
   flex-wrap: wrap;
+  gap: 5px;
+  padding-block: 5px;
 }
 
 .UMtag {
   padding: 5px;
-  margin: 5px;
   border-radius: 3px;
-  background: var(--C0);
+  background: #e4e4e4;
 }
 
 .UMtag span {
   cursor: pointer;
   color: var(--C1);
+  padding-inline-end: 5px;
+  border-inline-end: 1px solid #ccc;
 }
 
 .tagSelection {
-  background: #eee;
-  padding: 5px 10px;
+  padding: 5px 20px;
   border-radius: 3px;
   overflow: auto;
+  color: #555;
+  margin-bottom: 10px;
 }
+
+#txtSlotUniMorphTags {}
 
 /* details */
 details {

@@ -225,19 +225,7 @@ function insertParadigmClass() {
       description: description,
     },
     success: function (data) {
-      ParadigmClasses.push({ Id: data, Title: title });
-      $('#frmParadigmClass').hide();
-      $('#lstParadigmClasses').append(`<li id="PC_${data}">
-        <div class="list-title">
-          <div id="PCT_${data}" class="paradigmClass">${title}</div>
-          <div>
-            <span class="smallButton AddSlot" data-PC="${data}"><span class="material-icons">add_circle</span></span>
-            <span class="smallButton" onclick="EditParadigmClass(${data})"><span class="material-icons">edit</span></span>        
-          </div>
-        </div>
-        <ul class="slots"></ul>
-        </li>`);
-      $('.loading').hide();
+      window.location.href = '/app/linguist'; // refresh the page
     },
     error: function (data) {
       alert('Error');
@@ -284,8 +272,7 @@ function updateParadigmClass() {
 
 // UMtagSelector
 $('#SlotUMtagSelector').append(
-  `<div id="addedUMtags" class="addedUMtags"></div>
-  <div>
+  `<div><div><b>Add feature:</b></div>
     <label>Dimension:</label>
     <select class="UMtagSelector" id="dimension"></select>
     <br />
@@ -319,7 +306,7 @@ $('#btnAddUMtag').click(function () {
   let feat_title = $('#feature  option:selected').attr('title');
   if ($('#F_' + feat).length == 0 && dim && feat) {
     $('#addedUMtags').append(
-      `<div class="UMtag" id="F_${feat}">${dim}: ${feat_title} <span class="remove" onclick="RemoveFeat('${feat}')">&times;</span></div>`
+      `<div class="UMtag" id="F_${feat}"><span class="remove" onclick="RemoveFeat('${feat}')">&times;</span> ${dim}: ${feat_title}</div>`
     );
   }
   UpdateUniMorphTagSet();
@@ -349,7 +336,7 @@ function updateSlotUMselects(tagset) {
     if (feat) {
       let vec = UM.find((item) => item.l === feat);
       $('#addedUMtags').append(
-        `<div class="UMtag" id="F_${feat}">${vec.d}: ${vec.f} <span class="remove" onclick="RemoveFeat('${feat}')">&times;</span></div>`
+        `<div class="UMtag" id="F_${feat}"><span class="remove" onclick="RemoveFeat('${feat}')">&times;</span> ${vec.d}: ${vec.f}</div>`
       );
     }
   });

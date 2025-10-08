@@ -337,11 +337,15 @@ function getPrevPage(type) {
 }
 
 function findReplace() {
-  let find = $('#find').val();
-  let replace = $('#replace').val();
-  $('input[type="text"]').each(function () {
-    $(this).val($(this).val().replace(new RegExp(find, 'g'), replace));
-  });
+  let finds = $('#find').val().split('\n');
+  let replaces = $('#replace').val().split('\n');
+  for (let i = 0; i < finds.length; i++) {
+    let find = finds[i];
+    let replace = replaces[i];
+    $('input[type="text"]').each(function () {
+      $(this).val($(this).val().replace(new RegExp(find, 'g'), replace));
+    });
+  }
 }
 
 $(document).ready(function () {
@@ -363,7 +367,7 @@ $(document).ready(function () {
   </div>
 </div>
 <style>
-details {width: 200px; color: #555;}
+details {width: 300px; color: #555;}
 details summary {list-style: none;}
 details summary::-webkit-details-marker {display: none;}
 </style>
@@ -373,10 +377,16 @@ details summary::-webkit-details-marker {display: none;}
     <label>Rule:</label>
     <select id="cmbMorphophonemicRule"></select>
   </div>
-  <label for="find">Find:</label>
-  <input type="text" id="find" name="find" />
-  <label for="replace">Replace with:</label>
-  <input type="text" id="replace" name="replace" />
+  <div class="field2cols">
+    <div class="field">
+      <label for="find">Find:</label>
+      <textarea id="find" name="find"></textarea>
+    </div>
+    <div class="field">
+      <label for="replace">Replace with:</label>
+      <textarea id="replace" name="replace"></textarea>
+    </div>
+  </div>
   <button type="button" onclick="findReplace()">Replace All</button>
 </details>
 <div id="dataentry"></div>`);
