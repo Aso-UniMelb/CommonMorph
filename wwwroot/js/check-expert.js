@@ -32,15 +32,13 @@ function CheckGetTable(myLangId, pg, type) {
           let C = pool[i];
           let title = S.title;
           if (C.atitle) {
-            title += `| ${C.atitle}`;
+            title += `, ${C.atitle}`;
           }
           title += ' (' + C.lemma + ')';
+          let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">
-    ${title} | 
-    <small>${UM_tag2word(C.tags, myLang.code)}</small>
-  </label>            
+  <label for="input${i}">${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}">
     <input type="text" 
        data-attr="${C.cellid}" value=${C.submitted} disabled />
@@ -70,12 +68,10 @@ function CheckGetTable(myLangId, pg, type) {
           if (C.atitle) {
             title += `| ${C.atitle}`;
           }
+          let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">
-    ${title} | 
-    <small>${UM_tag2word(C.tags, myLang.code)}</small>
-  </label>            
+  <label for="input${i}">${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}" >
     <input type="text" 
       data-attr="${C.cellid}" value=${C.submitted} disabled />

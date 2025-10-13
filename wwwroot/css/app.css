@@ -1,7 +1,7 @@
 :root {
   --maxWidth: 800px;
   --C: #175676;
-  --C0: #4ba3c3;
+  --C0: #9ad3e7;
   --C1: #ba324f;
   --C2: #9b90ff;
   --C3: #629ff4;
@@ -34,7 +34,11 @@ h1 {
 
 h2 {
   font-size: 1.3rem;
-  text-align: center;
+}
+
+blockquote {
+  margin: 0;
+  margin-inline-start: 1em;
 }
 
 .forms {
@@ -92,19 +96,42 @@ a.button {
 
 /* main 3 rows */
 .wrapper {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: grid;
-  grid-template: auto 1fr auto / 1fr;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .header {
   box-shadow: inset #eee 0 -3px 20px 0px;
+  height: 60px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
 }
 
+.main {
+  box-sizing: border-box;
+  background-color: #fff;
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 60px);
+}
+
+.sidepanel {
+  border-inline-end: 1px solid #eee;
+  background: #fafafa;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.content {
+  overflow: auto;
+  width: 100%;
+}
+
+/* header */
 .header .nav {
   margin: auto;
   display: flex;
@@ -123,28 +150,6 @@ a.button {
   border-radius: 5px;
   color: var(--C2);
   display: flex;
-}
-
-.main {
-  overflow: auto;
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0 auto;
-  background-color: #fff;
-  display: flex;
-}
-
-.footer {
-  user-select: none;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 10px;
-  text-align: center;
-  box-shadow: inset #eee 0 5px 20px 0px;
-}
-
-.footer div {
-  padding: 5px;
 }
 
 /* panels */
@@ -318,7 +323,15 @@ form {
 }
 
 form .field {
-  padding: 0 5px;
+  padding: 0 5px 10px;
+}
+
+form .field.small {
+  font-size: 0.8rem;
+}
+
+.field.small select {
+  font-size: 0.8rem;
 }
 
 form .field-end {
@@ -329,7 +342,6 @@ form .field-end {
 .field>label {
   padding-block-start: 5px;
   display: block;
-  font-size: 0.9rem;
   font-weight: bold;
   margin-bottom: 3px;
   color: #555;
@@ -355,6 +367,7 @@ form .field-end {
 
 input[type="text"] {
   letter-spacing: 1px;
+  color: #333;
 }
 
 input[type="text"],
@@ -589,11 +602,6 @@ label small {
 }
 
 /* Drawer */
-.sidepanel {
-  width: 200px;
-  border-inline-end: 1px solid #eee;
-  background: #fafafa;
-}
 
 .drawer {
   position: fixed;
@@ -671,7 +679,7 @@ label small {
 .drawer a,
 .sidepanel a {
   display: flex;
-  padding: 20px;
+  padding: 15px 20px;
   color: #555;
   gap: 5px;
 }
@@ -695,6 +703,15 @@ label small {
 #instruction {
   border-radius: 5px;
   color: #333;
+  font-size: 0.9rem;
+}
+
+#instruction p {
+  margin-block-end: 0;
+}
+
+#instruction ul {
+  margin-block-start: 0;
 }
 
 .qTemaplateEntryList {
@@ -720,6 +737,7 @@ label small {
 
 .qTemaplateEntryList .question small {
   font-size: 0.8rem;
+  font-family: 'Courier New', Courier, monospace;
   color: #888;
 }
 
@@ -738,7 +756,7 @@ label small {
   padding: 5px;
   margin: 5px;
   margin-inline-end: 2px;
-  background-color: var(--C0);
+  background-color: var(--C);
   border-radius: 2px;
 }
 
@@ -747,6 +765,7 @@ label small {
   border-radius: 5px;
   background: #f9fde5;
   margin: 5px 0;
+  font-size: 0.9rem;
 }
 
 /* agreement */
@@ -778,7 +797,7 @@ ul.slots {
 ul.agreementItems li,
 ul.slots li {
   cursor: pointer;
-  padding: 10px 10px;
+  padding: 5px 10px;
   user-select: none;
 }
 
@@ -790,7 +809,8 @@ ul.slots li {
 
 /*  */
 .myLang {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
+  font-weight: bold;
   color: var(--C1);
 }
 
@@ -994,23 +1014,25 @@ button.disapprove {
 
 .UMtagSelector {
   margin: 3px;
+  color: #555;
 }
 
 .tagSelection button {
-  background: var(--C2);
+  background: var(--C0);
 }
 
 .addedUMtags {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
-  padding-block: 5px;
+  padding-bottom: 5px;
 }
 
 .UMtag {
   padding: 5px;
   border-radius: 3px;
-  background: #e4e4e4;
+  background: var(--C0);
+  color: #333;
 }
 
 .UMtag span {
@@ -1025,10 +1047,23 @@ button.disapprove {
   border-radius: 3px;
   overflow: auto;
   color: #555;
+}
+
+.unimorph {
+  color: #555;
+  font-size: 0.8rem;
+  width: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 10px;
 }
 
-#txtSlotUniMorphTags {}
+.unimorph input {
+  width: auto;
+  font-size: 0.8rem;
+}
+
 
 /* details */
 details {
@@ -1041,6 +1076,10 @@ details {
 summary {
   cursor: pointer;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 /* tour */

@@ -272,13 +272,13 @@ function updateParadigmClass() {
 
 // UMtagSelector
 $('#SlotUMtagSelector').append(
-  `<div><div><b>Add feature:</b></div>
+  `<div class="UMtagSelector"><div><i>Add feature:</i></div>
     <label>Dimension:</label>
-    <select class="UMtagSelector" id="dimension"></select>
+    <select id="dimension"></select>
     <br />
     <label>Feature:</label>
-    <select class="UMtagSelector" id="feature"></select>
-    <button type="button" id="btnAddUMtag">+ Add</button>
+    <select id="feature"></select>
+    <button type="button" id="btnAddUMtag">⇧ Add</button>
   </div>
   `
 );

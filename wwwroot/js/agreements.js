@@ -280,13 +280,13 @@ function updateAgreementGroup() {
 
 // UMtagSelector
 $('#AgreementUMtagSelector').append(
-  `<div><div><b>Add feature:</b></div>
+  `<div class="UMtagSelector"><div><i>Add feature:</i></div>
     <label>Dimension:</label>
-    <select class="UMtagSelector" id="dimensionA"></select>
+    <select id="dimensionA"></select>
     <br />
     <label>Feature:</label>
-    <select class="UMtagSelector" id="featureA"></select>
-    <button type="button" id="btnAddUMtagA">+ Add</button>
+    <select id="featureA"></select>
+    <button type="button" id="btnAddUMtagA">⇧ Add</button>
   </div>
   
   `

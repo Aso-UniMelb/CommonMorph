@@ -22,10 +22,10 @@
         <form onsubmit="ParadigmClassSubmit(); return false;">
           <input type="hidden" id="ParadigmClassId" />
           <div class="field">
-            <label for="txtParadigmClassTitle">Title</label>
+            <label for="txtParadigmClassTitle">Inflection Class Title</label>
             <input type="text" id="txtParadigmClassTitle" name="title" required />
           </div>
-          <div class="field">
+          <div class="field small">
             <label for="txtParadigmClassDescription">Description</label>
             <textarea id="txtParadigmClassDescription" name="description"></textarea>
           </div>
@@ -52,14 +52,16 @@
           <input type="hidden" id="SlotId" />
           <input type="hidden" id="SlotPClassId" />
           <div class="field">
-            <label for="txtSlotTitle">Title</label>
+            <label for="txtSlotTitle">Structure Title/Alias</label>
             <input type="text" id="txtSlotTitle" name="Title" required />
           </div>
           <div class="field">
             <label for="txtSlotUniMorphTags">Morphosyntactic Feature</label>
             <div id="addedUMtags" class="addedUMtags"></div>
-            <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" required disabled />
             <div id="SlotUMtagSelector" class="tagSelection"></div>
+            <div class="unimorph">UniMorph:
+              <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" requireddisabled />
+            </div>
           </div>
           <div class="field">
             <label for="txtSlotFormula">Formula <small>(optional)</small></label>
@@ -67,12 +69,12 @@
             <small>You can use: S1 (stem1), S2 (stem2), A (reusable layer), L (lemma)</small>
           </div>
           <div class="field">
-            <label>Reusable Layer</label>
+            <label>Reusable Layer <small>(if Formula contains A)</small></label>
             <select id="cmbSlotAgreementGroup" style="width: 300px;"></select>
           </div>
-          <div class="field">
+          <div class="field small">
             <label>Priority</label>
-            <select id="cmbSlotPriority" style="width: 300px;" required>
+            <select id="cmbSlotPriority" style="width: 100px;" required>
               <option value="0" selected>Low</option>
               <option value="1">Medium</option>
               <option value="2">High</option>
@@ -116,7 +118,7 @@
         <form onsubmit="AgreementGroupSubmit(); return false;">
           <input type="hidden" id="AgreementGroupId" />
           <div class="field">
-            <label>Title</label>
+            <label>Reusable Layer Title</label>
             <input type="text" id="txtAgreementGroupTitle" name="title" required />
           </div>
           <div class="field-end">
@@ -130,7 +132,7 @@
           <input type="hidden" id="AgreementItemId" />
           <input type="hidden" id="AgreementItemGroupId" />
           <div class="field">
-            <label for="txtAgreementItemTitle">Title</label>
+            <label for="txtAgreementItemTitle">Reusable Morpheme Title/Alias</label>
             <input type="text" id="txtAgreementItemTitle" name="Title" placeholder="1st person singular" required />
           </div>
           <div class="field">
@@ -140,12 +142,14 @@
           <div class="field">
             <label for="txtAgreementItemUniMorphTags">Morphosyntactic Feature</label>
             <div id="addedUMtagsA" class="addedUMtags"></div>
-            <input type="text" id="txtAgreementItemUniMorphTags" name="UniMorphTags" required disabled />
             <div id="AgreementUMtagSelector" class="tagSelection"></div>
+            <div class="unimorph">UniMorph:
+              <input type="text" id="txtAgreementItemUniMorphTags" name="UniMorphTags" required disabled />
+            </div>
           </div>
-          <div class="field">
+          <div class="field small">
             <label>Priority</label>
-            <select id="cmbAgreementItemPriority" style="width: 300px;">
+            <select id="cmbAgreementItemPriority" style="width: 100px;">
               <option value="0" selected>Low</option>
               <option value="1">Medium</option>
               <option value="2">High</option>
@@ -189,15 +193,15 @@
         <form onsubmit="LemmasSubmit(); return false;">
           <input type="hidden" id="LemmaId" />
           <div class="field">
-            <label>Paradigm Class</label>
+            <label>Inflection Class</label>
             <select id="cmbLemmaParadigmClass" style="width: 300px;" required></select>
           </div>
           <div class="field">
-            <label>Meaning</label>
+            <label>Gloss (Meaning)</label>
             <input type="text" id="txtLemmaEnglish" name="EngMeaning" required />
           </div>
           <div class="field">
-            <label>Dictionary Entry</label>
+            <label>Lemma (Dictionary Entry)</label>
             <input type="text" id="txtLemmaEntry" name="entry" required />
           </div>
           <div class="field">
@@ -219,17 +223,17 @@
               <input type="text" id="txtLemmaStem4" name="Stem4" />
             </div>
           </details>
-          <div class="field">
+          <div class="field small">
+            <label>Description <small>(optional)</small></label>
+            <input type="text" id="txtLemmaDescription" name="Description" />
+          </div>
+          <div class="field small">
             <label>Priority</label>
-            <select id="cmbLemmaPriority" style="width: 300px;" required>
+            <select id="cmbLemmaPriority" style="width: 100px;" required>
               <option value="0" selected>Low</option>
               <option value="1">Medium</option>
               <option value="2">High</option>
             </select>
-          </div>
-          <div class="field">
-            <label>Description <small>(optional)</small></label>
-            <input type="text" id="txtLemmaDescription" name="Description" />
           </div>
           <div class="field-end">
             <button type="button" id="btnLemmasCancel">Cancel</button>
@@ -251,7 +255,7 @@
         <form onsubmit="MorphophonemicRuleSubmit(); return false;">
           <input type="hidden" id="MorphophonemicRuleId" />
           <div class="field">
-            <label for="txtMorphophonemicRuleTitle">Title</label>
+            <label for="txtMorphophonemicRuleTitle">Layer Title</label>
             <input type="text" id="txtMorphophonemicRuleTitle" name="title" required />
           </div>
           <div class="field2cols">

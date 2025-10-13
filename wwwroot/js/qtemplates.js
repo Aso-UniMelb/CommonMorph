@@ -10,13 +10,13 @@ function getQuestionLists() {
   $('#questionLists').append(`<div class="field">
     <label>${i18n[myMetalang]['q_1']}</label>
     <select id="cmbAvailable" style="width: 350px;">
-      <option value="">----</option>
+      <option value="">-</option>
     </select></div>`);
 
   $('#questionLists').append(`<div class="field">
     <label>${i18n[myMetalang]['q_2']}</label>
     <select id="cmbUnavailable" style="width: 350px;">
-      <option value="">----</option>
+      <option value="">-</option>
     </select></div>`);
   getListAvailable();
   getListUnavailable();
@@ -175,6 +175,7 @@ function getQTemplateFromLLM(prompt) {
       prompt: prompt,
     },
     success: function (data) {
+      $('.question').remove();
       $.each(data, function (key, value) {
         let q = value;
         let model = key;
@@ -185,8 +186,6 @@ function getQTemplateFromLLM(prompt) {
           `<div class="question" dir="${dir}"><small>${model}:</small><blockquote>${q}</blockquote> </div>`
         );
       });
-
-      $('#examples').slideDown();
       $('.loading').hide();
     },
     error: function (data) {

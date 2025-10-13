@@ -102,12 +102,10 @@ function EntryGetTable(myLangId, pg, type) {
           }
           title += ' (' + C.lemma + ')';
           let ids = `${C.lemmaid},${slot.id},${C.agreementid ?? 0}`;
+          let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="${i + 1}">
-    ${title} | 
-    <small>${UM_tag2word(C.tags, myLang.code)}</small>
-  </label>            
+  <label for="${i + 1}">${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -138,15 +136,13 @@ function EntryGetTable(myLangId, pg, type) {
           );
           let title = C.stitle;
           if (C.atitle) {
-            title += `| ${C.atitle}`;
+            title += `, ${C.atitle}`;
           }
           let ids = `${lemma.id},${C.slotid},${C.agreementid ?? 0}`;
+          let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">
-    ${title} | 
-    <small>${UM_tag2word(C.tags, myLang.code)}</small>
-  </label>            
+  <label for="input${i}">${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -179,12 +175,10 @@ function EntryGetTable(myLangId, pg, type) {
             title += `| ${C.atitle}`;
           }
           let ids = `${C.lemmaid},${C.slotid},${C.agreementid ?? 0}`;
+          let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">
-    ${title} | 
-    <small>${UM_tag2word(C.tags, myLang.code)}</small>
-  </label>            
+  <label for="input${i}">${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -366,13 +360,8 @@ $(document).ready(function () {
     <span id="pageButtons"></span>
   </div>
 </div>
-<style>
-details {width: 300px; color: #555;}
-details summary {list-style: none;}
-details summary::-webkit-details-marker {display: none;}
-</style>
-<details id="findReplace">
-  <summary><span class="material-icons">find_replace</span> Morphophonemic Rules </summary>
+<details id="findReplace" style="width: 300px; color: #555;">
+  <summary><span class="material-icons">find_replace</span> Morphophonemic Rules</summary>
   <div>
     <label>Rule:</label>
     <select id="cmbMorphophonemicRule"></select>
