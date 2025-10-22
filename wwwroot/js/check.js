@@ -106,7 +106,7 @@ $(document).ready(function () {
   $('#check').html(`
 <div class="field">
   <label>My grammar knowledge:</label>
-  <select id="cmbLevel" style="width: 200px;">
+  <select id="cmbLevel" style="width: 300px;">
     <option value="0">Not confident in my grammar skills</option>
     <option value="1">Basic (high school grammar)</option>
     <option value="2">Expert (familiar with linguistics terms)</option>

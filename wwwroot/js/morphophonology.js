@@ -31,6 +31,19 @@ $('#btnAddMorphophonemicRule').click(function () {
   $('#btnMorphophonemicRuleSubmit').html('Add');
 });
 
+// sync scrolls
+$('#txtMorphophonemicRuleReplaceFrom').on('scroll', function () {
+  $('#txtMorphophonemicRuleReplaceTo').scrollTop(
+    $('#txtMorphophonemicRuleReplaceFrom').scrollTop()
+  );
+});
+
+$('#txtMorphophonemicRuleReplaceTo').on('scroll', function () {
+  $('#txtMorphophonemicRuleReplaceFrom').scrollTop(
+    $('#txtMorphophonemicRuleReplaceTo').scrollTop()
+  );
+});
+
 function MorphophonemicRuleSubmit() {
   if ($('#btnMorphophonemicRuleSubmit').html() == 'Add') {
     insertRule();

@@ -832,6 +832,14 @@ ul.slots li {
   padding: 20px;
 }
 
+.terms-box {
+  margin-top: 10px;
+  background: #eee;
+  padding: 5px 20px;
+  max-width: 600px;
+
+}
+
 /* elicit */
 .progress-container {
   width: 100%;
@@ -840,6 +848,7 @@ ul.slots li {
   height: 20px;
   margin-top: 10px;
   margin-bottom: 30px;
+  max-width: 400px;
 }
 
 .progress-container span {
@@ -860,6 +869,7 @@ ul.slots li {
 #elicit,
 #check {
   padding: 20px;
+  max-width: 600px;
 }
 
 .elicit_expert {
@@ -955,9 +965,6 @@ ul.slots li {
 
 .submitted {
   font-size: 1.2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   padding: 10px;
 }
 

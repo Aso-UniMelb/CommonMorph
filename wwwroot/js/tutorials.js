@@ -2,8 +2,6 @@ let tutorials = {
   welcome: {
     title: 'Welcome to the Common Morph!',
     content: `<p>This tutorial will guide you through the process of contributing to the Common Morph project.</p>
-<iframe width="533" height="300" src="https://www.youtube.com/embed/Yk0ClOkeBm0">
-</iframe>
 <p>Table of Contents:</p>
 <ul id="toc"></ul>
 `,

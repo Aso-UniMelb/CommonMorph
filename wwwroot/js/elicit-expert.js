@@ -83,7 +83,7 @@ function EntryGetTable(myLangId, pg, type) {
         let slot = data.slot;
         $('#dataentry').append(
           `<h2>${slot.title}</h2>
-          <form id="dataForm" dir="${dir}"><div id="formFields"></div></form>`
+          <form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < pool.length; i++) {
           let C = pool[i];
@@ -105,7 +105,7 @@ function EntryGetTable(myLangId, pg, type) {
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="${i + 1}">${hint}</label>            
+  <label>${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -121,7 +121,9 @@ function EntryGetTable(myLangId, pg, type) {
       if (type == 'Lemma') {
         let lemma = data.lemma;
         $('#dataentry').append(
-          `<h2>${lemma.entry}</h2><form id="dataForm" dir="${dir}"><div id="formFields"></div></form>`
+          `<h2>${lemma.entry} <small>(${lemma.engmeaning})</small></h2>
+          <a href="https://en.wiktionary.org/wiki/${lemma.entry}" target="_blank">Wiktionary</a>
+          <form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < data.pool.length; i++) {
           let C = pool[i];
@@ -142,7 +144,7 @@ function EntryGetTable(myLangId, pg, type) {
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">${hint}</label>            
+  <label>${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -157,7 +159,7 @@ function EntryGetTable(myLangId, pg, type) {
       }
       if (type == 'NN') {
         $('#dataentry').append(
-          `<form id="dataForm" dir="${dir}"><div id="formFields"></div></form>`
+          `<form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < data.pool.length; i++) {
           let C = pool[i];
@@ -178,7 +180,7 @@ function EntryGetTable(myLangId, pg, type) {
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">${hint}</label>            
+  <label>${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;">
     <input type="text" id="${i + 1}" data-attr="${ids}" value=${w} />
     <button type="button" id="btnSubmit${
@@ -360,7 +362,7 @@ $(document).ready(function () {
     <span id="pageButtons"></span>
   </div>
 </div>
-<details id="findReplace" style="width: 300px; color: #555;">
+<details id="findReplace" style="max-width: 400px; color: #555;">
   <summary><span class="material-icons">find_replace</span> Morphophonemic Rules</summary>
   <div>
     <label>Rule:</label>
@@ -403,6 +405,15 @@ $(document).ready(function () {
     let rule = rules.filter((x) => x.id == $(this).val())[0];
     $('#find').val(rule.replacefrom);
     $('#replace').val(rule.replaceto);
+  });
+
+  // sync scrolls
+  $('#find').on('scroll', function () {
+    $('#replace').scrollTop($('#find').scrollTop());
+  });
+
+  $('#replace').on('scroll', function () {
+    $('#find').scrollTop($('#replace').scrollTop());
   });
 
   getNextPage('Lemma');

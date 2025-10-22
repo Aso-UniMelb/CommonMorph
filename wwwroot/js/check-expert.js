@@ -26,7 +26,7 @@ function CheckGetTable(myLangId, pg, type) {
         let S = data.slot;
         $('#checking').append(
           `<h2>${S.title}</h2>
-          <form id="dataForm" dir="${dir}"><div id="formFields"></div></form>`
+          <form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < pool.length; i++) {
           let C = pool[i];
@@ -38,7 +38,7 @@ function CheckGetTable(myLangId, pg, type) {
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">${hint}</label>            
+  <label>${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}">
     <input type="text" 
        data-attr="${C.cellid}" value=${C.submitted} disabled />
@@ -59,8 +59,9 @@ function CheckGetTable(myLangId, pg, type) {
       if (type == 'Lemma') {
         let L = data.lemma;
         $('#checking').append(
-          `<h2>${L.entry}</h2>
-          <form id="dataForm" dir="${dir}"><div id="formFields"></div></form>`
+          `<h2>${L.entry} <small>(${L.engmeaning})</small></h2>
+          <a href="https://en.wiktionary.org/wiki/${L.entry}" target="_blank">Wiktionary</a>
+          <form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < pool.length; i++) {
           let C = pool[i];
@@ -71,7 +72,7 @@ function CheckGetTable(myLangId, pg, type) {
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
-  <label for="input${i}">${hint}</label>            
+  <label>${hint}</label>            
   <div class="field-nowrap" style="max-width: 300px;" id="${C.cellid}" >
     <input type="text" 
       data-attr="${C.cellid}" value=${C.submitted} disabled />
