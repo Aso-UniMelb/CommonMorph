@@ -90,7 +90,7 @@ function EditAgreementItem(id) {
       $('#txtAgreementItemTitle').val(data.title);
       $('#txtAgreementItemRealization').val(data.realization);
       $('#AgreementItemId').val(data.id);
-      $('#cmbAgreementItemPriority').val(data.priority);
+      $('#txtAgreementItemOrder').val(data.order);
       $('#AgreementItemGroupId').val(data.agreementgroupid);
       $('#btnAgreementItemSubmit').html('Save');
       $('#frmAgreementItem').show();
@@ -108,7 +108,7 @@ $(document).on('click', '.AddAgreemnt', function (event) {
   $('#txtAgreementItemTitle').val('');
   $('#txtAgreementItemRealization').val('');
   $('#AgreementItemId').val('');
-  $('#cmbAgreementItemPriority').val('1');
+  $('#txtAgreementItemOrder').val('1');
   $('#btnAgreementItemSubmit').html('Add');
   $('#AgreementItemGroupId').val($(this).attr('data-AG'));
   updateAggrementUMselects([]);
@@ -131,7 +131,7 @@ function insertAgreementItem() {
   let AG = $('#AgreementItemGroupId').val();
   let realization = $('#txtAgreementItemRealization').val().trim();
   let title = $('#txtAgreementItemTitle').val().trim();
-  let priority = $('#cmbAgreementItemPriority').val();
+  let priority = $('#txtAgreementItemOrder').val();
   $.ajax({
     url: '/Agreement/insertItem',
     type: 'POST',
@@ -163,7 +163,7 @@ function updateAgreementItem() {
   let AG = $('#AgreementItemGroupId').val();
   let realization = $('#txtAgreementItemRealization').val().trim();
   let title = $('#txtAgreementItemTitle').val().trim();
-  let priority = $('#cmbAgreementItemPriority').val();
+  let priority = $('#txtAgreementItemOrder').val();
   $.ajax({
     url: '/Agreement/updateItem',
     type: 'POST',
@@ -401,7 +401,9 @@ $('#btnExportAgreements').click(async function () {
       const data = await response.json();
       file +=
         data
-          .map((s) => [s.unimorphtags, s.realization, s.title].join('\t'))
+          .map((s) =>
+            [s.order, s.unimorphtags, s.realization, s.title].join('\t')
+          )
           .join('\n') + '\n';
     } catch (error) {
       console.error('Error fetching slot list:', error);

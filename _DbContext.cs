@@ -114,7 +114,7 @@ namespace common_morph_backend
       public string title { get; set; }
       public string unimorphtags { get; set; }
       public string realization { get; set; }
-      public Priority? priority { get; set; }
+      public int order { get; set; }
       public bool isdeleted { get; set; }
     }
 

@@ -148,12 +148,8 @@
             </div>
           </div>
           <div class="field small">
-            <label>Priority</label>
-            <select id="cmbAgreementItemPriority" style="width: 100px;">
-              <option value="0" selected>Low</option>
-              <option value="1">Medium</option>
-              <option value="2">High</option>
-            </select>
+            <label>Order</label>
+            <input type="number" id="txtAgreementItemOrder" name="order" min="0" max="50" step="1" required />
           </div>
           <div class="field-end">
             <button type="button" id="btnAgreementItemCancel">Cancel</button>

@@ -61,7 +61,7 @@ namespace common_morph_backend.Controllers
     {
       return Ok(_context.agreements
       .Where(x => x.agreementgroupid == AgreementGroupId && x.isdeleted == false)
-      .Select(x => new { x.id, x.realization, x.priority, x.title, x.unimorphtags }).OrderBy(x => x.unimorphtags).ToList());
+      .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags }).OrderBy(x => x.unimorphtags).ToList());
     }
 
     [HttpGet("getItem")]
@@ -138,10 +138,10 @@ namespace common_morph_backend.Controllers
           {
             var agr = new Agreement()
             {
-              unimorphtags = line.Split('\t')[0].Trim(),
-              realization = line.Split('\t')[1].Trim(),
-              title = line.Split('\t')[2].Trim(),
-              priority = 0,
+              order = Int32.Parse(line.Split('\t')[0].Trim()),
+              unimorphtags = line.Split('\t')[1].Trim(),
+              realization = line.Split('\t')[2].Trim(),
+              title = line.Split('\t')[3].Trim(),
               agreementgroupid = curGroupId,
             };
             _context.agreements.Add(agr);

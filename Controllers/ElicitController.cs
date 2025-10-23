@@ -122,7 +122,7 @@ INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
 INNER JOIN agreements a ON a.agreementgroupid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
 WHERE l.id= {lemmaId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY s.priority DESC, s.unimorphtags, a.unimorphtags");
+ORDER BY s.priority DESC, s.unimorphtags, a.order");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT s.id AS slotid, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
@@ -170,7 +170,7 @@ INNER JOIN lemmas l ON l.id = c.lemmaid
 INNER JOIN slots s ON s.id = c.slotid
 INNER JOIN agreements a ON a.id = c.agreementid
 WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId}
-ORDER BY s.priority DESC, s.unimorphtags, a.unimorphtags");
+ORDER BY s.priority DESC, s.unimorphtags, a.order");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, c.submitted AS submitted
@@ -217,7 +217,7 @@ INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
 INNER JOIN agreements a ON a.agreementgroupid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
 WHERE s.id= {slotId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY a.unimorphtags, l.priority DESC, l.entry");
+ORDER BY a.order, l.priority DESC, l.entry");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, s.unimorphtags AS tags
@@ -266,7 +266,7 @@ INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
 INNER JOIN agreements a ON a.agreementgroupid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
 WHERE s.id= {slotId} AND c.byuserid != {userId} AND  (c.submitted IS NOT NULL OR c.isdeleted = TRUE)
-ORDER BY a.unimorphtags, l.priority DESC, l.entry");
+ORDER BY a.order, l.priority DESC, l.entry");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT  c.id AS cellid, l.entry AS lemma, c.submitted AS submitted
