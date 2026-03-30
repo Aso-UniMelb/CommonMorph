@@ -21,7 +21,7 @@ namespace common_morph_backend.Controllers
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private string connectionString;
-    private string server = "http://51.21.248.63";
+    private string server = "https://46.62.152.200";
     public ActiveLearningController(AppDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
       _context = context;
@@ -43,7 +43,7 @@ namespace common_morph_backend.Controllers
       // extract data from the database
       using var connection = new NpgsqlConnection(connectionString);
       var pool = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, a.id AS agreementid, (l.priority + s.priority) AS priority,
+SELECT l.id AS lemmaid, s.id AS slotid, a.id AS agreementid, (l.priority) AS priority,
   s.title AS stitle, a.title AS atitle, a.realization AS a, s.formula AS formula,
   l.stem1, l.stem2, l.stem3, l.stem4,
   l.entry lemma, s.unimorphtags || ';' || a.unimorphtags AS tags
@@ -57,7 +57,7 @@ WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 ORDER BY priority DESC, lemmaid").ToList();
 
       var pool2 = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, (l.priority + s.priority) AS priority,
+SELECT l.id AS lemmaid, s.id AS slotid, (l.priority) AS priority,
   s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4,
   l.entry lemma, s.unimorphtags AS tags
 FROM lemmas l 

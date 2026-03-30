@@ -357,7 +357,6 @@ $(document).ready(function () {
     <select id="cmbElicitOrder">
         <option value="Lemma">By Lemma</option>
         <option value="Slot">By Slot</option>
-        <option value="NN">By Priority</option>
     </select>
     <span id="pageButtons"></span>
   </div>

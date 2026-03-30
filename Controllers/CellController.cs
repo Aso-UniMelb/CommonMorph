@@ -25,27 +25,6 @@ namespace common_morph_backend.Controllers
       connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
 
-    [HttpPost("batchApprove")]
-    public IActionResult batchApprove([FromBody] List<CellRating> cells)
-    {
-      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-      foreach (var cell in cells)
-      {
-        if (_context.cellratings.Any(x => x.cellid == cell.id && x.userid == userId))
-        {
-
-        }
-        else
-        {
-          cell.userid = userId;
-          cell.rate = true;
-          _context.cellratings.Add(cell);
-        }
-      }
-      _context.SaveChanges();
-      return Ok(cells.Count);
-    }
-
     [HttpPost("batchInsert")]
     public IActionResult batchInsert([FromBody] List<Cell> cells)
     {
@@ -155,6 +134,27 @@ namespace common_morph_backend.Controllers
       return Ok(id.ToString());
     }
 
+    [HttpPost("batchApprove")]
+    public IActionResult batchApprove([FromBody] List<CellRating> cells)
+    {
+      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+      foreach (var cell in cells)
+      {
+        if (_context.cellratings.Any(x => x.cellid == cell.id && x.userid == userId))
+        {
+
+        }
+        else
+        {
+          cell.userid = userId;
+          cell.rate = true;
+          cell.daterated = DateTime.UtcNow;
+          _context.cellratings.Add(cell);
+        }
+      }
+      _context.SaveChanges();
+      return Ok(cells.Count);
+    }
 
     [Authorize]
     [HttpPost("approve")]

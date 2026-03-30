@@ -365,6 +365,17 @@ form .field-end {
   white-space: pre;
 }
 
+input[type="number"],
+textarea {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  unicode-bidi: plaintext;
+  outline: none;
+  line-height: 1.5;
+}
+
 input[type="text"] {
   letter-spacing: 1px;
   color: #333;

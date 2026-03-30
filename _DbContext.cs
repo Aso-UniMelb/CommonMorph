@@ -149,7 +149,7 @@ namespace common_morph_backend
       public string? title { get; set; }
       public string? unimorphtags { get; set; }
       public string? formula { get; set; }
-      public Priority priority { get; set; }
+      public int order { get; set; }
       public int paradigmclassid { get; set; }
       public int agreementgroupid { get; set; }
       public bool isdeleted { get; set; }

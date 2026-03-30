@@ -91,7 +91,7 @@ function CheckGetTable(myLangId, pg, type) {
         }
       }
       $('#formFields').append(
-        `<button type="button" class="smallButton approve" onclick="ApproveAll()">
+        `<button type="button" class="smallButton approve" onclick="ApproveAll('${type}')">
           <span class="material-icons">done</span> Approve ALL
         </button>`
       );
@@ -106,18 +106,14 @@ function CheckGetTable(myLangId, pg, type) {
 function ApproveAll(nextType) {
   $('.loading').show();
   const dataToSend = [];
-  $('input[type="text"]')
-    .filter(function () {
-      return /^\d/.test(this.id);
-    })
-    .each(function () {
-      const id = $(this).attr('id');
-      const dataAttr = $(this).data('attr');
-      let cell = {
-        cellid: dataAttr.split(',')[0],
-      };
-      dataToSend.push(cell);
-    });
+  $('input[type="text"]').each(function () {
+    const id = $(this).attr('id');
+    const dataAttr = $(this).data('attr');
+    let cell = {
+      cellid: dataAttr,
+    };
+    dataToSend.push(cell);
+  });
   console.log(JSON.stringify(dataToSend));
   // disable all the inputs
   $('input').prop('disabled', true);
@@ -129,9 +125,8 @@ function ApproveAll(nextType) {
     data: JSON.stringify(dataToSend),
     success: function (response) {
       $('.loading').hide();
-      $('input').prop('disabled', false);
       $('button').prop('disabled', false);
-      getNextPage(type);
+      getNextPage(nextType);
     },
     error: function (data) {
       alert(data);

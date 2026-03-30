@@ -122,7 +122,7 @@ INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
 INNER JOIN agreements a ON a.agreementgroupid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
 WHERE l.id= {lemmaId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY s.priority DESC, s.unimorphtags, a.order");
+ORDER BY s.order, s.unimorphtags, a.order");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT s.id AS slotid, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
@@ -131,7 +131,7 @@ INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
 INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
 WHERE l.id= {lemmaId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) AND s.formula NOT LIKE '%A%'
-ORDER BY l.priority DESC, l.entry, s.priority DESC, s.unimorphtags");
+ORDER BY l.priority DESC, l.entry, s.order, s.unimorphtags");
       //  merge the results
       return Ok(new { lemma = lemma, pool = results1.Union(results2).ToList() });
     }
@@ -170,7 +170,7 @@ INNER JOIN lemmas l ON l.id = c.lemmaid
 INNER JOIN slots s ON s.id = c.slotid
 INNER JOIN agreements a ON a.id = c.agreementid
 WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId}
-ORDER BY s.priority DESC, s.unimorphtags, a.order");
+ORDER BY s.order, s.unimorphtags, a.order");
       // If the slots dose not contain agreement:
       var results2 = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, c.submitted AS submitted
@@ -179,7 +179,7 @@ INNER JOIN lemmas l ON l.id = c.lemmaid
 INNER JOIN slots s ON s.id = c.slotid
 LEFT JOIN cellratings r ON r.cellid = c.id
 WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId} AND r.userid IS NULL AND s.formula NOT LIKE '%A%'
-ORDER BY s.priority DESC, s.unimorphtags");
+ORDER BY s.order, s.unimorphtags");
       //  merge the results
       return Ok(new { lemma = lemma, pool = results1.Union(results2).ToList() });
     }
@@ -199,7 +199,7 @@ INNER JOIN agreements a ON a.agreementgroupid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 GROUP BY s.id
-ORDER BY s.priority DESC");
+ORDER BY s.order");
 
       if (slot_ids.ElementAtOrDefault(page - 1) == null)
         return Ok(new List<Cell>());
@@ -304,7 +304,7 @@ WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 	AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
 WHERE questionlang='{metalang}'
 GROUP BY unimorphtags having count(distinct questionlang) = 1)
-ORDER BY l.priority DESC, l.entry, s.priority DESC, s.title
+ORDER BY l.priority DESC, l.entry, s.order, s.title
 OFFSET 1*({page}-1) LIMIT 1").ToList();
 
       // If the slots dose not contain agreement:
@@ -320,7 +320,7 @@ WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 	AND s.unimorphtags IN (SELECT unimorphtags FROM questions
 WHERE questionlang ='{metalang}'
 GROUP BY unimorphtags HAVING COUNT(DISTINCT questionlang) = 1)
-ORDER BY l.priority DESC, l.entry, s.priority DESC, s.title
+ORDER BY l.priority DESC, l.entry, s.order, s.title
 OFFSET 1*({page}-1) LIMIT 1").ToList();
 
       if (result.Count > 0)
@@ -392,7 +392,7 @@ WHERE c.langid = {langid} AND c.byuserid != {userId} AND  r.cellid IS NULL
   AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
   WHERE questionlang='{metalang}'
   GROUP BY unimorphtags having count(distinct questionlang) = 1)
-ORDER BY l.priority DESC, l.entry, s.priority DESC, s.title
+ORDER BY l.priority DESC, l.entry, s.order, s.title
 OFFSET 1*({page}-1) LIMIT 1").ToList();
 
       var result2 = connection.Query(@$"
@@ -406,7 +406,7 @@ WHERE c.langid = {langid} AND c.byuserid != {userId} AND r.cellid IS NULL
   AND s.unimorphtags IN (SELECT unimorphtags FROM questions
   WHERE questionlang ='{metalang}'
   GROUP BY unimorphtags HAVING COUNT(DISTINCT questionlang) = 1)
-ORDER BY l.priority DESC, l.entry, s.priority DESC, s.title
+ORDER BY l.priority DESC, l.entry, s.order, s.title
 OFFSET 1*({page}-1) LIMIT 1").ToList();
 
       if (result.Count > 0)

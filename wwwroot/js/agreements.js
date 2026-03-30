@@ -61,7 +61,6 @@ function GetItems(AG) {
         $('.loading').hide();
         for (let i = 0; i < data.length; i++) {
           ul.append(`<li class="" onclick="EditAgreementItem(${data[i].id})">
-          <span class="priority${data[i].priority}"></span>
           ${data[i].realization} <small>(${data[i].title})</small>
           </li>`);
         }
@@ -131,7 +130,7 @@ function insertAgreementItem() {
   let AG = $('#AgreementItemGroupId').val();
   let realization = $('#txtAgreementItemRealization').val().trim();
   let title = $('#txtAgreementItemTitle').val().trim();
-  let priority = $('#txtAgreementItemOrder').val();
+  let order = $('#txtAgreementItemOrder').val();
   $.ajax({
     url: '/Agreement/insertItem',
     type: 'POST',
@@ -139,7 +138,7 @@ function insertAgreementItem() {
       unimorphtags: UM_Sort($('#txtAgreementItemUniMorphTags').val().trim()),
       title: title,
       realization: realization,
-      priority: priority,
+      order: order,
       agreementgroupid: AG,
     },
     success: function (data) {
@@ -147,7 +146,6 @@ function insertAgreementItem() {
       $('#frmAgreementItem').hide();
       let sublist = $('#AG_' + AG).children('ul');
       let newItem = $(`<li class="" id="A_${data}">
-        <span class="priority${priority}"></span>
         <span>${title} <small>(${realization})</small></span>
         </li>`);
       sublist.append(newItem);
@@ -163,7 +161,7 @@ function updateAgreementItem() {
   let AG = $('#AgreementItemGroupId').val();
   let realization = $('#txtAgreementItemRealization').val().trim();
   let title = $('#txtAgreementItemTitle').val().trim();
-  let priority = $('#txtAgreementItemOrder').val();
+  let order = $('#txtAgreementItemOrder').val();
   $.ajax({
     url: '/Agreement/updateItem',
     type: 'POST',
@@ -172,7 +170,7 @@ function updateAgreementItem() {
       unimorphtags: UM_Sort($('#txtAgreementItemUniMorphTags').val().trim()),
       title: title,
       realization: realization,
-      priority: priority,
+      order: order,
       agreementgroupid: AG,
     },
     success: function (data) {

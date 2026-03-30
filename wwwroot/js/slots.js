@@ -60,7 +60,6 @@ function GetSlots(PC) {
         $('.loading').hide();
         for (let i = 0; i < data.length; i++) {
           ul.append(`<li class="" onclick="EditSlot(${data[i].id})">
-          <span class="priority${data[i].priority}"></span>
           ${data[i].title}
           </li>`);
         }
@@ -91,7 +90,7 @@ function EditSlot(id) {
       $('#SlotId').val(data.id);
       $('#cmbSlotAgreementGroup').val(data.agreementgroupid).change();
       $('#btnSlotsSubmit').html('Save');
-      $('#cmbSlotPriority').val(data.priority);
+      $('#txtSlotOrder').val(data.order);
       $('#cmbSlotParadigmClass').val(data.paradigmclassid).trigger('change');
       $('#SlotPClassId').val(data.paradigmclassid);
       $('#frmSlots').show();
@@ -131,7 +130,7 @@ function insertSlot() {
   $('.loading').show();
   let PC = $('#SlotPClassId').val();
   let title = $('#txtSlotTitle').val().trim();
-  let priority = $('#cmbSlotPriority').val();
+  let order = $('#txtSlotOrder').val();
   $.ajax({
     url: '/Slot/insert',
     type: 'POST',
@@ -141,7 +140,7 @@ function insertSlot() {
       formula: $('#txtSlotFormula').val().trim(),
       agreementgroupid: $('#cmbSlotAgreementGroup').val(),
       paradigmclassid: PC,
-      priority: priority,
+      order: order,
       paradigmclassid: PC,
     },
     success: function (data) {
@@ -149,7 +148,6 @@ function insertSlot() {
       $('#frmSlots').hide();
       let sublist = $('#PC_' + PC).children('ul');
       let newItem = $(`<li class="" id="S_${data}">
-        <span class="priority${priority}"></span>
         <span>${title}</span>
         </li>`);
       sublist.append(newItem);
@@ -164,7 +162,7 @@ function updateSlot() {
   $('.loading').show();
   let PC = $('#SlotPClassId').val();
   let title = $('#txtSlotTitle').val().trim();
-  let priority = $('#cmbSlotPriority').val();
+  let order = $('#txtSlotOrder').val();
   $.ajax({
     url: '/Slot/update',
     type: 'POST',
@@ -175,7 +173,7 @@ function updateSlot() {
       formula: $('#txtSlotFormula').val().trim(),
       agreementgroupid: $('#cmbSlotAgreementGroup').val(),
       paradigmclassid: PC,
-      priority: priority,
+      order: order,
       paradigmclassid: PC,
     },
     success: function (data) {

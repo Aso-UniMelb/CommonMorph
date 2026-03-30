@@ -61,7 +61,7 @@ namespace common_morph_backend.Controllers
     {
       return Ok(_context.agreements
       .Where(x => x.agreementgroupid == AgreementGroupId && x.isdeleted == false)
-      .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags }).OrderBy(x => x.unimorphtags).ToList());
+      .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags }).OrderBy(x => x.order).ToList());
     }
 
     [HttpGet("getItem")]

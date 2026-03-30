@@ -23,8 +23,8 @@ namespace common_morph_backend.Controllers
     public IActionResult list(int ParadigmClassID)
     {
       return Ok(_context.slots
-      .Where(s => s.paradigmclassid == ParadigmClassID).OrderBy(x => x.title)
-      .Select(x => new { x.id, x.unimorphtags, x.formula, x.priority, x.agreementgroupid, x.title }).ToList());
+      .Where(s => s.paradigmclassid == ParadigmClassID).OrderBy(x => x.order)
+      .Select(x => new { x.id, x.unimorphtags, x.formula, x.order, x.agreementgroupid, x.title }).ToList());
     }
 
 
@@ -114,7 +114,7 @@ namespace common_morph_backend.Controllers
               unimorphtags = line.Split('\t')[0].Trim(),
               formula = line.Split('\t')[1].Trim(),
               title = line.Split('\t')[2].Trim(),
-              priority = 0,
+              order = 0,
               paradigmclassid = curParClassId,
             };
             _context.slots.Add(slot);

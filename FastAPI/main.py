@@ -209,6 +209,12 @@ def suggest(request: SingleSuggest):
   return {"predicted": predicted, "confidence": conf, "avg_confidence": conf_average}
 
 # =============================================================================
+import datetime
+def write_log(content):
+  with open('log.txt', 'a', encoding='utf-8') as logger:
+    now = datetime.datetime.now().strftime("%m/%d %H:%M:%S")
+    logger.write(now + '\t' + content + '\n')
+
 def read_data(filename):
   with open(filename, 'r', encoding='utf-8') as f:
     data = []
@@ -334,18 +340,20 @@ def train(request: TrainRequest):
   # read the data from Common-Morph and write it to a local file
   url = f'https://common-morph.com/downlaod/unimorph/{request.langid}'
   response = urllib.request.urlopen(url)
+  write_log(f'response got for {request.langid}')
   with open(f'data/{request.langid}.tsv', 'w', encoding='utf-8') as f:
     f.write(response.read().decode("utf-8"))
+  write_log(f'response wrote for {request.langid}')
   data = read_data(f'data/{request.langid}.tsv')
   # build vocabs
   vocab_file = f'model/{request.langid}_vocab.json'
   if os.path.exists(vocab_file):
     old_vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  
   char_stoi, tags_stoi = ExtractVocabFromUniMorph(data, char_fields, tag_fields)
   # save vocabs to file
   with open(vocab_file, 'w') as f:
     json.dump({"char_vocab": char_stoi, "tag_vocab": tags_stoi}, f)
+  write_log(f'vocab wrote for {request.langid}')
   # encode dataset
   new_vocab = VocabFromJson(vocab_file)    
   dataset = encode_dataset(data, tag_fields, char_fields, new_vocab)
@@ -354,12 +362,14 @@ def train(request: TrainRequest):
   # train the model
   word_vocab_size = len(new_vocab.char_vocab_stoi)
   tag_vocab_size = len(new_vocab.tags_vocab_stoi)
+  write_log(f'ready to train {request.langid}')
   # if model exists, finetune it
   if (os.path.exists(f'model/{request.langid}.pt')) and (old_vocab is not None) and (new_vocab == old_vocab):
     saved_state = f'model/{request.langid}.pt'
     train_loss_records, train_time = train_LSTM(train_loader, EPOCHS, request.langid, word_vocab_size, tag_vocab_size, saved_state=saved_state)
   else:
     train_loss_records, train_time = train_LSTM(train_loader, EPOCHS, request.langid, word_vocab_size, tag_vocab_size)
+  write_log(f'model {request.langid} trained')
   return {"message": f"Model trained successfully in {train_time:.2f} seconds"}
 
 # =============================================================================

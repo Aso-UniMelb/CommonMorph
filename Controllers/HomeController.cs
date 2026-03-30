@@ -99,6 +99,8 @@ SELECT
 	c.submitted AS form,
 	(SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
 	(SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags,
+	(SELECT realization  FROM agreements WHERE id = c.agreementid) AS affix,
+  (SELECT formula  FROM slots WHERE id = c.slotid) AS formula,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
@@ -111,14 +113,14 @@ SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.st
 FROM lemmas l
 INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
 WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
-          sb.AppendLine("Lemma\tForm\tTags\tClass\tStem1\tStem2\tStem3\tStem4");
+          sb.AppendLine("LEMMA\tFORM\tTAGS\tGLOSS\tCLASS\tFORMULA\tAFFIX\tSTEM1\tSTEM2\tSTEM3\tSTEM4");
           foreach (var form in forms)
           {
             var l = lemmas.FirstOrDefault(x => x.id == form.lemmaid);
             var tags = form.stags;
             if (!string.IsNullOrEmpty(form.atags))
               tags += ";" + form.atags;
-            var line = $"{l.entry}\t{form.form}\t{_cacheService.UM_Sort(tags)}\t{l.pcalss}\t";
+            var line = $"{l.entry}\t{form.form}\t{_cacheService.UM_Sort(tags)}\t{l.meaning}\t{l.pcalss}\t{form.formula}\t{form.affix}\t";
             line += $"{l.stem1 ?? ""}\t{l.stem2 ?? ""}\t{l.stem3 ?? ""}\t{l.stem4 ?? ""}";
             sb.AppendLine(line);
           }
@@ -132,7 +134,7 @@ INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
 INNER JOIN langs ON langs.id = pc.langid
 WHERE pc.langid = {langid} AND l.isdeleted is FALSE
 ORDER BY l.entry");
-          sb.AppendLine("Lemma\tClass\tGloss\tStem1\tStem2\tStem3\tStem4");
+          sb.AppendLine("LEMMA\tCLASS\tGLOSS\tSTEM1\tSTEM2\tSTEM3\tSTEM4");
           foreach (var record in lexicon)
           {
             var line = $"{record.lemma}\t{record.classtitle}\t{record.meaning}\t";
