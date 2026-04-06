@@ -21,7 +21,7 @@ namespace common_morph_backend.Controllers
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private string connectionString;
-    private string server = "https://46.62.152.200";
+    private string server = "http://46.62.152.200";
     public ActiveLearningController(AppDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
       _context = context;

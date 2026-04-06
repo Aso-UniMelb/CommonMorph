@@ -1,27 +1,77 @@
 let page = 1;
 let UniMorphTags = '';
 let dir = 'ltr';
+let allQuestions = [];
+let currentTags = '';
+let isCurrentAvailable = false;
 
 function getQuestionLists() {
-  // prepare the page elements
-  // questionLists
-  // fetch the data from the server
-  $('#questionLists').html('');
-  $('#questionLists').append(`<div class="field">
-    <label>${i18n[myMetalang]['q_1']}</label>
-    <select id="cmbAvailable" style="width: 350px;">
-      <option value="">-</option>
-    </select></div>`);
+  $('#questionLists').html('<div style="padding: 20px; text-align: center;">Loading questions...</div>');
+  renderForm();
 
-  $('#questionLists').append(`<div class="field">
-    <label>${i18n[myMetalang]['q_2']}</label>
-    <select id="cmbUnavailable" style="width: 350px;">
-      <option value="">-</option>
-    </select></div>`);
-  getListAvailable();
-  getListUnavailable();
+  // Fetch both available and unavailable questions
+  Promise.all([
+    fetchQuestions('/QTemplate/available', true),
+    fetchQuestions('/QTemplate/unavailable', false),
+  ])
+    .then((results) => {
+      allQuestions = [...results[0], ...results[1]];
+      // Sort alphabetically by title
+      allQuestions.sort((a, b) => a.stitle.localeCompare(b.stitle));
+      renderQuestionList(allQuestions);
+    })
+    .catch((err) => {
+      console.error('Error fetching questions:', err);
+      $('#questionLists').html('<div style="padding: 20px; color: red;">Failed to load questions.</div>');
+    });
+}
 
-  // questionForm
+function fetchQuestions(url, isAvailable) {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: url,
+      type: 'GET',
+      data: {
+        metalang: myMetalang,
+        langId: myLang.id,
+      },
+      success: function (data) {
+        if (typeof data !== 'undefined') {
+          resolve(data.map((q) => ({ ...q, available: isAvailable })));
+        } else {
+          resolve([]);
+        }
+      },
+      error: reject,
+    });
+  });
+}
+
+function renderQuestionList(questions) {
+  let html = '';
+  if (questions.length === 0) {
+    html = '<div style="padding: 20px; color: #888; text-align: center;">No questions found.</div>';
+  } else {
+    questions.forEach((q) => {
+      let title = q.stitle + (q.atitle ? ` (${q.atitle})` : '');
+      let statusIcon = q.available ? 'check_circle' : 'radio_button_unchecked';
+      let statusClass = q.available ? 'available' : 'unavailable';
+      let activeClass = currentTags === q.tags ? 'active' : '';
+
+      html += `
+        <div class="qTemplate-item ${statusClass} ${activeClass}" onclick="selectQuestion('${q.tags}', ${q.available}, this)">
+          <span class="material-icons status-icon">${statusIcon}</span>
+          <div class="item-content">
+            <div class="item-title" title="${title}">${title}</div>
+            <div class="item-tags" title="${q.tags}">${q.tags}</div>
+          </div>
+        </div>`;
+    });
+  }
+  $('#questionLists').html(html);
+}
+
+function renderForm() {
   let q_submit = i18n[myMetalang]['q_submit'];
   let elicit_skip = i18n[myMetalang]['elicit_skip'];
 
@@ -44,52 +94,31 @@ function getQuestionLists() {
   </div>
 </form>`);
   $('#questionForm').hide();
-
-  // instruction
-  $('#instruction').html(i18n[myMetalang]['q_4']);
-  $('#instruction').hide();
-  // examples
+  $('#instruction').html(i18n[myMetalang]['q_4']).hide();
 }
 
-function getListAvailable() {
-  $('.loading').show();
-  $.ajax({
-    url: '/QTemplate/available',
-    type: 'GET',
-    data: {
-      metalang: myMetalang,
-      langId: myLang.id,
-    },
-    success: function (data) {
-      $('.loading').hide();
-      if (typeof data !== 'undefined') {
-        for (let i = 0; i < data.length; i++) {
-          let title = data[i].stitle;
-          if (data[i].atitle) {
-            title += ` (${data[i].atitle})`;
-          }
-          $('#cmbAvailable').append(
-            `<option value="${data[i].tags}">${title}</option>`
-          );
-        }
-        $('#cmbAvailable').select2();
-        $('#cmbAvailable').on('select2:select', function (e) {
-          $('#cmbUnavailable').val('').trigger('change');
-          let tags = $('#cmbAvailable').val();
-          $('#unimorphtags').val(tags);
-          $('#examples').html('');
-          showFeatures(tags);
-          showAvailableQuestion(tags);
-          //show the example question
-          let prompt = UM_tags2QuestionPrompt(tags, myMetalang, myLang.Code);
-          getQTemplateFromLLM(prompt, myMetalang);
-        });
-      }
-    },
-    error: function (data) {
-      console.log(data);
-    },
-  });
+function selectQuestion(tags, available, element) {
+  currentTags = tags;
+  isCurrentAvailable = available;
+  
+  $('.qTemplate-item').removeClass('active');
+  $(element).addClass('active');
+
+  $('#unimorphtags').val(tags);
+  $('#examples').html('');
+  showFeatures(tags);
+
+  if (available) {
+    showAvailableQuestion(tags);
+  } else {
+    $('#question').val('');
+    $('#questionForm').show();
+    $('#instruction').show();
+  }
+
+  // Show the example question from LLM
+  let prompt = UM_tags2QuestionPrompt(tags, myMetalang, myLang.Code);
+  getQTemplateFromLLM(prompt);
 }
 
 function showFeatures(tags) {
@@ -118,52 +147,11 @@ function showAvailableQuestion(tags) {
     },
     error: function (data) {
       console.log(data);
-    },
-  });
-}
-
-function getListUnavailable() {
-  $('.loading').show();
-  $('#examples').html('');
-  $.ajax({
-    url: '/QTemplate/unavailable',
-    type: 'GET',
-    data: {
-      metalang: myMetalang,
-      langId: myLang.id,
-    },
-    success: function (data) {
       $('.loading').hide();
-      for (let i = 0; i < data.length; i++) {
-        let title = data[i].stitle;
-        if (data[i].atitle) {
-          title += ` (${data[i].atitle})`;
-        }
-        $('#cmbUnavailable').append(
-          `<option value="${data[i].tags}">${title}</option>`
-        );
-      }
-      $('#cmbUnavailable').select2();
-      $('#cmbUnavailable').on('select2:select', function (e) {
-        $('#cmbAvailable').val('').trigger('change');
-        $('#questionForm').show();
-        $('#instruction').show();
-        let tags = $('#cmbUnavailable').val();
-        showFeatures(tags);
-        $('#unimorphtags').val(tags);
-        $('#question').val('');
-        //show the example question
-        let prompt = UM_tags2QuestionPrompt(tags, myMetalang, myLang.Code);
-        getQTemplateFromLLM(prompt, myMetalang);
-      });
-    },
-    error: function (data) {
-      console.log(data);
     },
   });
 }
 
-let number_of_questions = 0;
 function getQTemplateFromLLM(prompt) {
   $('.loading').show();
   $('#examples').html(`<div class="q-LLM">${i18n[myMetalang]['q_5']}</div>`);
@@ -190,13 +178,14 @@ function getQTemplateFromLLM(prompt) {
     },
     error: function (data) {
       console.log(data);
+      $('.loading').hide();
     },
   });
 }
 
 function QTemplateSubmit() {
   $('.loading').show();
-  let url = $('#cmbAvailable').val() ? 'update' : 'insert';
+  let url = isCurrentAvailable ? 'update' : 'insert';
   $.ajax({
     url: '/QTemplate/' + url,
     type: 'POST',
@@ -206,17 +195,19 @@ function QTemplateSubmit() {
       question: $('#question').val(),
     },
     success: function (data) {
-      console.log(data);
+      $('.loading').hide();
+      // Refresh the specific item in the list or just reload all
       nextSlot();
     },
     error: function (data) {
       console.log('Error');
+      $('.loading').hide();
     },
   });
 }
 
 function nextSlot() {
-  $('#questionLists').html('');
+  currentTags = '';
   getQuestionLists();
 }
 
@@ -225,4 +216,16 @@ $(document).ready(function () {
   $('.loading').hide();
   dir = i18n[myMetalang]['dir'];
   getQuestionLists();
+
+  // Search functionality
+  $('#qSearch').on('input', function () {
+    let val = $(this).val().toLowerCase();
+    let filtered = allQuestions.filter(
+      (q) =>
+        q.tags.toLowerCase().includes(val) ||
+        q.stitle.toLowerCase().includes(val) ||
+        (q.atitle && q.atitle.toLowerCase().includes(val))
+    );
+    renderQuestionList(filtered);
+  });
 });

@@ -338,7 +338,7 @@ def train(request: TrainRequest):
   char_fields = request.char_fields or [0, 1]
   tag_fields = request.tag_fields or [2]
   # read the data from Common-Morph and write it to a local file
-  url = f'https://common-morph.com/downlaod/unimorph/{request.langid}'
+  url = f'https://common-morph.com/download/unimorph/{request.langid}'
   response = urllib.request.urlopen(url)
   write_log(f'response got for {request.langid}')
   with open(f'data/{request.langid}.tsv', 'w', encoding='utf-8') as f:
@@ -391,7 +391,7 @@ def finetune(request: FinetuneRequest):
   char_fields = request.char_fields or [0, 1]
   tag_fields = request.tag_fields or [2]
   # read the data from Common-Morph and write it to a local file
-  url = f'https://common-morph.com/downlaod/unimorph/{request.finetune_id}'
+  url = f'https://common-morph.com/download/unimorph/{request.finetune_id}'
   response = urllib.request.urlopen(url)
   with open(f'data/{request.finetune_id}.tsv', 'w', encoding='utf-8') as f:
     f.write(response.read().decode("utf-8"))  

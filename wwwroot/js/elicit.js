@@ -128,7 +128,7 @@ function getSuggestionFromNN(lemma, tags) {
         }, ${sahde}, 0);padding: 3px 0;">${R.predicted[i]}</span>`;
       }
       $('#suggestions').append(
-        `<button type="button" class="suggestedForm" onclick="acceptSuggestion('${R.predicted}')"><div>${pr}</div></button>`
+        `<button type="button" class="suggestedForm" onclick="acceptSuggestion('${R.predicted}')"><div>${pr}</div> <small>[NN]</small></button>`
       );
     },
     error: function (data) {
@@ -150,7 +150,7 @@ function getSuggestionFromLLM(curLemma, samples) {
       $.each(data, function (key, value) {
         if (!suggestionsForThisCell.some((s) => s.suggested == value)) {
           $('#suggestions').append(
-            `<button type="button" class="suggestedForm" onclick="acceptSuggestion('${value}')">${value}</button>`
+            `<button type="button" class="suggestedForm" onclick="acceptSuggestion('${value}')">${value} <small>[LLM]</small></button>`
           );
         }
         suggestionsForThisCell.push({

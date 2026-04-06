@@ -109,8 +109,8 @@ app.MapControllerRoute(
   defaults: new { controller = "Home", action = "dataset" });
 
 app.MapControllerRoute(
-  name: "downlaod",
-  pattern: "downlaod/{type}/{langid}",
+  name: "download",
+  pattern: "download/{type}/{langid}",
   defaults: new { controller = "Home", action = "Download" });
 
 app.MapControllerRoute(

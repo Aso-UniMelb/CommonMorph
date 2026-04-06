@@ -2,11 +2,18 @@
   ViewData["Title"] = "Linguist";
   Layout = "~/Views/Shared/_App.cshtml";
 }
-<div class="qTemaplateEntryList">
-  <div id="questionLists"></div>
-  <div id="questionForm"></div>
-  <div id="instruction"></div>
-  <div id="examples"></div>
+<div class="qTemplate-container">
+  <div class="qTemplate-sidebar">
+    <div class="search-box">
+      <input type="text" id="qSearch" placeholder="Search tags or titles...">
+    </div>
+    <div id="questionLists" class="qTemplate-list"></div>
+  </div>
+  <div class="qTemplate-main">
+    <div id="questionForm"></div>
+    <div id="instruction"></div>
+    <div id="examples"></div>
+  </div>
 </div>
 <script src="/js/myLang.js" asp-append-version="true"></script>
 <script src="/js/UM_tags.js" asp-append-version="true"></script>
