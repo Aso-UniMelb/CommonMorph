@@ -16,11 +16,13 @@ namespace common_morph_backend.Controllers
 
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IMyCacheService _cacheService;
     private string connectionString;
-    public CellController(AppDbContext context, IConfiguration configuration)
+    public CellController(AppDbContext context, IConfiguration configuration, IMyCacheService cacheService)
     {
       _context = context;
       _configuration = configuration;
+      _cacheService = cacheService;
       // For the complex query used in this controller, we need Dapper to connect to DB
       connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
     }
@@ -280,6 +282,43 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
       // WHERE pc.langid ={langid}");
 
       return Ok(new { forms, lemmas });
+    }
+    
+    [HttpPost("getAnalyses")]
+    public IActionResult GetAnalyses(string word)
+    {
+      if (string.IsNullOrEmpty(word))
+        return BadRequest("Word is empty");
+      
+      using var connection = new NpgsqlConnection(connectionString);
+      var query = @"
+SELECT 
+    l.title AS languagename,
+    (SELECT entry FROM lemmas WHERE id = c.lemmaid) AS lemma,
+    c.submitted AS form,
+    (SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
+    (SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags
+FROM cells c
+INNER JOIN langs l ON l.id = c.langid
+WHERE c.submitted LIKE @Word
+";
+      var results = connection.Query(query, new { Word = word.Trim() }).ToList();
+      var formattedResults = new List<dynamic>();
+      foreach (var r in results)
+      {
+          var tags = r.stags as string;
+          var atags = r.atags as string;
+          if (!string.IsNullOrEmpty(atags))
+              tags += ";" + atags;
+          
+          formattedResults.Add(new {
+              LanguageName = r.languagename,
+              Lemma = r.lemma,
+              Form = r.form,
+              Tags = string.IsNullOrEmpty(tags) ? "" : _cacheService.UM_Sort(tags)
+          });
+      }
+      return Ok(formattedResults);
     }
   }
 }

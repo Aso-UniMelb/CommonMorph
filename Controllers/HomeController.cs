@@ -149,6 +149,11 @@ ORDER BY l.entry");
       var fileName = lang + "_" + type + ".tsv";
       return File(bytes, "text/tab-separated-values", fileName);
     }
+    
+    public IActionResult Analyser()
+    {
+      return View();
+    }
 
     public IActionResult About()
     {
