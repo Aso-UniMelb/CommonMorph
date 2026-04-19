@@ -9,147 +9,147 @@
     <div class="accordion-header">Paradigm Structures</div>
     <div class="accordion-content">
       <label>
-        <span class="addButton" id="btnAddParadigmClass"><span class="material-icons">add</span>Add</span>
+        <span class="addButton" id="btnAddInflectionClass"><span class="material-icons">add</span>Add</span>
       </label>
       <label>
-        <span class="addButton" id="btnImportSlot"> <span class="material-icons">download</span> Import</span>
+        <span class="addButton" id="btnImportStructure"> <span class="material-icons">download</span> Import</span>
       </label>
       <label>
-        <span class="addButton" id="btnExportSlot"> <span class="material-icons">upload</span> Export</span>
+        <span class="addButton" id="btnExportStructure"> <span class="material-icons">upload</span> Export</span>
       </label>
-      <ul id="lstParadigmClasses" class="list"></ul>
-      <div id="frmParadigmClass" class="form">
-        <form onsubmit="ParadigmClassSubmit(); return false;">
-          <input type="hidden" id="ParadigmClassId" />
+      <ul id="lstInflectionClasses" class="list"></ul>
+      <div id="frmInflectionClass" class="form">
+        <form onsubmit="InflectionClassSubmit(); return false;">
+          <input type="hidden" id="InflectionClassId" />
           <div class="field">
-            <label for="txtParadigmClassTitle">Inflection Class Title</label>
-            <input type="text" id="txtParadigmClassTitle" name="title" required />
+            <label for="txtInflectionClassTitle">Inflection Class Title</label>
+            <input type="text" id="txtInflectionClassTitle" name="title" required />
           </div>
           <div class="field small">
-            <label for="txtParadigmClassDescription">Description</label>
-            <textarea id="txtParadigmClassDescription" name="description"></textarea>
+            <label for="txtInflectionClassDescription">Description</label>
+            <textarea id="txtInflectionClassDescription" name="description"></textarea>
           </div>
           <div class="field-end">
-            <button type="button" id="btnParadigmClassCancel">Cancel</button>
-            <button type="submit" id="btnParadigmClassSubmit"></button>
+            <button type="button" id="btnInflectionClassCancel">Cancel</button>
+            <button type="submit" id="btnInflectionClassSubmit"></button>
           </div>
         </form>
       </div>
-      <div id="frmImportSlots" class="form">
-        <form onsubmit="SlotImportSubmit(); return false;">
+      <div id="frmImportStructures" class="form">
+        <form onsubmit="StructureImportSubmit(); return false;">
           <div class="field">
             <label>Import Script</label>
-            <textarea id="txtSlotImport" rows="15"></textarea>
+            <textarea id="txtStructureImport" rows="15"></textarea>
           </div>
           <div class="field-end">
-            <button type="button" id="btnSlotImportCancel">Cancel</button>
+            <button type="button" id="btnStructureImportCancel">Cancel</button>
             <button type="submit">Submit</button>
           </div>
         </form>
       </div>
-      <div id="frmSlots" class="form">
-        <form onsubmit="SlotsSubmit(); return false;">
-          <input type="hidden" id="SlotId" />
-          <input type="hidden" id="SlotPClassId" />
+      <div id="frmStructures" class="form">
+        <form onsubmit="StructuresSubmit(); return false;">
+          <input type="hidden" id="StructureId" />
+          <input type="hidden" id="StructurePClassId" />
           <div class="field">
-            <label for="txtSlotTitle">Structure Title/Alias</label>
-            <input type="text" id="txtSlotTitle" name="Title" required />
+            <label for="txtStructureTitle">Structure Title/Alias</label>
+            <input type="text" id="txtStructureTitle" name="Title" required />
           </div>
           <div class="field">
-            <label for="txtSlotUniMorphTags">Morphosyntactic Feature</label>
+            <label for="txtStructureUniMorphTags">Morphosyntactic Feature</label>
             <div id="addedUMtags" class="addedUMtags"></div>
-            <div id="SlotUMtagSelector" class="tagSelection"></div>
+            <div id="StructureUMtagSelector" class="tagSelection"></div>
             <div class="unimorph">UniMorph:
-              <input type="text" id="txtSlotUniMorphTags" name="UniMorphTags" requireddisabled />
+              <input type="text" id="txtStructureUniMorphTags" name="UniMorphTags" requireddisabled />
             </div>
           </div>
           <div class="field">
-            <label for="txtSlotFormula">Formula <small>(optional)</small></label>
-            <input type="text" id="txtSlotFormula" name="formula" placeholder="S1+A" />
+            <label for="txtStructureFormula">Formula <small>(optional)</small></label>
+            <input type="text" id="txtStructureFormula" name="formula" placeholder="S1+A" />
             <small>You can use: S1 (stem1), S2 (stem2), A (reusable layer), L (lemma)</small>
           </div>
           <div class="field">
             <label>Reusable Layer <small>(if Formula contains A)</small></label>
-            <select id="cmbSlotAgreementGroup" style="width: 300px;"></select>
+            <select id="cmbStructureReusableLayer" style="width: 300px;"></select>
           </div>
           <div class="field small">
             <label>Order</label>
-            <input type="number" id="txtSlotOrder" name="order" min="0" max="50" step="1" required />
+            <input type="number" id="txtStructureOrder" name="order" min="0" max="50" step="1" required />
           </div>
           <div class="field-end">
-            <button type="button" id="btnSlotsCancel">Cancel</button>
-            <button type="submit" id="btnSlotsSubmit"></button>
+            <button type="button" id="btnStructuresCancel">Cancel</button>
+            <button type="submit" id="btnStructuresSubmit"></button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <div class="accordion-item" id="agreement-accordion">
+  <div class="accordion-item" id="affix-accordion">
     <div class="accordion-header">Reusable Layers</div>
     <div class="accordion-content">
       <label>
-        <span class="addButton" id="btnAddAgreementGroup"><span class="material-icons">add</span> Add</span>
+        <span class="addButton" id="btnAddReusableLayer"><span class="material-icons">add</span> Add</span>
       </label>
       <label>
-        <span class="addButton" id="btnImportAgreements"> <span class="material-icons">download</span> Import</span>
+        <span class="addButton" id="btnImportAffixes"> <span class="material-icons">download</span> Import</span>
       </label>
       <label>
-        <span class="addButton" id="btnExportAgreements"> <span class="material-icons">upload</span> Export</span>
+        <span class="addButton" id="btnExportAffixes"> <span class="material-icons">upload</span> Export</span>
       </label>
-      <ul id="lstAgreementGroups" class="list"></ul>
-      <div id="frmImportAgreement" class="form">
-        <form onsubmit="AgreementImportSubmit(); return false;">
+      <ul id="lstReusableLayers" class="list"></ul>
+      <div id="frmImportAffix" class="form">
+        <form onsubmit="AffixImportSubmit(); return false;">
           <div class="field">
-            <label>Import Agreement Script</label>
-            <textarea id="txtAgreementImport" rows="15"></textarea>
+            <label>Import Affix Script</label>
+            <textarea id="txtAffixImport" rows="15"></textarea>
           </div>
           <div class="field-end">
-            <button type="button" id="btnAgreementImportCancel">Cancel</button>
-            <button type="submit" id="btnAgreementImportSubmit">Submit</button>
+            <button type="button" id="btnAffixImportCancel">Cancel</button>
+            <button type="submit" id="btnAffixImportSubmit">Submit</button>
           </div>
         </form>
       </div>
-      <div id="frmAgreementGroup" class="form">
-        <form onsubmit="AgreementGroupSubmit(); return false;">
-          <input type="hidden" id="AgreementGroupId" />
+      <div id="frmReusableLayer" class="form">
+        <form onsubmit="ReusableLayerSubmit(); return false;">
+          <input type="hidden" id="ReusableLayerId" />
           <div class="field">
             <label>Reusable Layer Title</label>
-            <input type="text" id="txtAgreementGroupTitle" name="title" required />
+            <input type="text" id="txtReusableLayerTitle" name="title" required />
           </div>
           <div class="field-end">
-            <button type="button" id="btnAgreementGroupCancel">Cancel</button>
-            <button type="submit" id="btnAgreementGroupSubmit"></button>
+            <button type="button" id="btnReusableLayerCancel">Cancel</button>
+            <button type="submit" id="btnReusableLayerSubmit"></button>
           </div>
         </form>
       </div>
-      <div id="frmAgreementItem" class="form">
-        <form onsubmit="AgreementItemSubmit(); return false;">
-          <input type="hidden" id="AgreementItemId" />
-          <input type="hidden" id="AgreementItemGroupId" />
+      <div id="frmAffix" class="form">
+        <form onsubmit="AffixSubmit(); return false;">
+          <input type="hidden" id="AffixId" />
+          <input type="hidden" id="AffixGroupId" />
           <div class="field">
-            <label for="txtAgreementItemTitle">Reusable Morpheme Title/Alias</label>
-            <input type="text" id="txtAgreementItemTitle" name="Title" placeholder="1st person singular" required />
+            <label for="txtAffixTitle">Reusable Morpheme Title/Alias</label>
+            <input type="text" id="txtAffixTitle" name="Title" placeholder="1st person singular" required />
           </div>
           <div class="field">
-            <label for="txtAgreementItemRealization">Morpheme</label>
-            <input type="text" id="txtAgreementItemRealization" name="Realization" required />
+            <label for="txtAffixRealization">Morpheme</label>
+            <input type="text" id="txtAffixRealization" name="Realization" required />
           </div>
           <div class="field">
-            <label for="txtAgreementItemUniMorphTags">Morphosyntactic Feature</label>
+            <label for="txtAffixUniMorphTags">Morphosyntactic Feature</label>
             <div id="addedUMtagsA" class="addedUMtags"></div>
-            <div id="AgreementUMtagSelector" class="tagSelection"></div>
+            <div id="AffixUMtagSelector" class="tagSelection"></div>
             <div class="unimorph">UniMorph:
-              <input type="text" id="txtAgreementItemUniMorphTags" name="UniMorphTags" required disabled />
+              <input type="text" id="txtAffixUniMorphTags" name="UniMorphTags" required disabled />
             </div>
           </div>
           <div class="field small">
             <label>Order</label>
-            <input type="number" id="txtAgreementItemOrder" name="order" min="0" max="50" step="1" required />
+            <input type="number" id="txtAffixOrder" name="order" min="0" max="50" step="1" required />
           </div>
           <div class="field-end">
-            <button type="button" id="btnAgreementItemCancel">Cancel</button>
-            <button type="submit" id="btnAgreementItemSubmit"></button>
+            <button type="button" id="btnAffixCancel">Cancel</button>
+            <button type="submit" id="btnAffixSubmit"></button>
           </div>
         </form>
       </div>
@@ -186,7 +186,7 @@
           <input type="hidden" id="LemmaId" />
           <div class="field">
             <label>Inflection Class</label>
-            <select id="cmbLemmaParadigmClass" style="width: 300px;" required></select>
+            <select id="cmbLemmaInflectionClass" style="width: 300px;" required></select>
           </div>
           <div class="field">
             <label>Gloss (Meaning)</label>
@@ -280,21 +280,21 @@
 <script src="/js/myLang.js" asp-append-version="true"></script>
 <script src="/js/UM_tags.js" asp-append-version="true"></script>
 <script src="/js/linguist.js" asp-append-version="true"></script>
-<script src="/js/lemmas.js" asp-append-version="true"></script>
-<script src="/js/slots.js" asp-append-version="true"></script>
-<script src="/js/agreements.js" asp-append-version="true"></script>
+<script src="/js/lexicon.js" asp-append-version="true"></script>
+<script src="/js/structures.js" asp-append-version="true"></script>
+<script src="/js/affixes.js" asp-append-version="true"></script>
 <script src="/js/morphophonology.js" asp-append-version="true"></script>
 <script>
   $(document).ready(function () {
     $('#frmLang').hide();
-    $('#frmParadigmClass').hide();
-    $('#frmAgreementGroup').hide();
-    $('#frmImportAgreement').hide();
-    $('#frmImportSlots').hide();
+    $('#frmInflectionClass').hide();
+    $('#frmReusableLayer').hide();
+    $('#frmImportAffix').hide();
+    $('#frmImportStructures').hide();
     $('#frmImportLemmas').hide();
     $('#frmLemmas').hide();
-    $('#frmSlots').hide();
-    $('#frmAgreementItem').hide();
+    $('#frmStructures').hide();
+    $('#frmAffix').hide();
     $('#popup').hide();
   });
 </script>

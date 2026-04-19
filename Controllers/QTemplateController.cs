@@ -38,18 +38,18 @@ namespace common_morph_backend.Controllers
       using var connection = new NpgsqlConnection(connectionString);
       var available = connection.Query(@$"
 SELECT DISTINCT  s.title AS stitle, a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM slots s
-INNER JOIN paradigmclasses p ON p.id = s.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
+FROM structures s
+INNER JOIN inflectionclasses p ON p.id = s.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
 WHERE p.langid = {langid} AND s.unimorphtags || ';' || a.unimorphtags IN
 (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = '{metalang}')
 ORDER BY s.title, a.title").ToList();
-      // search for slots without agreement
+      // search for structures without affixes
       var availableWithoutAgr = connection.Query(@$"
 SELECT DISTINCT s.title AS stitle, s.unimorphtags AS tags
-FROM slots s
-INNER JOIN paradigmclasses p ON p.id = s.paradigmclassid
+FROM structures s
+INNER JOIN inflectionclasses p ON p.id = s.inflectionclassid
 WHERE p.langid = {langid} AND s.formula NOT LIKE '%A%' AND s.unimorphtags IN
 (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = '{metalang}')
 ORDER BY s.title").ToList();
@@ -71,18 +71,18 @@ ORDER BY s.title").ToList();
 
       var unavailable = connection.Query(@$"
 SELECT DISTINCT  s.title AS stitle, a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM slots s
-INNER JOIN paradigmclasses p ON p.id = s.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
+FROM structures s
+INNER JOIN inflectionclasses p ON p.id = s.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
 WHERE p.langid = {langid} AND s.unimorphtags || ';' || a.unimorphtags NOT IN
 (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = '{metalang}')
 ORDER BY s.title, a.title").ToList();
-      // search for slots without agreement
+      // search for structures without affixes
       var unavailableWithoutAgr = connection.Query(@$"
 SELECT DISTINCT s.title AS stitle, s.unimorphtags AS tags
-FROM slots s
-INNER JOIN paradigmclasses p ON p.id = s.paradigmclassid
+FROM structures s
+INNER JOIN inflectionclasses p ON p.id = s.inflectionclassid
 WHERE p.langid = {langid} AND s.formula NOT LIKE '%A%' AND s.unimorphtags NOT IN
 (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = '{metalang}')
 ORDER BY s.title").ToList();

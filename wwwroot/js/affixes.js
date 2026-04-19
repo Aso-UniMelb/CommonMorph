@@ -1,37 +1,37 @@
-// ========= Agreement Groups
-AgreementGroups = [];
+// ========= ReusableLayers
+ReusableLayers = [];
 
-function getAgreementGroups(langId) {
+function getReusableLayers(langId) {
   $('.loading').show();
   $.ajax({
-    url: '/Agreement/listGroups',
+    url: '/Affix/listLayers',
     type: 'GET',
     data: {
       langId: langId,
     },
     success: function (data) {
       $('.loading').hide();
-      AgreementGroups = data;
+      ReusableLayers = data;
       let html = '';
-      $('#cmbSlotAgreementGroup').empty();
-      $('#cmbSlotAgreementGroup').append(`<option value="0">-</option>`);
-      for (let i = 0; i < AgreementGroups.length; i++) {
-        $('#cmbSlotAgreementGroup').append(
-          `<option value="${AgreementGroups[i].id}">${AgreementGroups[i].title}</option>`
+      $('#cmbStructureReusableLayer').empty();
+      $('#cmbStructureReusableLayer').append(`<option value="0">-</option>`);
+      for (let i = 0; i < ReusableLayers.length; i++) {
+        $('#cmbStructureReusableLayer').append(
+          `<option value="${ReusableLayers[i].id}">${ReusableLayers[i].title}</option>`
         );
-        html += `<li id="AG_${AgreementGroups[i].id}">
+        html += `<li id="AG_${ReusableLayers[i].id}">
         <div class="list-title">
-          <div id="AGT_${AgreementGroups[i].id}" class="agreementGroup">${AgreementGroups[i].title}</div>
+          <div id="AGT_${ReusableLayers[i].id}" class="reusableLayer">${ReusableLayers[i].title}</div>
           <div>
-            <span class="smallButton AddAgreemnt" data-AG="${AgreementGroups[i].id}"><span class="material-icons">add_circle</span></span>
-            <span class="smallButton" onclick="RenameAgreementGroup(${AgreementGroups[i].id})"><span class="material-icons">edit</span></span>
+            <span class="smallButton AddAgreemnt" data-AG="${ReusableLayers[i].id}"><span class="material-icons">add_circle</span></span>
+            <span class="smallButton" onclick="RenameReusableLayer(${ReusableLayers[i].id})"><span class="material-icons">edit</span></span>
           </div>
         </div>
-        <ul class="agreementItems"></ul>
+        <ul class="affixes"></ul>
         </li>`;
       }
-      $('#lstAgreementGroups').html(html);
-      $('.agreementItems').toggle();
+      $('#lstReusableLayers').html(html);
+      $('.affixes').toggle();
     },
     error: function (data) {
       console.log(data);
@@ -41,26 +41,26 @@ function getAgreementGroups(langId) {
 
 //
 $(document).ready(function () {
-  $(document).on('click', '.agreementGroup', function (event) {
+  $(document).on('click', '.reusableLayer', function (event) {
     event.stopPropagation();
-    GetItems($(this).parent().parent());
+    GetAffixes($(this).parent().parent());
   });
 });
 
-function GetItems(AG) {
+function GetAffixes(AG) {
   let ul = AG.children('ul');
   if (AG.attr('data-opened') != 'true') {
     $('.loading').show();
     $.ajax({
-      url: '/Agreement/listItems',
+      url: '/Affix/listAffixes',
       type: 'GET',
       data: {
-        agreementgroupId: AG.attr('id').replace('AG_', ''),
+        reusablelayerid: AG.attr('id').replace('AG_', ''),
       },
       success: function (data) {
         $('.loading').hide();
         for (let i = 0; i < data.length; i++) {
-          ul.append(`<li class="" onclick="EditAgreementItem(${data[i].id})">
+          ul.append(`<li class="" onclick="EditAffix(${data[i].id})">
           ${data[i].realization} <small>(${data[i].title})</small>
           </li>`);
         }
@@ -75,24 +75,24 @@ function GetItems(AG) {
   AG.toggleClass('opened');
 }
 //
-function EditAgreementItem(id) {
+function EditAffix(id) {
   $('.loading').show();
   $.ajax({
-    url: '/Agreement/getItem',
+    url: '/Affix/getAffix',
     type: 'GET',
     data: {
       id: id,
     },
     success: function (data) {
-      $('#txtAgreementItemUniMorphTags').val(data.unimorphtags);
+      $('#txtAffixUniMorphTags').val(data.unimorphtags);
       updateAggrementUMselects(data.unimorphtags.split(/[;+]/));
-      $('#txtAgreementItemTitle').val(data.title);
-      $('#txtAgreementItemRealization').val(data.realization);
-      $('#AgreementItemId').val(data.id);
-      $('#txtAgreementItemOrder').val(data.order);
-      $('#AgreementItemGroupId').val(data.agreementgroupid);
-      $('#btnAgreementItemSubmit').html('Save');
-      $('#frmAgreementItem').show();
+      $('#txtAffixTitle').val(data.title);
+      $('#txtAffixRealization').val(data.realization);
+      $('#AffixId').val(data.id);
+      $('#txtAffixOrder').val(data.order);
+      $('#AffixGroupId').val(data.reusablelayerid);
+      $('#btnAffixSubmit').html('Save');
+      $('#frmAffix').show();
       $('.loading').hide();
     },
     error: function (data) {
@@ -102,53 +102,53 @@ function EditAgreementItem(id) {
 }
 // add agreemnt items
 $(document).on('click', '.AddAgreemnt', function (event) {
-  $('#frmAgreementItem').show();
-  $('#txtAgreementItemUniMorphTags').val('');
-  $('#txtAgreementItemTitle').val('');
-  $('#txtAgreementItemRealization').val('');
-  $('#AgreementItemId').val('');
-  $('#txtAgreementItemOrder').val('1');
-  $('#btnAgreementItemSubmit').html('Add');
-  $('#AgreementItemGroupId').val($(this).attr('data-AG'));
+  $('#frmAffix').show();
+  $('#txtAffixUniMorphTags').val('');
+  $('#txtAffixTitle').val('');
+  $('#txtAffixRealization').val('');
+  $('#AffixId').val('');
+  $('#txtAffixOrder').val('1');
+  $('#btnAffixSubmit').html('Add');
+  $('#AffixGroupId').val($(this).attr('data-AG'));
   updateAggrementUMselects([]);
 });
 
-$('#btnAgreementItemCancel').click(function () {
-  $('#frmAgreementItem').hide();
+$('#btnAffixCancel').click(function () {
+  $('#frmAffix').hide();
 });
 
-function AgreementItemSubmit() {
-  if ($('#btnAgreementItemSubmit').html() == 'Add') {
-    insertAgreementItem();
+function AffixSubmit() {
+  if ($('#btnAffixSubmit').html() == 'Add') {
+    insertAffix();
   } else {
-    updateAgreementItem();
+    updateAffix();
   }
 }
 
-function insertAgreementItem() {
+function insertAffix() {
   $('.loading').show();
-  let AG = $('#AgreementItemGroupId').val();
-  let realization = $('#txtAgreementItemRealization').val().trim();
-  let title = $('#txtAgreementItemTitle').val().trim();
-  let order = $('#txtAgreementItemOrder').val();
+  let AG = $('#AffixGroupId').val();
+  let realization = $('#txtAffixRealization').val().trim();
+  let title = $('#txtAffixTitle').val().trim();
+  let order = $('#txtAffixOrder').val();
   $.ajax({
-    url: '/Agreement/insertItem',
+    url: '/Affix/insertAffix',
     type: 'POST',
     data: {
-      unimorphtags: UM_Sort($('#txtAgreementItemUniMorphTags').val().trim()),
+      unimorphtags: UM_Sort($('#txtAffixUniMorphTags').val().trim()),
       title: title,
       realization: realization,
       order: order,
-      agreementgroupid: AG,
+      reusablelayerid: AG,
     },
     success: function (data) {
       $('.loading').hide();
-      $('#frmAgreementItem').hide();
+      $('#frmAffix').hide();
       let sublist = $('#AG_' + AG).children('ul');
-      let newItem = $(`<li class="" id="A_${data}">
+      let newAffix = $(`<li class="" id="A_${data}">
         <span>${title} <small>(${realization})</small></span>
         </li>`);
-      sublist.append(newItem);
+      sublist.append(newAffix);
     },
     error: function (data) {
       alert('Error');
@@ -156,30 +156,30 @@ function insertAgreementItem() {
   });
 }
 
-function updateAgreementItem() {
+function updateAffix() {
   $('.loading').show();
-  let AG = $('#AgreementItemGroupId').val();
-  let realization = $('#txtAgreementItemRealization').val().trim();
-  let title = $('#txtAgreementItemTitle').val().trim();
-  let order = $('#txtAgreementItemOrder').val();
+  let AG = $('#AffixGroupId').val();
+  let realization = $('#txtAffixRealization').val().trim();
+  let title = $('#txtAffixTitle').val().trim();
+  let order = $('#txtAffixOrder').val();
   $.ajax({
-    url: '/Agreement/updateItem',
+    url: '/Affix/updateAffix',
     type: 'POST',
     data: {
-      id: $('#AgreementItemId').val(),
-      unimorphtags: UM_Sort($('#txtAgreementItemUniMorphTags').val().trim()),
+      id: $('#AffixId').val(),
+      unimorphtags: UM_Sort($('#txtAffixUniMorphTags').val().trim()),
       title: title,
       realization: realization,
       order: order,
-      agreementgroupid: AG,
+      reusablelayerid: AG,
     },
     success: function (data) {
       $('.loading').hide();
-      $('#frmAgreementItem').hide();
+      $('#frmAffix').hide();
       let e = $('#AG_' + AG);
       e.children('ul').children('li').remove();
       e.attr('data-opened', 'false');
-      GetItems(e);
+      GetAffixes(e);
     },
     error: function (data) {
       alert('Error');
@@ -187,52 +187,52 @@ function updateAgreementItem() {
   });
 }
 
-// ======= Add/rename agreement groups
-function AgreementGroupSubmit() {
-  if ($('#btnAgreementGroupSubmit').html() == 'Add') {
-    insertAgreementGroup();
+// ======= Add/rename reusable layers
+function ReusableLayerSubmit() {
+  if ($('#btnReusableLayerSubmit').html() == 'Add') {
+    insertReusableLayer();
   } else {
-    updateAgreementGroup();
+    updateReusableLayer();
   }
 }
 
-$('#btnAgreementGroupCancel').click(function () {
-  $('#frmAgreementGroup').hide();
+$('#btnReusableLayerCancel').click(function () {
+  $('#frmReusableLayer').hide();
 });
 
-// add agreement group
-$('#btnAddAgreementGroup').click(function () {
-  $('#frmAgreementGroup').show();
-  $('#AgreementGroupId').val('');
-  $('#txtAgreementGroupTitle').val('');
-  $('#btnAgreementGroupSubmit').html('Add');
+// add reusable layer
+$('#btnAddReusableLayer').click(function () {
+  $('#frmReusableLayer').show();
+  $('#ReusableLayerId').val('');
+  $('#txtReusableLayerTitle').val('');
+  $('#btnReusableLayerSubmit').html('Add');
 });
 
-function insertAgreementGroup() {
+function insertReusableLayer() {
   $('.loading').show();
-  let title = $('#txtAgreementGroupTitle').val().trim();
+  let title = $('#txtReusableLayerTitle').val().trim();
   $.ajax({
-    url: '/Agreement/insertGroup',
+    url: '/Affix/insertLayer',
     type: 'POST',
     data: {
       title: title,
       langid: myLang.id,
     },
     success: function (data) {
-      AgreementGroups.push({ Id: data, Title: title });
-      $('#frmAgreementGroup').hide();
-      $('#cmbSlotAgreementGroup').append(
+      ReusableLayers.push({ Id: data, Title: title });
+      $('#frmReusableLayer').hide();
+      $('#cmbStructureReusableLayer').append(
         `<option value="${data}">${title}</option>`
       );
-      $('#lstAgreementGroups').append(`<li id="AG_${data}">
+      $('#lstReusableLayers').append(`<li id="AG_${data}">
         <div class="list-title">
-          <div id="AGT_${data}" class="agreementGroup">${title}</div>
+          <div id="AGT_${data}" class="reusableLayer">${title}</div>
           <div>
             <span class="smallButton AddAgreemnt" data-AG="${data}"><span class="material-icons">add_circle</span></span>
-            <span class="smallButton" onclick="RenameAgreementGroup(${data})"><span class="material-icons">edit</span></span>
+            <span class="smallButton" onclick="RenameReusableLayer(${data})"><span class="material-icons">edit</span></span>
           </div>
         </div>
-        <ul class="agreementItems"></ul>
+        <ul class="affixes"></ul>
         </li>`);
       $('.loading').hide();
     },
@@ -242,22 +242,22 @@ function insertAgreementGroup() {
   });
 }
 
-// rename agreement group
-function RenameAgreementGroup(id) {
-  $('#frmAgreementGroup').show();
-  $('#btnAgreementGroupSubmit').html('Save');
-  $('#txtAgreementGroupTitle').val(
-    AgreementGroups.find((x) => x.id == id).title
+// rename reusable layer
+function RenameReusableLayer(id) {
+  $('#frmReusableLayer').show();
+  $('#btnReusableLayerSubmit').html('Save');
+  $('#txtReusableLayerTitle').val(
+    ReusableLayers.find((x) => x.id == id).title
   );
-  $('#AgreementGroupId').val(id);
+  $('#ReusableLayerId').val(id);
 }
 
-function updateAgreementGroup() {
-  let id = $('#AgreementGroupId').val();
-  let title = $('#txtAgreementGroupTitle').val().trim();
+function updateReusableLayer() {
+  let id = $('#ReusableLayerId').val();
+  let title = $('#txtReusableLayerTitle').val().trim();
   $('.loading').show();
   $.ajax({
-    url: '/Agreement/updateGroup',
+    url: '/Affix/updateLayer',
     type: 'POST',
     data: {
       id: id,
@@ -266,9 +266,9 @@ function updateAgreementGroup() {
     },
     success: function (data) {
       $('.loading').hide();
-      AgreementGroups.find((x) => x.id == id).title = title;
+      ReusableLayers.find((x) => x.id == id).title = title;
       $('#AGT_' + id).html(title);
-      $('#frmAgreementGroup').hide();
+      $('#frmReusableLayer').hide();
     },
     error: function (data) {
       alert('Error');
@@ -277,7 +277,7 @@ function updateAgreementGroup() {
 }
 
 // UMtagSelector
-$('#AgreementUMtagSelector').append(
+$('#AffixUMtagSelector').append(
   `<div class="UMtagSelector"><div><i>Add feature:</i></div>
     <label>Dimension:</label>
     <select id="dimensionA"></select>
@@ -333,7 +333,7 @@ function UpdateUniMorphTagSetA() {
     let feat = $(added[i]).attr('id').replace('F_', '');
     tagset.push(feat);
   }
-  $('#txtAgreementItemUniMorphTags').val(UM_Sort(tagset.join(';')));
+  $('#txtAffixUniMorphTags').val(UM_Sort(tagset.join(';')));
 }
 
 function updateAggrementUMselects(tagset) {
@@ -348,32 +348,32 @@ function updateAggrementUMselects(tagset) {
   });
 }
 
-// ========= import agreements
+// ========= import affixes
 // show import form
-$('#btnImportAgreements').click(function () {
-  $('#frmImportAgreement').show();
+$('#btnImportAffixes').click(function () {
+  $('#frmImportAffix').show();
 });
 // cancel import form
-$('#btnAgreementImportCancel').click(function () {
-  $('#frmImportAgreement').hide();
+$('#btnAffixImportCancel').click(function () {
+  $('#frmImportAffix').hide();
 });
 // submit import form
-function AgreementImportSubmit() {
+function AffixImportSubmit() {
   // disable the button
-  $('#btnAgreementImportSubmit').attr('disabled', true);
+  $('#btnAffixImportSubmit').attr('disabled', true);
   $('.loading').show();
   $.ajax({
-    url: '/Agreement/import',
+    url: '/Affix/import',
     type: 'POST',
     data: {
-      file: $('#txtAgreementImport').val(),
+      file: $('#txtAffixImport').val(),
       langid: myLang.id,
     },
     success: function (data) {
       $('.loading').hide();
-      $('#frmImportAgreement').hide();
-      $('#btnAgreementImportSubmit').attr('disabled', false);
-      getAgreementGroups(myLang.id);
+      $('#frmImportAffix').hide();
+      $('#btnAffixImportSubmit').attr('disabled', false);
+      getReusableLayers(myLang.id);
     },
     error: function (data) {
       alert('Error');
@@ -381,16 +381,16 @@ function AgreementImportSubmit() {
   });
 }
 
-// export Agreements
-$('#btnExportAgreements').click(async function () {
+// export Affixes
+$('#btnExportAffixes').click(async function () {
   let file = '';
-  for (const ag of AgreementGroups) {
+  for (const ag of ReusableLayers) {
     file += '#' + ag.title + '\n';
     try {
       const response = await fetch(
-        '/Agreement/listItems?' +
+        '/Affix/listAffixes?' +
           new URLSearchParams({
-            AgreementGroupId: ag.id,
+            ReusableLayerId: ag.id,
           })
       );
       if (!response.ok) {
@@ -404,16 +404,16 @@ $('#btnExportAgreements').click(async function () {
           )
           .join('\n') + '\n';
     } catch (error) {
-      console.error('Error fetching slot list:', error);
+      console.error('Error fetching structure list:', error);
     }
   }
   const blob = new Blob([file], { type: 'text/plain' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = myLang.title + '_Agreements.tsv';
+  link.download = myLang.title + '_Affixes.tsv';
   link.click();
 });
 
 $(document).ready(function () {
-  getAgreementGroups(myLang.id);
+  getReusableLayers(myLang.id);
 });

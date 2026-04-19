@@ -1,5 +1,5 @@
 let lemmaPage = 0;
-let slotPage = 0;
+let structurePage = 0;
 let nnPage = 0;
 let dir = 'ltr';
 let rules = [];
@@ -79,16 +79,16 @@ function EntryGetTable(myLangId, pg, type) {
       $('#findReplace').show();
       let pool = data.pool;
 
-      if (type == 'Slot') {
-        let slot = data.slot;
+      if (type == 'Structure') {
+        let structure = data.structure;
         $('#dataentry').append(
-          `<h2>${slot.title}</h2>
+          `<h2>${structure.title}</h2>
           <form id="dataForm"><div id="formFields"></div></form>`
         );
         for (let i = 0; i < pool.length; i++) {
           let C = pool[i];
           let w = WordFromFormula(
-            slot.formula,
+            structure.formula,
             C.lemma,
             C.stem1,
             C.stem2,
@@ -96,12 +96,12 @@ function EntryGetTable(myLangId, pg, type) {
             C.stem4,
             C.a
           );
-          let title = slot.title;
+          let title = structure.title;
           if (C.atitle) {
             title += `| ${C.atitle}`;
           }
           title += ' (' + C.lemma + ')';
-          let ids = `${C.lemmaid},${slot.id},${C.agreementid ?? 0}`;
+          let ids = `${C.lemmaid},${structure.id},${C.affixid ?? 0}`;
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
@@ -140,7 +140,7 @@ function EntryGetTable(myLangId, pg, type) {
           if (C.atitle) {
             title += `, ${C.atitle}`;
           }
-          let ids = `${lemma.id},${C.slotid},${C.agreementid ?? 0}`;
+          let ids = `${lemma.id},${C.structureid},${C.affixid ?? 0}`;
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
@@ -176,7 +176,7 @@ function EntryGetTable(myLangId, pg, type) {
           if (C.atitle) {
             title += `| ${C.atitle}`;
           }
-          let ids = `${C.lemmaid},${C.slotid},${C.agreementid ?? 0}`;
+          let ids = `${C.lemmaid},${C.structureid},${C.affixid ?? 0}`;
           let hint = myLevel == '1' ? title : UM_tag2word(C.tags, myLang.code);
           $('#formFields').append(`
 <div class="field">
@@ -213,7 +213,7 @@ function WordFromFormula(formula, lemma, stem1, stem2, stem3, stem4, agg) {
   w = w.replace(/S2/g, stem2);
   w = w.replace(/S3/g, stem3);
   w = w.replace(/S4/g, stem4);
-  // circumfix agreement
+  // circumfix affix
   if (/A.+A/.test(w)) {
     w = w.replace(/A\+(.+)\+A/g, agg.split('#')[0] + '$1' + agg.split('#')[1]);
   } else {
@@ -224,7 +224,7 @@ function WordFromFormula(formula, lemma, stem1, stem2, stem3, stem4, agg) {
   return w;
 }
 
-function SubmitThisCell(i, lemmaId, slotId, agreementId) {
+function SubmitThisCell(i, lemmaId, structureId, affixId) {
   let submitted = $('#' + i)
     .val()
     .trim();
@@ -236,8 +236,8 @@ function SubmitThisCell(i, lemmaId, slotId, agreementId) {
   let cell = {
     langid: myLang.id,
     lemmaid: lemmaId,
-    slotid: slotId,
-    agreementid: agreementId,
+    structureid: structureId,
+    affixid: affixId,
     submitted: submitted,
   };
   $.ajax({
@@ -272,8 +272,8 @@ function submitall(nextType) {
       let cell = {
         langid: myLang.id,
         lemmaid: dataAttr.split(',')[0],
-        slotid: dataAttr.split(',')[1],
-        agreementid: dataAttr.split(',')[2],
+        structureid: dataAttr.split(',')[1],
+        affixid: dataAttr.split(',')[2],
         submitted: $(this).val(),
       };
       dataToSend.push(cell);
@@ -303,9 +303,9 @@ function getNextPage(type) {
   if (type == 'Lemma') {
     lemmaPage++;
     EntryGetTable(myLang.id, lemmaPage, type);
-  } else if (type == 'Slot') {
-    slotPage++;
-    EntryGetTable(myLang.id, slotPage, type);
+  } else if (type == 'Structure') {
+    structurePage++;
+    EntryGetTable(myLang.id, structurePage, type);
   } else {
     nnPage++;
     EntryGetTable(myLang.id, nnPage, type);
@@ -319,10 +319,10 @@ function getPrevPage(type) {
       lemmaPage--;
       EntryGetTable(myLang.id, lemmaPage, type);
     }
-  } else if (type == 'Slot') {
-    if (slotPage > 2) {
-      slotPage--;
-      EntryGetTable(myLang.id, slotPage, type);
+  } else if (type == 'Structure') {
+    if (structurePage > 2) {
+      structurePage--;
+      EntryGetTable(myLang.id, structurePage, type);
     }
   } else {
     if (nnPage > 2) {
@@ -356,7 +356,7 @@ $(document).ready(function () {
     <lable>Elicitation order:</lable>
     <select id="cmbElicitOrder">
         <option value="Lemma">By Lemma</option>
-        <option value="Slot">By Slot</option>
+        <option value="Structure">By Structure</option>
     </select>
     <span id="pageButtons"></span>
   </div>
@@ -386,10 +386,10 @@ $(document).ready(function () {
       $('#pageButtons').html(`
 <button type="button" class="primary" onclick="getPrevPage('NN')">< Previous</button>
 <button type="button" class="primary" onclick="getNextPage('NN')">Next  ></button>`);
-    } else if ($(this).val() == 'Slot') {
+    } else if ($(this).val() == 'Structure') {
       $('#pageButtons').html(`
-  <button type="button" class="primary" onclick="getPrevPage('Slot')">< Previous</button>
-  <button type="button" class="primary" onclick="getNextPage('Slot')">Next  ></button>`);
+  <button type="button" class="primary" onclick="getPrevPage('Structure')">< Previous</button>
+  <button type="button" class="primary" onclick="getNextPage('Structure')">Next  ></button>`);
     } else {
       $('#pageButtons').html(`
   <button type="button" class="primary" onclick="getPrevPage('Lemma')">< Previous</button>

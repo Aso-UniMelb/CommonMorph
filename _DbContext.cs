@@ -11,11 +11,11 @@ namespace common_morph_backend
     public DbSet<Lang> langs { get; set; }
     public DbSet<UsersLang> userslangs { get; set; }
     public DbSet<UserLog> userlogs { get; set; }
-    public DbSet<ParadigmClass> paradigmclasses { get; set; }
-    public DbSet<AgreementGroup> agreementgroups { get; set; }
-    public DbSet<Agreement> agreements { get; set; }
-    public DbSet<Lemma> lemmas { get; set; }
-    public DbSet<Slot> slots { get; set; }
+    public DbSet<InflectionClass> inflectionclasses { get; set; }
+    public DbSet<ReusableLayer> reusablelayers { get; set; }
+    public DbSet<Affix> affixes { get; set; }
+    public DbSet<Lemma> lexicon { get; set; }
+    public DbSet<Structure> structures { get; set; }
     public DbSet<Cell> cells { get; set; }
     public DbSet<Suggestion> suggestions { get; set; }
     public DbSet<MorphophonemicRule> morphophonemicrules { get; set; }
@@ -86,7 +86,7 @@ namespace common_morph_backend
       public DateTime logdate { get; set; }
     }
 
-    public class ParadigmClass // e.g. TransitiveVerbs
+    public class InflectionClass // e.g. TransitiveVerbs
     {
       [Key]
       public int id { get; set; }
@@ -98,7 +98,7 @@ namespace common_morph_backend
       public bool isdeleted { get; set; }
     }
 
-    public class AgreementGroup // e.g. PresentVerbAgreements
+    public class ReusableLayer // e.g. PresentVerbAgreements
     {
       [Key]
       public int id { get; set; }
@@ -106,11 +106,11 @@ namespace common_morph_backend
       public int langid { get; set; }
     }
 
-    public class Agreement // e.g. -s (for 3;SG)
+    public class Affix // e.g. -s (for 3;SG)
     {
       [Key]
       public int id { get; set; }
-      public int agreementgroupid { get; set; }
+      public int reusablelayerid { get; set; }
       public string title { get; set; }
       public string unimorphtags { get; set; }
       public string realization { get; set; }
@@ -131,7 +131,7 @@ namespace common_morph_backend
       public int id { get; set; }
       [StringLength(25)]
       public string entry { get; set; }
-      public int paradigmclassid { get; set; }
+      public int inflectionclassid { get; set; }
       public string? stem1 { get; set; }
       public string? stem2 { get; set; }
       public string? stem3 { get; set; }
@@ -142,7 +142,7 @@ namespace common_morph_backend
       public bool isdeleted { get; set; }
     }
 
-    public class Slot // Paradigm Slots, e.g. 'V;PST' with formula 'S+ed'
+    public class Structure // Paradigm structure, e.g. 'V;PST' with formula 'S+ed'
     {
       [Key]
       public int id { get; set; }
@@ -150,8 +150,8 @@ namespace common_morph_backend
       public string? unimorphtags { get; set; }
       public string? formula { get; set; }
       public int order { get; set; }
-      public int paradigmclassid { get; set; }
-      public int agreementgroupid { get; set; }
+      public int inflectionclassid { get; set; }
+      public int reusablelayerid { get; set; }
       public bool isdeleted { get; set; }
     }
 
@@ -161,8 +161,8 @@ namespace common_morph_backend
       public int id { get; set; }
       public int langid { get; set; }
       public int lemmaid { get; set; }
-      public int slotid { get; set; }
-      public int agreementid { get; set; }
+      public int structureid { get; set; }
+      public int affixid { get; set; }
       public string submitted { get; set; }
       public int byuserid { get; set; } // userId should be checked. the user submitted it should not rate the same cell
       public DateTime datesubmitted { get; set; }

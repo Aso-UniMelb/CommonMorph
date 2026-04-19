@@ -54,7 +54,7 @@ function getForEntry(myLangId, pg) {
             <div class="field-nowrap">
               <label>${i18n[myMetalang]['elicit_answer']}:</label>
               <input type="text" id="txtSubmittingForm" required>
-              <button type="button" onclick="SubmitCell(${C.lemmaid}, ${C.slotid}, ${C.agreementid})" class="approve" >
+              <button type="button" onclick="SubmitCell(${C.lemmaid}, ${C.structureid}, ${C.affixid})" class="approve" >
                 <span class="material-icons">done</span>
               </button>
             </div>
@@ -171,7 +171,7 @@ function acceptSuggestion(suggestion) {
   $('#txtSubmittingForm').val(suggestion);
 }
 
-function SubmitCell(lemmaId, slotId, agreementId) {
+function SubmitCell(lemmaId, structureId, affixId) {
   let submitted = $('#txtSubmittingForm').val().trim();
   if (submitted === '') {
     $('#txtSubmittingForm').focus();
@@ -181,8 +181,8 @@ function SubmitCell(lemmaId, slotId, agreementId) {
   let cell = {
     langid: myLang.id,
     lemmaid: lemmaId,
-    slotid: slotId,
-    agreementid: agreementId,
+    structureid: structureId,
+    affixid: affixId,
     submitted: submitted,
   };
   $.ajax({

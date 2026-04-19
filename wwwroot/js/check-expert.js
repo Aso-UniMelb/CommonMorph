@@ -1,5 +1,5 @@
 let lemmaPage = 0;
-let slotPage = 0;
+let structurePage = 0;
 let dir = 'ltr';
 
 function CheckGetTable(myLangId, pg, type) {
@@ -22,8 +22,8 @@ function CheckGetTable(myLangId, pg, type) {
       }
       let pool = data.pool;
 
-      if (type == 'Slot') {
-        let S = data.slot;
+      if (type == 'Structure') {
+        let S = data.structure;
         $('#checking').append(
           `<h2>${S.title}</h2>
           <form id="dataForm"><div id="formFields"></div></form>`
@@ -161,8 +161,8 @@ function getNextPage(type) {
     lemmaPage++;
     CheckGetTable(myLang.id, lemmaPage, type);
   } else {
-    slotPage++;
-    CheckGetTable(myLang.id, slotPage, type);
+    structurePage++;
+    CheckGetTable(myLang.id, structurePage, type);
   }
 }
 function getPrevPage(type) {
@@ -173,9 +173,9 @@ function getPrevPage(type) {
       CheckGetTable(myLang.id, lemmaPage, type);
     }
   } else {
-    if (slotPage > 1) {
-      slotPage--;
-      CheckGetTable(myLang.id, slotPage, type);
+    if (structurePage > 1) {
+      structurePage--;
+      CheckGetTable(myLang.id, structurePage, type);
     }
   }
 }
@@ -191,7 +191,7 @@ $(document).ready(function () {
     <lable>Chcking order:</lable>
     <select id="cmbElicitOrder">
         <option value="Lemma">By Lemma</option>
-        <option value="Slot">By Slot</option>
+        <option value="Structure">By Structure</option>
     </select>
     <span id="pageButtons"></span>
   </div>
@@ -203,10 +203,10 @@ $(document).ready(function () {
       $('#pageButtons').html(`
 <button type="button" class="primary" onclick="getPrevPage('NN')">< Previous</button>
 <button type="button" class="primary" onclick="getNextPage('NN')">Next  ></button>`);
-    } else if ($(this).val() == 'Slot') {
+    } else if ($(this).val() == 'Structure') {
       $('#pageButtons').html(`
-  <button type="button" class="primary" onclick="getPrevPage('Slot')">< Previous</button>
-  <button type="button" class="primary" onclick="getNextPage('Slot')">Next  ></button>`);
+  <button type="button" class="primary" onclick="getPrevPage('Structure')">< Previous</button>
+  <button type="button" class="primary" onclick="getNextPage('Structure')">Next  ></button>`);
     } else {
       $('#pageButtons').html(`
   <button type="button" class="primary" onclick="getPrevPage('Lemma')">< Previous</button>

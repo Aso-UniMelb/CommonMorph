@@ -31,8 +31,8 @@ namespace common_morph_backend.Controllers
       // list all languages that have lexical data
       var lexiconStats = connection.Query(@$"
 SELECT langs.id AS langid, langs.title, langs.code, COUNT(*) AS cnt
-FROM lemmas l
-INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 INNER JOIN langs ON langs.id = pc.langid
 GROUP BY langs.id, langs.title, langs.code
 ORDER BY cnt DESC").ToList();
@@ -73,16 +73,16 @@ ORDER BY cnt DESC");
         case "unimorph":
           var result = connection.Query(@$"
 SELECT 
-	(SELECT entry FROM lemmas WHERE id = c.lemmaid) AS lemma,
+	(SELECT entry FROM lexicon WHERE id = c.lemmaid) AS lemma,
 	c.submitted AS form,
-	(SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
-	(SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags,
+	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
+	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
 WHERE c.langid = {langid}
-GROUP BY c.id, c.agreementid, c.slotid, c.lemmaid, c.submitted, r.rate
-ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
+GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
+ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
           foreach (var record in result)
           {
             var tags = record.stags;
@@ -97,21 +97,21 @@ ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
 SELECT 
 	c.lemmaid AS lemmaid,
 	c.submitted AS form,
-	(SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
-	(SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags,
-	(SELECT realization  FROM agreements WHERE id = c.agreementid) AS affix,
-  (SELECT formula  FROM slots WHERE id = c.slotid) AS formula,
+	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
+	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
+	(SELECT realization  FROM affixes WHERE id = c.affixid) AS affix,
+  (SELECT formula  FROM structures WHERE id = c.structureid) AS formula,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
 WHERE c.langid = {langid}
-GROUP BY c.id, c.agreementid, c.slotid, c.lemmaid, c.submitted, r.rate
-ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
+GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
+ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
 
           var lemmas = connection.Query(@$"
 SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
-FROM lemmas l
-INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
           sb.AppendLine("LEMMA\tFORM\tTAGS\tGLOSS\tCLASS\tFORMULA\tAFFIX\tSTEM1\tSTEM2\tSTEM3\tSTEM4");
           foreach (var form in forms)
@@ -129,8 +129,8 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
         case "lexicon":
           var lexicon = connection.Query(@$"
 SELECT l.entry AS lemma, pc.title AS classtitle, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
-FROM lemmas l
-INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 INNER JOIN langs ON langs.id = pc.langid
 WHERE pc.langid = {langid} AND l.isdeleted is FALSE
 ORDER BY l.entry");

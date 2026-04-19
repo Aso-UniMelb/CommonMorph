@@ -9,74 +9,74 @@ using System.Security.Claims;
 namespace common_morph_backend.Controllers
 {
   [Route("[controller]")]
-  public class AgreementController : Controller
+  public class AffixController : Controller
   {
     private readonly AppDbContext _context;
-    public AgreementController(AppDbContext context)
+    public AffixController(AppDbContext context)
     {
       _context = context;
     }
 
-    [HttpGet("listGroups")]
-    public IActionResult listGroups(int LangId)
+    [HttpGet("listLayers")]
+    public IActionResult listLayers(int LangId)
     {
-      return Ok(_context.agreementgroups
+      return Ok(_context.reusablelayers
       .Where(x => x.langid == LangId)
       .Select(x => new { x.id, x.title }).ToList());
     }
 
-    [HttpGet("getGroup")]
-    public IActionResult getGroup(int id)
+    [HttpGet("getLayer")]
+    public IActionResult getLayer(int id)
     {
-      return Ok(_context.agreementgroups.FirstOrDefault(x => x.id == id));
+      return Ok(_context.reusablelayers.FirstOrDefault(x => x.id == id));
     }
 
-    [HttpPost("insertGroup")]
-    public IActionResult insertGroup(AgreementGroup agr)
+    [HttpPost("insertLayer")]
+    public IActionResult insertLayer(ReusableLayer agr)
     {
-      if (_context.agreementgroups.Any(x => x.title == agr.title && x.langid == agr.langid))
+      if (_context.reusablelayers.Any(x => x.title == agr.title && x.langid == agr.langid))
         return BadRequest("duplicate");
 
-      _context.agreementgroups.Add(agr);
+      _context.reusablelayers.Add(agr);
       _context.SaveChanges();
       var id = agr.id;
       return Ok(id.ToString());
     }
 
-    [HttpPost("updateGroup")]
-    public IActionResult updateGroup(AgreementGroup agr)
+    [HttpPost("updateLayer")]
+    public IActionResult updateLayer(ReusableLayer agr)
     {
-      var old = _context.agreementgroups.FirstOrDefault(x => x.id == agr.id);
+      var old = _context.reusablelayers.FirstOrDefault(x => x.id == agr.id);
       if (old == null)
         return BadRequest("not exist");
       _context.Entry(old).State = EntityState.Detached;
-      _context.agreementgroups.Update(agr);
+      _context.reusablelayers.Update(agr);
       _context.SaveChanges();
       return Ok(agr.id.ToString());
     }
     // ============
 
-    [HttpGet("listItems")]
-    public IActionResult listItems(int AgreementGroupId)
+    [HttpGet("listAffixes")]
+    public IActionResult listAffixes(int ReusableLayerId)
     {
-      return Ok(_context.agreements
-      .Where(x => x.agreementgroupid == AgreementGroupId && x.isdeleted == false)
+      return Ok(_context.affixes
+      .Where(x => x.reusablelayerid == ReusableLayerId && x.isdeleted == false)
       .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags }).OrderBy(x => x.order).ToList());
     }
 
-    [HttpGet("getItem")]
-    public IActionResult getItem(int id)
+    [HttpGet("getAffix")]
+    public IActionResult getAffix(int id)
     {
-      return Ok(_context.agreements.FirstOrDefault(x => x.id == id));
+      return Ok(_context.affixes.FirstOrDefault(x => x.id == id));
     }
 
-    [HttpPost("insertItem")]
-    public IActionResult insertItem(Agreement agr)
+    [HttpPost("insertAffix")]
+    public IActionResult insertAffix(Affix agr)
     {
-      if (_context.agreements.Any(x => x.unimorphtags == agr.unimorphtags && x.agreementgroupid == agr.agreementgroupid))
+      if (_context.affixes.Any(x => x.unimorphtags == agr.unimorphtags && x.reusablelayerid == agr.reusablelayerid))
         return BadRequest("duplicate");
 
-      _context.agreements.Add(agr);
+      _context.affixes.Add(agr);
 
       _context.SaveChanges();
 
@@ -84,7 +84,7 @@ namespace common_morph_backend.Controllers
       // log
       var userLog = new UserLog()
       {
-        log = $"Inserted agreement {agr.id}",
+        log = $"Inserted affix {agr.id}",
         userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value),
         logdate = DateTime.UtcNow
       };
@@ -93,14 +93,14 @@ namespace common_morph_backend.Controllers
       return Ok(id.ToString());
     }
 
-    [HttpPost("updateItem")]
-    public IActionResult updateItem(Agreement agr)
+    [HttpPost("updateAffix")]
+    public IActionResult updateAffix(Affix agr)
     {
-      var old = _context.agreements.FirstOrDefault(x => x.id == agr.id);
+      var old = _context.affixes.FirstOrDefault(x => x.id == agr.id);
       if (old == null)
         return BadRequest("not exist");
       _context.Entry(old).State = EntityState.Detached;
-      _context.agreements.Update(agr);
+      _context.affixes.Update(agr);
       _context.SaveChanges();
       return Ok(agr.id.ToString());
     }
@@ -116,18 +116,18 @@ namespace common_morph_backend.Controllers
         var line = l.Trim();
         if (line.StartsWith("#"))
         {
-          var agrGr = new AgreementGroup()
+          var agrGr = new ReusableLayer()
           {
             title = line.Replace("#", "").Trim(),
             langid = langid
           };
-          if (_context.agreementgroups.Any(x => x.title == agrGr.title && x.langid == agrGr.langid))
+          if (_context.reusablelayers.Any(x => x.title == agrGr.title && x.langid == agrGr.langid))
           {
-            curGroupId = _context.agreementgroups.FirstOrDefault(x => x.title == agrGr.title && x.langid == agrGr.langid).id;
+            curGroupId = _context.reusablelayers.FirstOrDefault(x => x.title == agrGr.title && x.langid == agrGr.langid).id;
           }
           else
           {
-            _context.agreementgroups.Add(agrGr);
+            _context.reusablelayers.Add(agrGr);
             _context.SaveChanges();
             curGroupId = agrGr.id;
           }
@@ -136,15 +136,15 @@ namespace common_morph_backend.Controllers
         {
           if (!string.IsNullOrEmpty(line) && line.Trim().Length > 1)
           {
-            var agr = new Agreement()
+            var agr = new Affix()
             {
               order = Int32.Parse(line.Split('\t')[0].Trim()),
               unimorphtags = line.Split('\t')[1].Trim(),
               realization = line.Split('\t')[2].Trim(),
               title = line.Split('\t')[3].Trim(),
-              agreementgroupid = curGroupId,
+              reusablelayerid = curGroupId,
             };
-            _context.agreements.Add(agr);
+            _context.affixes.Add(agr);
             _context.SaveChanges();
           }
         }

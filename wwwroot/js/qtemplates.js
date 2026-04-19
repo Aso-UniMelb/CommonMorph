@@ -77,7 +77,7 @@ function renderForm() {
 
   $('#questionForm').html(`
 <form id="form" onsubmit="QTemplateSubmit(); return false;" dir="${dir}">
-  <div class="paradigm_features"></div>
+  <div class="inflectional_features"></div>
   ${i18n[myMetalang]['q_3']}
   <input type="hidden" id="questionlang" value="${myMetalang}" />
   <input type="hidden" id="unimorphtags" value="" />
@@ -88,7 +88,7 @@ function renderForm() {
     <button type="submit">
       ${q_submit} <span class="material-icons">send</span>
     </button>
-    <button type="button" onclick="nextSlot()">
+    <button type="button" onclick="nextStructure()">
       ${elicit_skip} <span class="material-icons">skip_next</span>
     </button>
   </div>
@@ -122,10 +122,10 @@ function selectQuestion(tags, available, element) {
 }
 
 function showFeatures(tags) {
-  $('.paradigm_features').html('');
+  $('.inflectional_features').html('');
   let feats = UM_tags2DimFeat(tags, myLang.Code);
   for (let i = 0; i < feats.length; i++) {
-    $('.paradigm_features').append(`<span>${feats[i]}</span>`);
+    $('.inflectional_features').append(`<span>${feats[i]}</span>`);
   }
 }
 
@@ -197,7 +197,7 @@ function QTemplateSubmit() {
     success: function (data) {
       $('.loading').hide();
       // Refresh the specific item in the list or just reload all
-      nextSlot();
+      nextStructure();
     },
     error: function (data) {
       console.log('Error');
@@ -206,7 +206,7 @@ function QTemplateSubmit() {
   });
 }
 
-function nextSlot() {
+function nextStructure() {
   currentTags = '';
   getQuestionLists();
 }

@@ -5,8 +5,8 @@ function getLemmas(id) {
   validateInput('#txtLemmaStem2', myLang.validchars);
   validateInput('#txtLemmaStem3', myLang.validchars);
   validateInput('#txtLemmaStem4', myLang.validchars);
-  $('#detailsSlots').hide();
-  $('#frmSlots').hide();
+  $('#detailsStructures').hide();
+  $('#frmStructures').hide();
   $('.loading').show();
 
   $.ajax({
@@ -41,7 +41,7 @@ function getLemmas(id) {
 }
 
 $('#btnAddLemma').click(function () {
-  if (ParadigmClasses.length == 0) {
+  if (InflectionClasses.length == 0) {
     alert('No word classes! Please add word classes first.');
     return;
   } else {
@@ -73,7 +73,7 @@ function insertLemma() {
     type: 'POST',
     data: {
       Entry: $('#txtLemmaEntry').val().trim(),
-      ParadigmClassId: $('#cmbLemmaParadigmClass').val(),
+      InflectionClassId: $('#cmbLemmaInflectionClass').val(),
       EngMeaning: $('#txtLemmaEnglish').val().trim(),
       Stem1: $('#txtLemmaStem1').val().trim(),
       Stem2: $('#txtLemmaStem2').val().trim(),
@@ -100,7 +100,7 @@ function updateLemma() {
       Id: $('#LemmaId').val(),
       Entry: $('#txtLemmaEntry').val().trim(),
       EngMeaning: $('#txtLemmaEnglish').val().trim(),
-      ParadigmClassId: $('#cmbLemmaParadigmClass').val(),
+      InflectionClassId: $('#cmbLemmaInflectionClass').val(),
       Stem1: $('#txtLemmaStem1').val().trim(),
       Stem2: $('#txtLemmaStem2').val().trim(),
       Stem3: $('#txtLemmaStem3').val().trim(),
@@ -133,7 +133,7 @@ function EditLemma(id) {
   $('#txtLemmaStem4').val(Lemmas[id].stem4);
   $('#txtLemmaDescription').val(Lemmas[id].description);
   $('#LemmaId').val(Lemmas[id].id);
-  $('#cmbLemmaParadigmClass').val(Lemmas[id].paradigmclassid).trigger('change');
+  $('#cmbLemmaInflectionClass').val(Lemmas[id].inflectionclassid).trigger('change');
   $('#cmbLemmaPriority').val(Lemmas[id].priority);
   $('#btnLemmasSubmit').html('Save');
 }
@@ -168,7 +168,7 @@ function LemmaImportSubmit() {
   });
 }
 
-// export lemmas
+// export lexicon
 $('#btnExportLemmas').click(function () {
   let file = Lemmas.map((lemma) => {
     const stems = [lemma.stem1, lemma.stem2, lemma.stem3, lemma.stem4].filter(
@@ -185,6 +185,6 @@ $('#btnExportLemmas').click(function () {
 
 $(document).ready(function () {
   $('#frmLemmas').hide();
-  $('#cmbLemmaParadigmClass option').remove().trigger('change');
+  $('#cmbLemmaInflectionClass option').remove().trigger('change');
   getLemmas(myLang.id);
 });

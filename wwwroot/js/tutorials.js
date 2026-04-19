@@ -16,34 +16,34 @@ let tutorials = {
   <figcaption>Describing the terminology on Latin conjugation table</figcaption>
 </figure>
 <dl>
-  <dt>Paradigm Class</dt>
+  <dt>Inflection Class</dt>
   <dd>A category within a part-of-speech.</dd>
-  <dd class="example">1st, 2nd, 3rd, 4th conjugations in Latin are four Paradigm Classes.</dd>
+  <dd class="example">1st, 2nd, 3rd, 4th conjugations in Latin are four Inflection Classes.</dd>
 
   <dt>Lemma</dt>
-  <dd>The headword or dictionary form of a word. Each lemma belongs to one Paradigm Class.</dd>
+  <dd>The headword or dictionary form of a word. Each lemma belongs to one Inflection Class.</dd>
   <dd class="example">"amō"</dd>
 
   <dt>Stem</dt>
   <dd>A base form derived from a lemma. Each lemma can have zero or more Stems. Each Stem can be used in formation of
-    different Slots.</dd>
+    different Structures.</dd>
   <dd class="example">"am", "amāv", "amāt"</dd>
 
-  <dt>Slot</dt>
-  <dd>A Slot is a grammatical category (e.g., TAM features for verbs) that is expressed by combining a Lemma or Stem
-    with an Agreement Group and other morphemes according to a specific formula. Each Paradigm class has one or more
-    Slots.</dd>
+  <dt>Structure</dt>
+  <dd>A Structure is a grammatical category (e.g., TAM features for verbs) that is expressed by combining a Lemma or Stem
+    with a Reusable Layer and other morphemes according to a specific formula. Each Inflection class has one or more
+    Structures.</dd>
   <dd class="example">Active Indicative Present, Active Subjunctive Pluperfect</dd>
 
-  <dt>Agreement Group</dt>
-  <dd>A label for a set of affixes (endings) that are used together in one or more Slots. Agreement Groups help to
-    associate Slots with the appropriate Agreement Items. One Agreement Group can appear in multiple Slots.</dd>
+  <dt>Reusable Layer</dt>
+  <dd>A label for a set of affixes (endings) that are used together in one or more Structures. Reusable Layers help to
+    associate Structures with the appropriate Affixes. One Reusable Layer can appear in multiple Structures.</dd>
   <dd class="example">Future endings</dd>
 
-  <dt>Agreement Item</dt>
-  <dd>An individual affix (morpheme) within an Agreement Group that marks grammatical features such as person, number,
-    and gender in a Slot.</dd>
-  <dd class="example">"ābō" (1st person Singular in "Future endings" Group)</dd>
+  <dt>Affixes</dt>
+  <dd>An individual affix (morpheme) within a Reusable Layer that marks grammatical features such as person, number,
+    and gender in a Structure.</dd>
+  <dd class="example">"ābō" (1st person Singular in "Future endings" Layer)</dd>
 </dl>`,
   },
   // ===================
@@ -61,12 +61,12 @@ let tutorials = {
     title: 'Linguist Panel: Lemmas (for Linguists)',
     content: `
 <figure>
-  <img src="/img/lemmas.png">
+  <img src="/img/lexicon.png">
   <figcaption></figcaption>
 </figure>
 <p>
-  Lemmas should be added after the paradigm classes have been defined, since each lemma must be assigned to a specific
-  paradigm class.
+  Lemmas should be added after the inflection classes have been defined, since each lemma must be assigned to a specific
+  inflection class.
 </p>
 <h4>Add/Edit Lemma:</h4>
 <figure>
@@ -79,16 +79,16 @@ let tutorials = {
 </p>`,
   },
   // ===================
-  ParadigmClasses: {
-    title: 'Linguist Panel: Paradigm Classes (for Linguists)',
+  InflectionClasses: {
+    title: 'Linguist Panel: Inflection Classes (for Linguists)',
     content: `
 <figure>
-  <img src="/img/paradigm_classes.png">
+  <img src="/img/inflection_classes.png">
   <figcaption></figcaption>
 </figure>
-<strong>Add/Edit Slot:</strong>
+<strong>Add/Edit Structure:</strong>
 <figure>
-  <img src="/img/edit_slot.png">
+  <img src="/img/edit_structure.png">
   <figcaption></figcaption>
 </figure>
 <p>
@@ -97,23 +97,23 @@ let tutorials = {
 </p>
 <p>
   The <b>formula</b> is optional and can be used to generate more accurate suggestions during the early stages of
-  elicitation. In the formula, capital letters are placeholders that will be replaced by an agreement item morpheme, a
-  stem, or the lemma. If "A" exists in the formula, the appropriate agreement item is selected from the members of the
-  corresponding Agreement Group. If no formula is provided, the suggestion will simply copy the lemma, which is
+  elicitation. In the formula, capital letters are placeholders that will be replaced by an affix morpheme, a
+  stem, or the lemma. If "A" exists in the formula, the appropriate affix is selected from the members of the
+  corresponding Reusable Layer. If no formula is provided, the suggestion will simply copy the lemma, which is
   generally not very informative or useful.
 </p>`,
   },
   // ===================
-  AgreementGroups: {
-    title: 'Linguist Panel: Agreement Groups (for Linguists)',
+  ReusableLayers: {
+    title: 'Linguist Panel: Reusable Layers (for Linguists)',
     content: `
 <figure>
-  <img src="/img/agreement_groups.png">
+  <img src="/img/reusable_layers.png">
   <figcaption></figcaption>
 </figure>
-<h4>Add/Edit Agreement Items:</h4>
+<h4>Add/Edit Affixes:</h4>
 <figure>
-  <img src="/img/edit_agreement_item.png">
+  <img src="/img/edit_affix.png">
   <figcaption></figcaption>
 </figure>
 <p>
@@ -130,8 +130,8 @@ const steps = [
   tutorials.Terminology,
   tutorials.Dashboard,
   tutorials.Lemmas,
-  tutorials.ParadigmClasses,
-  tutorials.AgreementGroups,
+  tutorials.InflectionClasses,
+  tutorials.ReusableLayers,
 ];
 
 function nextStep() {

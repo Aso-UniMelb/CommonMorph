@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Authorization;
 namespace common_morph_backend.Controllers
 {
   [Route("[controller]")]
-  public class ParadigmClassController : Controller
+  public class InflectionClassController : Controller
   {
     private readonly AppDbContext _context;
-    public ParadigmClassController(AppDbContext context)
+    public InflectionClassController(AppDbContext context)
     {
       _context = context;
     }
@@ -19,7 +19,7 @@ namespace common_morph_backend.Controllers
     [HttpGet("list")]
     public IActionResult list(int LangId)
     {
-      return Ok(_context.paradigmclasses
+      return Ok(_context.inflectionclasses
         .Where(x => x.langid == LangId).OrderBy(x => x.title)
         .Select(x => new { x.id, x.langid, x.title }).ToList());
     }
@@ -28,17 +28,17 @@ namespace common_morph_backend.Controllers
     [HttpGet("get")]
     public IActionResult get(int id)
     {
-      return Ok(_context.paradigmclasses.FirstOrDefault(x => x.id == id));
+      return Ok(_context.inflectionclasses.FirstOrDefault(x => x.id == id));
     }
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("insert")]
-    public IActionResult insert(ParadigmClass pClass)
+    public IActionResult insert(InflectionClass pClass)
     {
-      if (_context.paradigmclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid))
+      if (_context.inflectionclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid))
         return BadRequest("duplicate");
 
-      _context.paradigmclasses.Add(pClass);
+      _context.inflectionclasses.Add(pClass);
       _context.SaveChanges();
       var id = pClass.id;
       return Ok(id.ToString());
@@ -46,13 +46,13 @@ namespace common_morph_backend.Controllers
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("update")]
-    public IActionResult update(ParadigmClass pClass)
+    public IActionResult update(InflectionClass pClass)
     {
-      var old = _context.paradigmclasses.FirstOrDefault(x => x.id == pClass.id);
+      var old = _context.inflectionclasses.FirstOrDefault(x => x.id == pClass.id);
       if (old == null)
         return BadRequest("not exist");
       _context.Entry(old).State = EntityState.Detached;
-      _context.paradigmclasses.Update(pClass);
+      _context.inflectionclasses.Update(pClass);
       _context.SaveChanges();
       return Ok(pClass.id.ToString());
     }

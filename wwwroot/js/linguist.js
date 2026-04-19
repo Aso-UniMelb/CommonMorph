@@ -55,19 +55,19 @@ $(document).ready(function () {
               "I'll guide you through the process of contributing to the CommonMorph project. Please click the 'Next' button below to begin.",
           },
           {
-            element: document.querySelector('#agreement-accordion'),
-            intro: `This is the agreement group manager. It helps you input agreement morphems.
-            Note: You can skip it if your language does not have a complex agreement system.`,
+            element: document.querySelector('#affix-accordion'),
+            intro: `This is the reusable layer manager. It helps you input reusable morphems.
+            Note: You can skip it if your language does not have a complex affix system.`,
           },
           {
-            element: document.querySelector('#paradigm-accordion'),
+            element: document.querySelector('#inflection-classes-accordion'),
             intro:
-              'This is the paradigm class and slot manager. It helps you input each slot in the paradigm.',
+              'This is the paradigm structure manager. It helps you input different structures for the inflection classes.',
           },
           {
             element: document.querySelector('#lemma-accordion'),
             intro:
-              'This is the lexicon. It helps you input each lemma and its paradigm class.',
+              'This is the lexicon. It helps you input each lemma and its inflection class.',
           },
         ],
       })

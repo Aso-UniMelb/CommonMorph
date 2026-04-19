@@ -26,9 +26,9 @@ namespace common_morph_backend.Controllers
     [HttpGet("list")]
     public IActionResult list(int LangID)
     {
-      var result = from l in _context.lemmas
-                   join w in _context.paradigmclasses
-                   on l.paradigmclassid equals w.id
+      var result = from l in _context.lexicon
+                   join w in _context.inflectionclasses
+                   on l.inflectionclassid equals w.id
                    where w.langid == LangID
                    select new
                    {
@@ -40,7 +40,7 @@ namespace common_morph_backend.Controllers
                      l.stem3,
                      l.stem4,
                      l.description,
-                     l.paradigmclassid,
+                     l.inflectionclassid,
                      l.priority,
                      wClass = w.title
                    };
@@ -51,17 +51,17 @@ namespace common_morph_backend.Controllers
     [HttpGet("get")]
     public IActionResult get(int id)
     {
-      return Ok(_context.lemmas.FirstOrDefault(x => x.id == id));
+      return Ok(_context.lexicon.FirstOrDefault(x => x.id == id));
     }
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("insert")]
     public IActionResult insert(Lemma lem)
     {
-      if (_context.lemmas.Any(x => x.entry == lem.entry && x.paradigmclassid == lem.paradigmclassid))
+      if (_context.lexicon.Any(x => x.entry == lem.entry && x.inflectionclassid == lem.inflectionclassid))
         return BadRequest("duplicate");
 
-      _context.lemmas.Add(lem);
+      _context.lexicon.Add(lem);
       _context.SaveChanges();
 
       var id = lem.id;
@@ -80,12 +80,12 @@ namespace common_morph_backend.Controllers
     [HttpPost("update")]
     public IActionResult update(Lemma lem)
     {
-      var old = _context.lemmas.FirstOrDefault(x => x.id == lem.id);
+      var old = _context.lexicon.FirstOrDefault(x => x.id == lem.id);
       if (old == null)
         return BadRequest("not exist");
 
       _context.Entry(old).State = EntityState.Detached;
-      _context.lemmas.Update(lem);
+      _context.lexicon.Update(lem);
 
       // delete all cells with this lemma
       // var cells = _context.cells.Where(x => x.lemmaid == lem.id).ToList();
@@ -119,15 +119,15 @@ namespace common_morph_backend.Controllers
         if (!string.IsNullOrEmpty(line) && line.Trim().Length > 1)
         {
           var l = line.Split('\t');
-          var pClass = new ParadigmClass()
+          var pClass = new InflectionClass()
           {
             title = l[0].Trim(),
             langid = langid
           };
-          if (_context.paradigmclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid))
-            curParClassId = _context.paradigmclasses.FirstOrDefault(x => x.title == pClass.title && x.langid == pClass.langid).id;
+          if (_context.inflectionclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid))
+            curParClassId = _context.inflectionclasses.FirstOrDefault(x => x.title == pClass.title && x.langid == pClass.langid).id;
           else
-            return BadRequest("paradigm class not found");
+            return BadRequest("inflection class not found");
 
           var lemma = new Lemma()
           {
@@ -137,10 +137,10 @@ namespace common_morph_backend.Controllers
             stem2 = (l.Length > 4) ? l[4].Trim() : "",
             stem3 = (l.Length > 5) ? l[5].Trim() : "",
             stem4 = (l.Length > 6) ? l[6].Trim() : "",
-            paradigmclassid = curParClassId,
+            inflectionclassid = curParClassId,
             priority = 0,
           };
-          _context.lemmas.Add(lemma);
+          _context.lexicon.Add(lemma);
           _context.SaveChanges();
         }
 
@@ -153,14 +153,14 @@ namespace common_morph_backend.Controllers
       // using dapper
       using var connection = new NpgsqlConnection(connectionString);
 
-      var lemmas = connection.Query(@$"
+      var lexicon = connection.Query(@$"
 SELECT l.entry AS lemma, pc.title AS classtitle, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
-FROM lemmas l
-INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 INNER JOIN langs ON langs.id = pc.langid
 WHERE pc.langid = {langid} AND l.isdeleted is FALSE
 ORDER BY l.entry");
-      return Ok(lemmas);
+      return Ok(lexicon);
     }
   }
 }

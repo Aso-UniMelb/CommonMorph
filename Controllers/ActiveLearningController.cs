@@ -43,27 +43,27 @@ namespace common_morph_backend.Controllers
       // extract data from the database
       using var connection = new NpgsqlConnection(connectionString);
       var pool = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, a.id AS agreementid, (l.priority) AS priority,
+SELECT l.id AS lemmaid, s.id AS structureid, a.id AS affixid, (l.priority) AS priority,
   s.title AS stitle, a.title AS atitle, a.realization AS a, s.formula AS formula,
   l.stem1, l.stem2, l.stem3, l.stem4,
   l.entry lemma, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ORDER BY priority DESC, lemmaid").ToList();
 
       var pool2 = connection.Query(@$"
-SELECT l.id AS lemmaid, s.id AS slotid, (l.priority) AS priority,
+SELECT l.id AS lemmaid, s.id AS structureid, (l.priority) AS priority,
   s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4,
   l.entry lemma, s.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id 
 WHERE s.formula NOT LIKE '%A%' AND p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ORDER BY priority DESC, lemmaid").ToList();
       pool.AddRange(pool2);

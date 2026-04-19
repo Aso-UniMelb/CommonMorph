@@ -395,7 +395,7 @@ textarea {
   font-size: 1.1rem;
 }
 
-input[type="text"]#txtSlotFormula {
+input[type="text"]#txtStructureFormula {
   unicode-bidi: normal;
 }
 
@@ -818,7 +818,7 @@ label small {
   margin-block-start: 0;
 }
 
-.paradigm_features {
+.inflectional_features {
   padding: 10px;
   background: #E5F3FD;
   border-radius: 5px;
@@ -828,7 +828,7 @@ label small {
   justify-content: center;
 }
 
-.paradigm_features span {
+.inflectional_features span {
   color: #fff;
   padding: 5px;
   margin: 5px;
@@ -859,34 +859,34 @@ label small {
   color: #888;
 }
 
-/* agreement */
-.agreementGroup,
-.paradigmClass {
+/* affix */
+.reusableLayer,
+.inflectionClass {
   cursor: pointer;
   user-select: none;
   flex-grow: 1;
 }
 
-.agreementGroup::before,
-.paradigmClass::before {
+.reusableLayer::before,
+.inflectionClass::before {
   content: "➤ ";
   color: #888;
 }
 
-.opened .agreementGroup::before,
-.opened .paradigmClass::before {
+.opened .reusableLayer::before,
+.opened .inflectionClass::before {
   content: "▼ ";
 }
 
 
-ul.agreementItems,
-ul.slots {
+ul.affixes,
+ul.structures {
   list-style: none;
   padding-inline-start: 5px;
 }
 
-ul.agreementItems li,
-ul.slots li {
+ul.affixes li,
+ul.structures li {
   cursor: pointer;
   padding: 5px 10px;
   user-select: none;

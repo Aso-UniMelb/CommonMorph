@@ -34,9 +34,9 @@ namespace common_morph_backend.Controllers
       foreach (var cell in cells)
       {
         // update if already deleted 
-        if (_context.cells.Any(x => x.lemmaid == cell.lemmaid && x.slotid == cell.slotid && x.agreementid == cell.agreementid && x.isdeleted == true))
+        if (_context.cells.Any(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.affixid == cell.affixid && x.isdeleted == true))
         {
-          var old = _context.cells.FirstOrDefault(x => x.lemmaid == cell.lemmaid && x.slotid == cell.slotid && x.isdeleted == true);
+          var old = _context.cells.FirstOrDefault(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.isdeleted == true);
           if (old == null)
             return BadRequest("not exist");
 
@@ -90,10 +90,10 @@ namespace common_morph_backend.Controllers
       cell.datesubmitted = DateTime.UtcNow;
       cell.byuserid = userId;
 
-      if (_context.cells.Any(x => x.lemmaid == cell.lemmaid && x.slotid == cell.slotid && x.isdeleted == true))
+      if (_context.cells.Any(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.isdeleted == true))
       {
         // update if already deleted 
-        var old = _context.cells.FirstOrDefault(x => x.lemmaid == cell.lemmaid && x.slotid == cell.slotid && x.isdeleted == true);
+        var old = _context.cells.FirstOrDefault(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.isdeleted == true);
         if (old == null)
           return BadRequest("not exist");
 
@@ -230,16 +230,16 @@ namespace common_morph_backend.Controllers
 
       var result = connection.Query(@$"
 SELECT 
-	(SELECT entry FROM lemmas WHERE id = c.lemmaid) AS lemma,
+	(SELECT entry FROM lexicon WHERE id = c.lemmaid) AS lemma,
 	c.submitted AS form,
-	(SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
-	(SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags,
+	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
+	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
 WHERE c.langid = {langid}
-GROUP BY c.id, c.agreementid, c.slotid, c.lemmaid, c.submitted, r.rate
-ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
+GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
+ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
       return Ok(result);
     }
 
@@ -254,31 +254,31 @@ ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
 SELECT 
 	c.lemmaid AS lemma,
 	c.submitted AS form,
-	(SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
-	(SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags,
+	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
+	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
 WHERE c.langid = {langid}
-GROUP BY c.id, c.agreementid, c.slotid, c.lemmaid, c.submitted, r.rate
-ORDER BY r.rate, c.lemmaid, c.slotid, c.agreementid");
+GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
+ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
 
       var lemmas = connection.Query(@$"
 SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
-FROM lemmas l
-INNER JOIN paradigmclasses pc ON pc.id = l.paradigmclassid
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
 
-      // var slots = connection.Query(@$"
-      // SELECT s.id, s.title, s.unimorphtags, s.formula, s.agreementgroupid, s.paradigmclassid
-      // FROM slots s
-      // INNER JOIN paradigmclasses pc ON pc.id = s.paradigmclassid
+      // var structures = connection.Query(@$"
+      // SELECT s.id, s.title, s.unimorphtags, s.formula, s.reusablelayerid, s.inflectionclassid
+      // FROM structures s
+      // INNER JOIN inflectionclasses pc ON pc.id = s.inflectionclassid
       // WHERE pc.langid ={langid}");
 
-      // var agreements = connection.Query(@$"SELECT a.id, a.agreementgroupid, a.title, a.unimorphtags, a.realization
-      // FROM agreements a
-      // INNER JOIN agreementgroups ag ON ag.id = a.agreementgroupid
-      // INNER JOIN paradigmclasses pc ON pc.id = ag.id
+      // var affixes = connection.Query(@$"SELECT a.id, a.reusablelayerid, a.title, a.unimorphtags, a.realization
+      // FROM affixes a
+      // INNER JOIN reusablelayers ag ON ag.id = a.reusablelayerid
+      // INNER JOIN inflectionclasses pc ON pc.id = ag.id
       // WHERE pc.langid ={langid}");
 
       return Ok(new { forms, lemmas });
@@ -294,10 +294,10 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
       var query = @"
 SELECT 
     l.title AS languagename,
-    (SELECT entry FROM lemmas WHERE id = c.lemmaid) AS lemma,
+    (SELECT entry FROM lexicon WHERE id = c.lemmaid) AS lemma,
     c.submitted AS form,
-    (SELECT unimorphtags FROM slots WHERE id = c.slotid) AS stags,
-    (SELECT unimorphtags FROM agreements WHERE id = c.agreementid) AS atags
+    (SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
+    (SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags
 FROM cells c
 INNER JOIN langs l ON l.id = c.langid
 WHERE c.submitted LIKE @Word

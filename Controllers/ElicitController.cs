@@ -37,17 +37,17 @@ namespace common_morph_backend.Controllers
 WITH
 c1 AS (
 SELECT COUNT(*) as cnt 
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
 WHERE p.langid = {langid}), 
 c2 AS (
 SELECT COUNT(*) as cnt
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 WHERE s.formula NOT LIKE '%A%' AND p.langid = {langid})
 SELECT c1.cnt + c2.cnt AS total_count
 FROM c1, c2; ").First();
@@ -56,20 +56,20 @@ FROM c1, c2; ").First();
 WITH
 c1 AS (
 SELECT COUNT(*) as cnt 
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ), 
 c2 AS (
 SELECT COUNT(*) as cnt
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id 
 WHERE s.formula NOT LIKE '%A%' AND p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 )
 SELECT c1.cnt + c2.cnt AS total_count
@@ -85,22 +85,22 @@ FROM c1, c2;").First();
       using var connection = new NpgsqlConnection(connectionString);
       var lemma_ids = connection.Query(@$"
 SELECT l.id
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 GROUP BY l.id
 ORDER BY l.priority DESC, l.entry").ToList();
 
       var lemma_ids2 = connection.Query(@$"
 SELECT l.id
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE AND s.formula NOT LIKE '%A%')
 GROUP BY l.id
 ORDER BY l.priority DESC, l.entry").ToList();
@@ -110,26 +110,26 @@ ORDER BY l.priority DESC, l.entry").ToList();
         return Ok(new List<Cell>());
 
       int lemmaId = lemma_ids.ElementAtOrDefault(page - 1).id;
-      var lemma = _context.lemmas.FirstOrDefault(l => l.id == lemmaId);
-      // If the slots contain agreement:
+      var lemma = _context.lexicon.FirstOrDefault(l => l.id == lemmaId);
+      // If the structures contain affixes:
       var results1 = connection.Query(@$"
-SELECT s.id AS slotid, a.id AS agreementid, a.realization AS a,
+SELECT s.id AS structureid, a.id AS affixid, a.realization AS a,
 	s.formula AS formula, s.title AS stitle, a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE l.id= {lemmaId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ORDER BY s.order, s.unimorphtags, a.order");
-      // If the slots dose not contain agreement:
+      // If the structures dose not contain affixes:
       var results2 = connection.Query(@$"
-SELECT s.id AS slotid, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
+SELECT s.id AS structureid, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
 WHERE l.id= {lemmaId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) AND s.formula NOT LIKE '%A%'
 ORDER BY l.priority DESC, l.entry, s.order, s.unimorphtags");
       //  merge the results
@@ -145,10 +145,10 @@ ORDER BY l.priority DESC, l.entry, s.order, s.unimorphtags");
       var lemma_ids = connection.Query(@$"
 WITH xx AS (
   SELECT l.id lemma, c.id cell, r.userid
-  FROM lemmas l 
-  INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-  INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-  INNER JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
+  FROM lexicon l 
+  INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+  INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+  INNER JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
   LEFT JOIN cellratings r ON r.cellid = c.id
   WHERE p.langid = {langid} AND (c.byuserid != {userId}) 
 )
@@ -160,23 +160,23 @@ WHERE cell NOT IN (SELECT cell FROM xx WHERE userid ={userId})
         return Ok(new List<Cell>());
 
       int lemmaId = lemma_ids.ElementAtOrDefault(page - 1).lemma;
-      var lemma = _context.lemmas.FirstOrDefault(l => l.id == lemmaId);
-      // If the slots contain agreement:
+      var lemma = _context.lexicon.FirstOrDefault(l => l.id == lemmaId);
+      // If the structures contain affixes:
       var results1 = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags || ';' || a.unimorphtags AS tags,
   s.title AS stitle, a.title AS atitle, c.submitted AS submitted
 FROM cells c
-INNER JOIN lemmas l ON l.id = c.lemmaid
-INNER JOIN slots s ON s.id = c.slotid
-INNER JOIN agreements a ON a.id = c.agreementid
+INNER JOIN lexicon l ON l.id = c.lemmaid
+INNER JOIN structures s ON s.id = c.structureid
+INNER JOIN affixes a ON a.id = c.affixid
 WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId}
 ORDER BY s.order, s.unimorphtags, a.order");
-      // If the slots dose not contain agreement:
+      // If the structures dose not contain affixes:
       var results2 = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, c.submitted AS submitted
 FROM cells c
-INNER JOIN lemmas l ON l.id = c.lemmaid
-INNER JOIN slots s ON s.id = c.slotid
+INNER JOIN lexicon l ON l.id = c.lemmaid
+INNER JOIN structures s ON s.id = c.structureid
 LEFT JOIN cellratings r ON r.cellid = c.id
 WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId} AND r.userid IS NULL AND s.formula NOT LIKE '%A%'
 ORDER BY s.order, s.unimorphtags");
@@ -185,99 +185,99 @@ ORDER BY s.order, s.unimorphtags");
     }
     // =====================================================================
     // Called by elicit-expert.js
-    [HttpGet("EntryGetTableBySlot")]
-    public IActionResult EntryGetTableBySlot(int langid, int page = 1)
+    [HttpGet("EntryGetTableByStructure")]
+    public IActionResult EntryGetTableByStructure(int langid, int page = 1)
     {
       using var connection = new NpgsqlConnection(connectionString);
-      var slot_ids = connection.Query(@$"
+      var structure_ids = connection.Query(@$"
 SELECT s.id
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 GROUP BY s.id
 ORDER BY s.order");
 
-      if (slot_ids.ElementAtOrDefault(page - 1) == null)
+      if (structure_ids.ElementAtOrDefault(page - 1) == null)
         return Ok(new List<Cell>());
 
-      int slotId = slot_ids.ElementAtOrDefault(page - 1).id;
-      var slt = _context.slots.FirstOrDefault(l => l.id == slotId);
-      // If the slots contain agreement:
+      int structureId = structure_ids.ElementAtOrDefault(page - 1).id;
+      var slt = _context.structures.FirstOrDefault(l => l.id == structureId);
+      // If the structures contain affixes:
       var results1 = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, a.id AS agreementid, a.realization AS a,
+SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, a.id AS affixid, a.realization AS a,
 	a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
-WHERE s.id= {slotId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
+WHERE s.id= {structureId} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ORDER BY a.order, l.priority DESC, l.entry");
-      // If the slots dose not contain agreement:
+      // If the structures dose not contain affixes:
       var results2 = connection.Query(@$"
 SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, s.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
-WHERE s.id= {slotId} AND (s.formula NOT LIKE '%A%')  AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
+WHERE s.id= {structureId} AND (s.formula NOT LIKE '%A%')  AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 ORDER BY l.priority DESC, l.entry");
       //  merge the results
-      return Ok(new { slot = slt, pool = results1.Union(results2).ToList() });
+      return Ok(new { structure = slt, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
     // Called by check-expert.js
-    [HttpGet("CheckGetTableBySlot")]
-    public IActionResult CheckGetTableBySlot(int langid, int page = 1)
+    [HttpGet("CheckGetTableByStructure")]
+    public IActionResult CheckGetTableByStructure(int langid, int page = 1)
     {
       var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
       using var connection = new NpgsqlConnection(connectionString);
-      // find the slots that need to be checked by this user
-      var slot_ids = connection.Query(@$"
+      // find the structures that need to be checked by this user
+      var structure_ids = connection.Query(@$"
 WITH xx AS (
-  SELECT s.id slot, c.id cell, r.userid
-  FROM lemmas l 
-  INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-  INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-  INNER JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
+  SELECT s.id structure, c.id cell, r.userid
+  FROM lexicon l 
+  INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+  INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+  INNER JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
   LEFT JOIN cellratings r ON r.cellid = c.id
   WHERE p.langid = {langid} AND (c.byuserid != {userId}) 
 )
-SELECT DISTINCT slot FROM xx 
+SELECT DISTINCT structure FROM xx 
 WHERE cell NOT IN (SELECT cell FROM xx WHERE userid ={userId})");
 
-      if (slot_ids.ElementAtOrDefault(page - 1) == null)
+      if (structure_ids.ElementAtOrDefault(page - 1) == null)
         return Ok(new List<Cell>());
 
-      int slotId = slot_ids.ElementAtOrDefault(page - 1).slot;
-      var slt = _context.slots.FirstOrDefault(l => l.id == slotId);
-      // If the slots contain agreement:
+      int structureId = structure_ids.ElementAtOrDefault(page - 1).structure;
+      var slt = _context.structures.FirstOrDefault(l => l.id == structureId);
+      // If the structures contain affixes:
       var results1 = connection.Query(@$"
 SELECT c.id AS cellid, l.entry AS lemma, a.title AS atitle, a.unimorphtags AS tags, c.submitted AS submitted
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
-WHERE s.id= {slotId} AND c.byuserid != {userId} AND  (c.submitted IS NOT NULL OR c.isdeleted = TRUE)
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
+WHERE s.id= {structureId} AND c.byuserid != {userId} AND  (c.submitted IS NOT NULL OR c.isdeleted = TRUE)
 ORDER BY a.order, l.priority DESC, l.entry");
-      // If the slots dose not contain agreement:
+      // If the structures dose not contain affixes:
       var results2 = connection.Query(@$"
 SELECT  c.id AS cellid, l.entry AS lemma, c.submitted AS submitted
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id
-WHERE s.id= {slotId} AND c.byuserid != {userId} AND (s.formula NOT LIKE '%A%')  AND (c.submitted IS NOT NULL OR c.isdeleted = TRUE) 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
+WHERE s.id= {structureId} AND c.byuserid != {userId} AND (s.formula NOT LIKE '%A%')  AND (c.submitted IS NOT NULL OR c.isdeleted = TRUE) 
 ORDER BY l.priority DESC, l.entry");
       //  merge the results
-      return Ok(new { slot = slt, pool = results1.Union(results2).ToList() });
+      return Ok(new { structure = slt, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
     // Called by elicit.js
@@ -289,17 +289,17 @@ ORDER BY l.priority DESC, l.entry");
       // using var connection = new SqlConnection(connectionString);
       using var connection = new NpgsqlConnection(connectionString);
 
-      // If the slots contain agreement:
+      // If the structures contain affixes:
       var result = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS slotid, a.id AS agreementid,
+SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS structureid, a.id AS affixid,
 	l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3, a.realization AS a,
 	l.engmeaning AS eng, s.formula AS formula, s.title AS stitle, a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-INNER JOIN agreementgroups ag ON ag.id = s.agreementgroupid
-INNER JOIN agreements a ON a.agreementgroupid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id AND c.agreementid = a.id
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
+INNER JOIN affixes a ON a.reusablelayerid = ag.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 	AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
 WHERE questionlang='{metalang}'
@@ -307,15 +307,15 @@ GROUP BY unimorphtags having count(distinct questionlang) = 1)
 ORDER BY l.priority DESC, l.entry, s.order, s.title
 OFFSET 1*({page}-1) LIMIT 1").ToList();
 
-      // If the slots dose not contain agreement:
+      // If the structures dose not contain affixes:
       var result2 = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS slotid,
+SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS structureid,
 	l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3,
 	l.engmeaning AS eng, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
-FROM lemmas l 
-INNER JOIN paradigmclasses p ON p.id = l.paradigmclassid
-INNER JOIN slots s ON s.paradigmclassid = l.paradigmclassid
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.slotid = s.id 
+FROM lexicon l 
+INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
+INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id 
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
 	AND s.unimorphtags IN (SELECT unimorphtags FROM questions
 WHERE questionlang ='{metalang}'
@@ -333,15 +333,15 @@ OFFSET 1*({page}-1) LIMIT 1").ToList();
             q.question
           })
           .First();
-        // get previous samples from the same slot and agreement
-        int slotid = Convert.ToInt32(result.First().slotid);
-        int agreementid = Convert.ToInt32(result.First().agreementid);
+        // get previous samples from the same structure and affixes
+        int structureid = Convert.ToInt32(result.First().structureid);
+        int affixid = Convert.ToInt32(result.First().affixid);
 
         var samples = connection.Query(@$"
 SELECT c.submitted AS form, l.entry AS lemma, l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3
 FROM cells c
-INNER JOIN lemmas l On l.id=c.lemmaid
-WHERE c.langid={langid} AND c.slotid={slotid} AND c.agreementid={agreementid} 
+INNER JOIN lexicon l On l.id=c.lemmaid
+WHERE c.langid={langid} AND c.structureid={structureid} AND c.affixid={affixid} 
 ORDER BY c.datesubmitted DESC 
 LIMIT 5").ToList();
         return Ok(new { r = result.First(), q = question, s = samples });
@@ -357,13 +357,13 @@ LIMIT 5").ToList();
             q.question
           })
           .First();
-        // get previous samples from the same slot
-        int slotid = Convert.ToInt32(result2.First().slotid);
+        // get previous samples from the same structure
+        int structureid = Convert.ToInt32(result2.First().structureid);
         var samples = connection.Query(@$"
 SELECT c.submitted AS form, l.entry AS lemma, l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3
 FROM cells c
-INNER JOIN lemmas l On l.id=c.lemmaid
-WHERE c.langid={langid} AND c.slotid={slotid} 
+INNER JOIN lexicon l On l.id=c.lemmaid
+WHERE c.langid={langid} AND c.structureid={structureid} 
 ORDER BY c.datesubmitted DESC 
 LIMIT 5").ToList();
         // now we could get suggestions from LLM here but as it needs API call, better to do it in the frontend
@@ -384,9 +384,9 @@ LIMIT 5").ToList();
 SELECT c.id AS cellid, s.unimorphtags || ';' || a.unimorphtags AS tags, s.title AS stitle, a.title AS atitle, 
 	l.entry AS lemma, l.engmeaning AS eng, c.submitted AS submitted
 FROM cells c
-INNER JOIN lemmas l ON l.id = c.lemmaid
-INNER JOIN slots s ON s.id = c.slotid
-INNER JOIN agreements a ON a.id = c.agreementid
+INNER JOIN lexicon l ON l.id = c.lemmaid
+INNER JOIN structures s ON s.id = c.structureid
+INNER JOIN affixes a ON a.id = c.affixid
 LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = {userId}
 WHERE c.langid = {langid} AND c.byuserid != {userId} AND  r.cellid IS NULL
   AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
@@ -399,8 +399,8 @@ OFFSET 1*({page}-1) LIMIT 1").ToList();
 SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, 
 	l.entry AS lemma, l.engmeaning AS eng, c.submitted AS submitted
 FROM cells c
-INNER JOIN lemmas l ON l.id = c.lemmaid
-INNER JOIN slots s ON s.id = c.slotid
+INNER JOIN lexicon l ON l.id = c.lemmaid
+INNER JOIN structures s ON s.id = c.structureid
 LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = {userId}
 WHERE c.langid = {langid} AND c.byuserid != {userId} AND r.cellid IS NULL
   AND s.unimorphtags IN (SELECT unimorphtags FROM questions
