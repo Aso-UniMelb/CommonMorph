@@ -194,9 +194,7 @@ SELECT s.id
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
 INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
-INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
-INNER JOIN affixes a ON a.reusablelayerid = ag.id
-LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
+LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 GROUP BY s.id
 ORDER BY s.order");
@@ -208,7 +206,7 @@ ORDER BY s.order");
       var slt = _context.structures.FirstOrDefault(l => l.id == structureId);
       // If the structures contain affixes:
       var results1 = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, a.id AS affixid, a.realization AS a,
+SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags AS ltags, a.id AS affixid, a.realization AS a,
 	a.title AS atitle, s.unimorphtags || ';' || a.unimorphtags AS tags
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
@@ -220,7 +218,7 @@ WHERE s.id= {structureId} AND (c.submitted IS NULL OR c.isdeleted = TRUE)
 ORDER BY a.order, l.priority DESC, l.entry");
       // If the structures dose not contain affixes:
       var results2 = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, s.unimorphtags AS tags
+SELECT l.id AS lemmaid, l.entry AS lemma, l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags AS ltags, s.unimorphtags AS tags
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
 INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid

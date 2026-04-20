@@ -390,9 +390,11 @@ function UM_Sort(strTags) {
 }
 
 function UM_tag2word(strTags, langCode) {
-  let tags = strTags.split(/[;+]/);
   let words = [];
+  if (!strTags) return '';
+  let tags = strTags.split(/[;+]/);
   for (let i = 0; i < tags.length; i++) {
+    if (!tags[i] || tags[i] === '') continue; // skip empty tags
     let tag = tags[i];
     let word = UM.find((item) => item.l === tag).f;
     if (

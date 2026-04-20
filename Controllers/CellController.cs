@@ -264,7 +264,7 @@ GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
 ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
 
       var lemmas = connection.Query(@$"
-SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
+SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags
 FROM lexicon l
 INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 WHERE pc.langid = {langid} AND l.isdeleted = FALSE");

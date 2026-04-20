@@ -77,6 +77,7 @@ SELECT
 	c.submitted AS form,
 	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
 	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
+	(SELECT unimorphtags FROM lexicon WHERE id = c.lemmaid) AS ltags,
   COUNT(r.cellid) AS trueratingscount
 FROM cells c
 LEFT JOIN cellratings r ON c.id = r.cellid
@@ -85,9 +86,14 @@ GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
 ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
           foreach (var record in result)
           {
-            var tags = record.stags;
+            var tags = "";
+            if (!string.IsNullOrEmpty(record.ltags))
+              tags += record.ltags;
+            if (!string.IsNullOrEmpty(record.stags))
+              tags += ";" + record.stags;
             if (!string.IsNullOrEmpty(record.atags))
               tags += ";" + record.atags;
+            tags = tags.Trim(';');
             sb.AppendLine($"{record.lemma}\t{record.form}\t{_cacheService.UM_Sort(tags)}");
           }
           break;
@@ -99,6 +105,7 @@ SELECT
 	c.submitted AS form,
 	(SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
 	(SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags,
+	(SELECT unimorphtags FROM lexicon WHERE id = c.lemmaid) AS ltags,
 	(SELECT realization  FROM affixes WHERE id = c.affixid) AS affix,
   (SELECT formula  FROM structures WHERE id = c.structureid) AS formula,
   COUNT(r.cellid) AS trueratingscount
@@ -109,7 +116,7 @@ GROUP BY c.id, c.affixid, c.structureid, c.lemmaid, c.submitted, r.rate
 ORDER BY r.rate, c.lemmaid, c.structureid, c.affixid");
 
           var lemmas = connection.Query(@$"
-SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
+SELECT l.id, l.entry, pc.title AS pcalss, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags
 FROM lexicon l
 INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
@@ -117,9 +124,14 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
           foreach (var form in forms)
           {
             var l = lemmas.FirstOrDefault(x => x.id == form.lemmaid);
-            var tags = form.stags;
+            var tags = "";
+            if (!string.IsNullOrEmpty(form.ltags))
+              tags += form.ltags;
+            if (!string.IsNullOrEmpty(form.stags))
+              tags += ";" + form.stags;
             if (!string.IsNullOrEmpty(form.atags))
               tags += ";" + form.atags;
+            tags = tags.Trim(';');
             var line = $"{l.entry}\t{form.form}\t{_cacheService.UM_Sort(tags)}\t{l.meaning}\t{l.pcalss}\t{form.formula}\t{form.affix}\t";
             line += $"{l.stem1 ?? ""}\t{l.stem2 ?? ""}\t{l.stem3 ?? ""}\t{l.stem4 ?? ""}";
             sb.AppendLine(line);
@@ -128,17 +140,17 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
         // ==================================
         case "lexicon":
           var lexicon = connection.Query(@$"
-SELECT l.entry AS lemma, pc.title AS classtitle, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4
+SELECT l.entry AS lemma, pc.title AS classtitle, l.engmeaning AS meaning, l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags
 FROM lexicon l
 INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
 INNER JOIN langs ON langs.id = pc.langid
 WHERE pc.langid = {langid} AND l.isdeleted is FALSE
 ORDER BY l.entry");
-          sb.AppendLine("LEMMA\tCLASS\tGLOSS\tSTEM1\tSTEM2\tSTEM3\tSTEM4");
+          sb.AppendLine("LEMMA\tCLASS\tGLOSS\tSTEM1\tSTEM2\tSTEM3\tSTEM4\tTAGS");
           foreach (var record in lexicon)
           {
             var line = $"{record.lemma}\t{record.classtitle}\t{record.meaning}\t";
-            line += $"{record.stem1 ?? ""}\t{record.stem2 ?? ""}\t{record.stem3 ?? ""}\t{record.stem4 ?? ""}";
+            line += $"{record.stem1 ?? ""}\t{record.stem2 ?? ""}\t{record.stem3 ?? ""}\t{record.stem4 ?? ""}\t{record.unimorphtags}";
             sb.AppendLine(line);
           }
           break;

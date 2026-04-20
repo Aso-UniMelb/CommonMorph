@@ -45,7 +45,7 @@ namespace common_morph_backend.Controllers
       var pool = connection.Query(@$"
 SELECT l.id AS lemmaid, s.id AS structureid, a.id AS affixid, (l.priority) AS priority,
   s.title AS stitle, a.title AS atitle, a.realization AS a, s.formula AS formula,
-  l.stem1, l.stem2, l.stem3, l.stem4,
+  l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags,
   l.entry lemma, s.unimorphtags || ';' || a.unimorphtags AS tags
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
@@ -58,7 +58,7 @@ ORDER BY priority DESC, lemmaid").ToList();
 
       var pool2 = connection.Query(@$"
 SELECT l.id AS lemmaid, s.id AS structureid, (l.priority) AS priority,
-  s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4,
+  s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags,
   l.entry lemma, s.unimorphtags AS tags
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid

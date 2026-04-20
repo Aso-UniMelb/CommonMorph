@@ -50,6 +50,8 @@ namespace common_morph_backend
 
     public string UM_Sort(string strTags)
     {
+      if (string.IsNullOrEmpty(strTags))
+        return "";
       var tags = strTags.Split(new[] { ';', '+' }, StringSplitOptions.RemoveEmptyEntries).ToList();
       // Sort based on index in UM 
       tags.Sort((a, b) =>

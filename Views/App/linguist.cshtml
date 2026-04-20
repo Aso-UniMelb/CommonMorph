@@ -205,7 +205,7 @@
             <input type="text" id="txtLemmaStem2" name="Stem2" />
           </div>
           <details>
-            <summary>More Stems</summary>
+            <summary>More</summary>
             <div class="field">
               <label>Stem3 <small>(optional)</small></label>
               <input type="text" id="txtLemmaStem3" name="Stem3" />
@@ -214,11 +214,19 @@
               <label>Stem4 <small>(optional)</small></label>
               <input type="text" id="txtLemmaStem4" name="Stem4" />
             </div>
+            <div class="field">
+              <label for="txtLemmaUniMorphTags">Morphosyntactic Features <small>(optional)</small></label>
+              <div id="addedUMtagsL" class="addedUMtags"></div>
+              <div id="LemmaUMtagSelector" class="tagSelection"></div>
+              <div class="unimorph">UniMorph:
+                <input type="text" id="txtLemmaUniMorphTags" name="UniMorphTags" disabled />
+              </div>
+            </div>
+            <div class="field small">
+              <label>Description <small>(optional)</small></label>
+              <input type="text" id="txtLemmaDescription" name="Description" />
+            </div>
           </details>
-          <div class="field small">
-            <label>Description <small>(optional)</small></label>
-            <input type="text" id="txtLemmaDescription" name="Description" />
-          </div>
           <div class="field small">
             <label>Priority</label>
             <select id="cmbLemmaPriority" style="width: 100px;" required>

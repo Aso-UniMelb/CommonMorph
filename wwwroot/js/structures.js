@@ -85,7 +85,11 @@ function EditStructure(id) {
     success: function (data) {
       $('#txtStructureTitle').val(data.title);
       $('#txtStructureUniMorphTags').val(data.unimorphtags);
-      updateStructureUMselects(data.unimorphtags.split(/[;+]/));
+      if (data.unimorphtags) {
+        updateStructureUMselects(data.unimorphtags.split(/[;+]/));
+      } else {
+        updateStructureUMselects([]);
+      }
       $('#txtStructureFormula').val(data.formula);
       $('#StructureId').val(data.id);
       $('#cmbStructureReusableLayer').val(data.reusablelayerid).change();

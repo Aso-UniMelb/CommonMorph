@@ -29,7 +29,6 @@ function getRules(langid) {
 
 function getLangStats(langid) {
   $('.loading').show();
-  $('#langstats').html('');
   $.ajax({
     url: '/Elicit/GetStats',
     type: 'GET',
@@ -38,6 +37,7 @@ function getLangStats(langid) {
     },
     success: function (data) {
       $('.loading').hide();
+      $('#langstats').html('');
       if (data.countAll == 0) {
         $('#langstats').append(`<span>No linguistic data added!</div>`);
       } else {
@@ -96,6 +96,12 @@ function EntryGetTable(myLangId, pg, type) {
             C.stem4,
             C.a
           );
+          if (C.ltags) {
+            if(C.tags)
+              C.tags = C.ltags + ';' + C.tags;
+            else
+              C.tags = C.ltags;
+          }
           let title = structure.title;
           if (C.atitle) {
             title += `| ${C.atitle}`;
@@ -136,6 +142,14 @@ function EntryGetTable(myLangId, pg, type) {
             lemma.stem4,
             C.a
           );
+          if (lemma.unimorphtags) {
+            if (C.tags){
+               C.tags = lemma.unimorphtags + ';' + C.tags;
+            }
+            else {
+              C.tags = lemma.unimorphtags;
+            }           
+          }
           let title = C.stitle;
           if (C.atitle) {
             title += `, ${C.atitle}`;
@@ -390,10 +404,12 @@ $(document).ready(function () {
       $('#pageButtons').html(`
   <button type="button" class="primary" onclick="getPrevPage('Structure')">< Previous</button>
   <button type="button" class="primary" onclick="getNextPage('Structure')">Next  ></button>`);
+      getNextPage('Structure');
     } else {
       $('#pageButtons').html(`
   <button type="button" class="primary" onclick="getPrevPage('Lemma')">< Previous</button>
   <button type="button" class="primary" onclick="getNextPage('Lemma')">Next  ></button>`);
+      getNextPage('Lemma');
     }
   });
   $('#cmbElicitOrder').change();
@@ -415,5 +431,4 @@ $(document).ready(function () {
     $('#find').scrollTop($('#replace').scrollTop());
   });
 
-  getNextPage('Lemma');
 });

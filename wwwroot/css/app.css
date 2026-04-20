@@ -316,6 +316,8 @@ button {
   border-radius: 8px;
   min-width: 350px;
   max-width: 450px;
+  max-height: 100vh;
+  overflow: scroll;
 }
 
 form {
@@ -323,7 +325,7 @@ form {
 }
 
 form .field {
-  padding: 0 5px 10px;
+  padding: 0 5px 5px;
 }
 
 form .field.small {
@@ -385,7 +387,7 @@ input[type="text"],
 input[type="email"],
 textarea {
   width: 100%;
-  padding: 5px 10px;
+  padding: 3px 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;

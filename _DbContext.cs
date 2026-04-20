@@ -137,6 +137,7 @@ namespace common_morph_backend
       public string? stem3 { get; set; }
       public string? stem4 { get; set; }
       public string? engmeaning { get; set; }
+      public string? unimorphtags { get; set; }
       public string? description { get; set; }
       public Priority priority { get; set; }
       public bool isdeleted { get; set; }
