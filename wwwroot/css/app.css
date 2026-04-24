@@ -317,7 +317,7 @@ button {
   min-width: 350px;
   max-width: 450px;
   max-height: 100vh;
-  overflow: scroll;
+  overflow-y: auto;
 }
 
 form {

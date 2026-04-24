@@ -1,0 +1,48 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Advanced Search | CommonMorph";
+    string form = ViewBag.Form as string;
+    string lemma = ViewBag.Lemma as string;
+    string meaning = ViewBag.Meaning as string;
+    string tags = ViewBag.Tags as string;
+}
+
+<div class="container">
+    <h1>Advanced Search</h1>
+    <p>Search across morphological records of CommonMorph using one or more fields. Leave fields empty to ignore them.</p>
+
+    <form method="get" action="/Home/Search" style="margin-bottom: 2rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <label>Inflected Form</label>
+                <input type="text" id="txtForm" name="form" value="@form" placeholder="e.g. amā% (use % for unknown letters)" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+            <div>
+                <label>UniMorph Tags</label>
+                <input type="text" id="txtTags" name="tags" value="@tags" placeholder="e.g. V;3;SG;PRS" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+            <div>
+                <label>Lemma Entry</label>
+                <input type="text" id="txtLemma" name="lemma" value="@lemma" placeholder="e.g. amō" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+            <div>
+                <label>Lemma Gloss/Meaning</label>
+                <input type="text" id="txtMeaning" name="meaning" value="@meaning" placeholder="e.g. love" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem; display: flex; gap: 10px; flex-wrap: wrap;">
+            <b>Morphosyntactic Tags Format:</b>
+            <label class="radio-label"><input type="radio" name="tagsFormat" value="unimorph" checked> UniMorph</label>
+            <label class="radio-label"><input type="radio" name="tagsFormat" value="universal"> Linguistic Terms</label>
+        </div>
+
+        <button type="submit" id="btnSearch">Search</button>
+    </form>
+
+    <div id="results"></div>
+</div>
+
+<script src="/js/UM_tags.js" asp-append-version="true"></script>
+<script src="/js/i18n.js" asp-append-version="true"></script>
+<script src="/js/search.js" asp-append-version="true"></script>

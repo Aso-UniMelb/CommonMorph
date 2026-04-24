@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Npgsql;
 using Dapper;
+using System.Text.RegularExpressions;
 
 namespace common_morph_backend.Controllers
 {
@@ -285,39 +286,75 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
     }
     
     [HttpPost("getAnalyses")]
-    public IActionResult GetAnalyses(string word)
+    public IActionResult GetAnalyses(string form, string lemma, string meaning, string tags)
     {
-      if (string.IsNullOrEmpty(word))
-        return BadRequest("Word is empty");
+      if (string.IsNullOrWhiteSpace(form) && string.IsNullOrWhiteSpace(lemma) && string.IsNullOrWhiteSpace(meaning) && string.IsNullOrWhiteSpace(tags))
+      {
+        return Ok(new List<dynamic>());
+      }
       
       using var connection = new NpgsqlConnection(connectionString);
-      var query = @"
-SELECT 
-    l.title AS languagename,
-    (SELECT entry FROM lexicon WHERE id = c.lemmaid) AS lemma,
-    c.submitted AS form,
-    (SELECT unimorphtags FROM structures WHERE id = c.structureid) AS stags,
-    (SELECT unimorphtags FROM affixes WHERE id = c.affixid) AS atags
-FROM cells c
-INNER JOIN langs l ON l.id = c.langid
-WHERE c.submitted LIKE @Word
+      
+      var conditions = new List<string>();
+      var parameters = new DynamicParameters();
+      
+      if (!string.IsNullOrWhiteSpace(form)) {
+          conditions.Add("form ILIKE @form");
+          parameters.Add("form", form.Trim());
+      }
+      if (!string.IsNullOrWhiteSpace(lemma)) {
+          conditions.Add("lemma ILIKE @lemma");
+          parameters.Add("lemma", lemma.Trim());
+      }
+      if (!string.IsNullOrWhiteSpace(meaning)) {
+          conditions.Add("meaning ILIKE @meaning");
+          parameters.Add("meaning", meaning.Trim());
+      }
+      if (!string.IsNullOrWhiteSpace(tags)) {
+          var tagList = tags.ToUpper().Split(';', StringSplitOptions.RemoveEmptyEntries);
+          for (int i = 0; i < tagList.Length; i++)
+          {
+              var t = tagList[i].Trim();
+              conditions.Add($"alltags LIKE @tag{i}");
+              parameters.Add($"tag{i}", $"% {t}; %");
+          }
+      }      
+      var whereClause = conditions.Any() ? "WHERE " + string.Join(" AND ", conditions) : "";
+
+      var query = $@"
+SELECT * FROM (
+    SELECT 
+        l.title AS languagename,
+        (SELECT entry FROM lexicon WHERE id = c.lemmaid) AS lemma,
+        (SELECT engmeaning FROM lexicon WHERE id = c.lemmaid) AS meaning,
+        c.submitted AS form,
+        ' ' || REPLACE( CONCAT_WS(';',
+	        (SELECT unimorphtags FROM structures WHERE id = c.structureid),
+	        (SELECT unimorphtags FROM affixes WHERE id = c.affixid),
+	        (SELECT unimorphtags FROM lexicon WHERE id = c.lemmaid)),';', '; '
+        ) || '; ' AS alltags
+    FROM cells c
+    INNER JOIN langs l ON l.id = c.langid
+) t
+{whereClause}
+ORDER BY languagename, lemma
+LIMIT 500
 ";
-      var results = connection.Query(query, new { Word = word.Trim() }).ToList();
+      var results = connection.Query(query, parameters).ToList();
       var formattedResults = new List<dynamic>();
       foreach (var r in results)
       {
-          var tags = r.stags as string;
-          var atags = r.atags as string;
-          if (!string.IsNullOrEmpty(atags))
-              tags += ";" + atags;
-          
+          var combinedTags = r.alltags as string;
+          combinedTags = Regex.Replace(combinedTags, " +" , "");
           formattedResults.Add(new {
               LanguageName = r.languagename,
               Lemma = r.lemma,
+              Meaning = r.meaning,
               Form = r.form,
-              Tags = string.IsNullOrEmpty(tags) ? "" : _cacheService.UM_Sort(tags)
+              Tags = string.IsNullOrEmpty(combinedTags) ? "" : _cacheService.UM_Sort(combinedTags)
           });
       }
+
       return Ok(formattedResults);
     }
   }

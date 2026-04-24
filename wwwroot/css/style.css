@@ -724,13 +724,33 @@ figcaption {
   border-radius: 5px;
 }
 
-table.analyses {
+table.search_results {
   border-collapse: collapse;
-  margin: 0 auto;
+  width: 100%;
+  margin: 10px 0;
 }
 
-table.analyses th,
-table.analyses td {
-  border: 1px solid #ccc;
+table.search_results th,
+table.search_results td {
+  text-align: start;
   padding: 5px;
+}
+
+table.search_results tr {
+  border-bottom: 1px solid #dee2e6;
+}
+
+table.search_results tr:hover {
+  background-color: #f5f5f5;
+}
+
+table.search_results thead {
+  font-weight: bold;
+  background-color: #777;
+  color: #fff;
+}
+
+.radio-label {
+  display: inline-flex;
+  gap: 5px;
 }

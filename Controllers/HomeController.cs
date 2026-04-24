@@ -162,7 +162,7 @@ ORDER BY l.entry");
       return File(bytes, "text/tab-separated-values", fileName);
     }
     
-    public IActionResult Analyser()
+    public IActionResult Search()
     {
       return View();
     }
