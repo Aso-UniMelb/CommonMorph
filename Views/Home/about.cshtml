@@ -38,4 +38,232 @@
     collaboration across borders, disciplines, and perspectives. By bringing together a global community, we aim to
     create
     a living, growing database that benefits researchers, educators, and language communities alike.</p>
+
+  <style>
+    .section-title {
+      margin-top: 3.5rem;
+      font-size: 1.6rem;
+      text-align: center;
+      color: var(--C);
+      position: relative;
+      padding-bottom: 12px;
+      margin-bottom: 2rem;
+    }
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: var(--C3);
+      border-radius: 2px;
+    }
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 30px;
+      margin-top: 2rem;
+      margin-bottom: 3rem;
+    }
+    @@media (max-width: 992px) {
+      .resources-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .resource-card {
+      background: #ffffff;
+      border: 1px solid #eef2f5;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .resource-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 35px rgba(23, 86, 118, 0.12);
+    }
+    .resource-card .card-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #f8fafd 0%, #f1f6fa 100%);
+      border-bottom: 1px solid #eef2f5;
+    }
+    .resource-card .card-header h3 {
+      margin: 8px 0 0 0;
+      font-size: 1.25rem;
+      color: var(--C);
+      line-height: 1.4;
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+    .badge-video {
+      background: #ffebee;
+      color: var(--C3);
+    }
+    .badge-paper {
+      background: #e1f5fe;
+      color: #0288d1;
+    }
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+      height: 0;
+      overflow: hidden;
+      background: #000;
+      border-bottom: 1px solid #eef2f5;
+    }
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .resource-card .card-content {
+      padding: 24px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .resource-desc {
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .authors {
+      font-size: 0.9rem;
+      color: #333;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .citation {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .abstract-box {
+      background: #f8fafc;
+      border-left: 3px solid var(--C1);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    .abstract-box strong {
+      color: #333;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .abstract-text {
+      margin: 0;
+      line-height: 1.6;
+    }
+    .abstract-text code {
+      background: #eef2f5;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .card-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: background 0.2s ease, transform 0.1s ease;
+      cursor: pointer;
+      text-decoration: none;
+      flex: 1;
+      text-align: center;
+    }
+    .btn .material-icons {
+      font-size: 1.1rem;
+    }
+    .btn-primary {
+      background: var(--C);
+      color: #ffffff !important;
+    }
+    .btn-primary:hover {
+      background: #103d54;
+      color: #ffffff !important;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155 !important;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+      color: #1e293b !important;
+    }
+  </style>
+
+  <h2 class="section-title">Research & Presentations</h2>
+  <div class="resources-grid">
+    <!-- Video Card -->
+    <div class="resource-card video-card">
+      <div class="card-header">
+        <span class="badge badge-video">Video Presentation</span>
+        <h3>CommonMorph Platform Presentation</h3>
+      </div>
+      <div class="video-container">
+        <iframe src="https://www.youtube.com/embed/KrbE2jhGVZ0" title="CommonMorph Platform Presentation" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+      <div class="card-content">
+        <p class="resource-desc">Watch our comprehensive video walkthrough demonstrating the CommonMorph platform, its core workflows (expert definition, contributor elicitation, and community validation), and how it streamlines morphological data collection.</p>
+      </div>
+    </div>
+
+    <!-- Paper Card -->
+    <div class="resource-card paper-card">
+      <div class="card-header">
+        <span class="badge badge-paper">Academic Paper</span>
+        <h3>CommonMorph: Participatory Morphological Documentation Platform</h3>
+      </div>
+      <div class="card-content">
+        <div class="authors">
+          <strong>Authors:</strong> Aso Mahmudi, Sina Ahmadi, Kemal Kurniawan, Rico Sennrich, Eduard Hovy, Ekaterina Vylomova
+        </div>
+        <div class="citation">
+          <em>arXiv:2604.04515 [cs.CL], April 2026</em>
+        </div>
+        <div class="abstract-box">
+          <strong>Abstract:</strong>
+          <p class="abstract-text">Collecting and annotating morphological data present significant challenges, requiring linguistic expertise, methodological rigour, and substantial resources. These barriers are particularly acute for low-resource languages and varieties. To accelerate this process, we introduce <code>CommonMorph</code>, a comprehensive platform that streamlines morphological data collection development through a three-tiered approach: expert linguistic definition, contributor elicitation, and community validation. The platform minimises manual work by incorporating active learning, annotation suggestions, and tools to import and adapt materials from related languages. It accommodates diverse morphological systems, including fusional, agglutinative, and root-and-pattern morphologies. Its open-source design and UniMorph-compatible outputs ensure accessibility and interoperability with NLP tools. Our platform is accessible at <a href="https://common-morph.com" target="_blank">common-morph.com</a>, offering a replicable model for preserving linguistic diversity through collaborative technology.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://arxiv.org/abs/2604.04515" target="_blank" class="btn btn-primary">
+            <span class="material-icons">open_in_new</span> View on arXiv
+          </a>
+          <a href="https://arxiv.org/pdf/2604.04515" target="_blank" class="btn btn-secondary">
+            <span class="material-icons">picture_as_pdf</span> Download PDF
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
