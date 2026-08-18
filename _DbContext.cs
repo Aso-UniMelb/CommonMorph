@@ -139,7 +139,7 @@ namespace common_morph_backend
       public string? engmeaning { get; set; }
       public string? unimorphtags { get; set; }
       public string? description { get; set; }
-      public Priority priority { get; set; }
+      public Priority? priority { get; set; }
       public bool isdeleted { get; set; }
     }
 

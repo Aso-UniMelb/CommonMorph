@@ -22,6 +22,280 @@ namespace common_morph_backend.Controllers
       _EmailService = emailService;
       _context = context;
     }
+    public class LoginDto
+    {
+      public string username { get; set; }
+      public string password { get; set; }
+    }
+
+    public class RegisterDto
+    {
+      public string username { get; set; }
+      public UserRole desiredRole { get; set; }
+    }
+
+    public class ActivateDto
+    {
+      public string username { get; set; }
+      public string code { get; set; }
+      public string password { get; set; }
+      public string name { get; set; }
+    }
+
+    public class ForgotDto
+    {
+      public string username { get; set; }
+    }
+
+    public class GoogleLoginDto
+    {
+      public string credential { get; set; }
+    }
+
+    [HttpGet("User/me")]
+    public IActionResult Me()
+    {
+      if (User.Identity == null || !User.Identity.IsAuthenticated)
+      {
+        return Ok(new { isAuthenticated = false });
+      }
+
+      var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      int.TryParse(idStr, out int userId);
+      var role = User.FindFirst(ClaimTypes.Role)?.Value;
+      var name = User.FindFirst(ClaimTypes.GivenName)?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value;
+      var email = User.FindFirst(ClaimTypes.Name)?.Value;
+
+      return Ok(new
+      {
+        isAuthenticated = true,
+        user = new
+        {
+          id = userId,
+          name = name,
+          role = role,
+          email = email
+        }
+      });
+    }
+
+    [HttpPost("User/login-api")]
+    public IActionResult LoginApi([FromBody] LoginDto dto)
+    {
+      if (dto == null || string.IsNullOrWhiteSpace(dto.username) || string.IsNullOrWhiteSpace(dto.password))
+      {
+        return BadRequest(new { error = "Username and password are required." });
+      }
+      var user = _context.users.FirstOrDefault(x => x.username == dto.username.Trim().ToLower());
+      if (user == null || !VerifyPassword(dto.password, user.passwordhash, user.passwordsalt))
+      {
+        return BadRequest(new { error = "Invalid username or password." });
+      }
+
+      var principal = GetUser(dto.username.Trim().ToLower(), dto.password);
+      var authProperties = new AuthenticationProperties
+      {
+        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+        IsPersistent = true
+      };
+      HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+
+      return Ok(new
+      {
+        success = true,
+        user = new
+        {
+          id = user.id,
+          name = user.name,
+          role = user.role.ToString(),
+          email = user.username
+        }
+      });
+    }
+
+    [HttpPost("User/logout-api")]
+    public IActionResult LogoutApi()
+    {
+      HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+      return Ok(new { success = true });
+    }
+
+    [HttpPost("User/register-api")]
+    public IActionResult RegisterApi([FromBody] RegisterDto dto)
+    {
+      if (dto == null || string.IsNullOrWhiteSpace(dto.username))
+      {
+        return BadRequest(new { error = "Email is required." });
+      }
+      var email = dto.username.Trim().ToLower();
+      var usr = _context.users.FirstOrDefault(x => x.username == email);
+      if (usr != null)
+      {
+        return BadRequest(new { error = "User already exists." });
+      }
+      var random = new Random();
+      var code = random.Next(100000, 999999).ToString();
+
+      usr = new User
+      {
+        username = email,
+        registrationcode = code,
+        role = UserRole.speaker
+      };
+
+      if (dto.desiredRole == UserRole.speaker || dto.desiredRole == UserRole.linguist)
+        usr.desiredrole = dto.desiredRole;
+
+      _context.users.Add(usr);
+      _context.SaveChanges();
+
+      try
+      {
+        _EmailService.Send(
+          usr.username,
+          "You are invited to CommonMorph!",
+          @$"<h2>You are invited to contribute to the CommonMorph Project!</h2>
+            <p><a href=""https://common-morph.com/#/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>
+            <p>Your activation code is: <b>{code}</b></p>",
+          isHtml: true);
+      }
+      catch {}
+
+      return Ok(new { success = true, message = "Please check your email for the registration code." });
+    }
+
+    [HttpPost("User/activate-api")]
+    public IActionResult ActivateApi([FromBody] ActivateDto dto)
+    {
+      if (dto == null || string.IsNullOrWhiteSpace(dto.username) || string.IsNullOrWhiteSpace(dto.code))
+      {
+        return BadRequest(new { error = "Username and code are required." });
+      }
+      var email = dto.username.Trim().ToLower();
+      var user = _context.users.FirstOrDefault(x => x.username == email && x.registrationcode == dto.code.Trim());
+      if (user == null)
+      {
+        return BadRequest(new { error = "Invalid username or registration code." });
+      }
+      var salt = GenerateSalt();
+      var hashedPassword = HashPassword(dto.password, salt);
+      user.name = dto.name;
+      user.passwordhash = hashedPassword;
+      user.passwordsalt = salt;
+      _context.Entry(user).State = EntityState.Detached;
+      _context.users.Update(user);
+      _context.SaveChanges();
+
+      var principal = GetUser(email, dto.password);
+      var authProperties = new AuthenticationProperties
+      {
+        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+        IsPersistent = true
+      };
+      HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+
+      return Ok(new
+      {
+        success = true,
+        user = new
+        {
+          id = user.id,
+          name = user.name,
+          role = user.role.ToString(),
+          email = user.username
+        }
+      });
+    }
+
+    [HttpPost("User/forgot-api")]
+    public IActionResult ForgotApi([FromBody] ForgotDto dto)
+    {
+      if (dto == null || string.IsNullOrWhiteSpace(dto.username))
+      {
+        return BadRequest(new { error = "Username is required." });
+      }
+      var email = dto.username.Trim().ToLower();
+      var user = _context.users.FirstOrDefault(x => x.username == email);
+      if (user == null)
+      {
+        return BadRequest(new { error = "Invalid username." });
+      }
+      var random = new Random();
+      var code = random.Next(100000, 999999).ToString();
+      try
+      {
+        _EmailService.Send(
+          user.username,
+          "CommonMorph: Password reset",
+          @$"<h2>Please click this link to reset your password in the CommonMorph Project!</h2>
+            <p><a href=""https://common-morph.com/#/user/activate?username={user.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>
+            <p>Your reset code is: <b>{code}</b></p>",
+          isHtml: true);
+      }
+      catch {}
+      user.registrationcode = code;
+      _context.Entry(user).State = EntityState.Detached;
+      _context.users.Update(user);
+      _context.SaveChanges();
+      return Ok(new { success = true, message = "Reset code has been sent to your email." });
+    }
+
+    [HttpPost("User/google-login-api")]
+    public async Task<IActionResult> GoogleLoginApi([FromBody] GoogleLoginDto dto)
+    {
+      if (dto == null || string.IsNullOrWhiteSpace(dto.credential))
+      {
+        return BadRequest(new { error = "Google credential token is required." });
+      }
+      var handler = new JwtSecurityTokenHandler();
+      var jsonToken = handler.ReadToken(dto.credential);
+      var tokenS = jsonToken as JwtSecurityToken;
+      var email = tokenS.Claims.First(claim => claim.Type == "email").Value.Trim().ToLower();
+      var name = tokenS.Claims.First(claim => claim.Type == "name").Value;
+
+      var checkuser = _context.users.FirstOrDefault(x => x.username == email);
+      if (checkuser == null)
+      {
+        var newUser = new User
+        {
+          role = UserRole.speaker,
+          username = email,
+          name = name,
+        };
+        _context.users.Add(newUser);
+        _context.SaveChanges();
+      }
+
+      var user = _context.users.FirstOrDefault(x => x.username == email);
+      var claims = new List<Claim>
+      {
+        new Claim(ClaimTypes.Name, email),
+        new Claim(ClaimTypes.Role, user.role.ToString()),
+        new Claim(ClaimTypes.NameIdentifier, user.id.ToString()),
+        new Claim(ClaimTypes.GivenName, user.name ?? name)
+      };
+      var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+      var principal = new ClaimsPrincipal(identity);
+      var authProperties = new AuthenticationProperties
+      {
+        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+        IsPersistent = true
+      };
+      await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+
+      return Ok(new
+      {
+        success = true,
+        user = new
+        {
+          id = user.id,
+          name = user.name ?? name,
+          role = user.role.ToString(),
+          email = user.username
+        }
+      });
+    }
+
     //=====================================================================
     // Google Login/Register
     //=====================================================================
@@ -249,31 +523,46 @@ namespace common_morph_backend.Controllers
     }
 
 
+    public class InviteUserDto
+    {
+      public string? username { get; set; }
+      public int role { get; set; }
+    }
+
     [Authorize(Roles = "admin")]
     [HttpPost("User/invite")]
-    public async Task<IActionResult> invite(User usr)
+    public async Task<IActionResult> invite([FromBody] InviteUserDto usr)
     {
-      var checkuser = _context.users.FirstOrDefault(x => x.username == usr.username);
+      if (string.IsNullOrWhiteSpace(usr.username))
+        return BadRequest("Email is required");
+
+      var email = usr.username.Trim().ToLower();
+      var checkuser = _context.users.FirstOrDefault(x => x.username == email);
       if (checkuser != null)
-        return BadRequest("user already exists");
-      // random code between 1000 and 9999
+        return BadRequest("User already exists");
+
       var random = new Random();
       var code = random.Next(100000, 999999).ToString();
-      _EmailService.Send(
-        usr.username,
-        "You are invited to the CommonMorph!",
-        @$"<h2>You are invited to contribute to the CommonMorph Project!</h2>
-          <p><a href=""https://common-morph.com/user/activate?username={usr.username}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
-        isHtml: true);
+      try
+      {
+        _EmailService.Send(
+          email,
+          "You are invited to the CommonMorph!",
+          @$"<h2>You are invited to contribute to the CommonMorph Project!</h2>
+            <p><a href=""https://common-morph.com/user/activate?username={email}&code={code}"" style=""background:#1B84FF;color:#fff; padding:5px 10px;border-radius:5px;"">Click here to start</a></p>",
+          isHtml: true);
+      }
+      catch {}
+
       var user = new User
       {
         role = (UserRole)usr.role,
-        username = usr.username,
+        username = email,
         registrationcode = code
       };
       _context.users.Add(user);
       _context.SaveChanges();
-      return Ok("User created successfully.");
+      return Ok(new { success = true, message = "User invited successfully." });
     }
 
     [Authorize(Roles = "admin")]
@@ -289,7 +578,7 @@ namespace common_morph_backend.Controllers
       _context.Entry(usr).State = EntityState.Detached;
       _context.users.Update(usr);
       _context.SaveChanges();
-      return Ok("User's Role Changed successfully.");
+      return Ok(new { success = true, message = "User's role changed successfully." });
     }
 
     [Authorize]

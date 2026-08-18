@@ -20,41 +20,54 @@ namespace common_morph_backend.Controllers
     public IActionResult list(int LangId)
     {
       return Ok(_context.inflectionclasses
-        .Where(x => x.langid == LangId).OrderBy(x => x.title)
-        .Select(x => new { x.id, x.langid, x.title }).ToList());
+        .Where(x => x.langid == LangId && !x.isdeleted).OrderBy(x => x.title)
+        .Select(x => new { x.id, x.langid, x.title, x.description }).ToList());
     }
-
 
     [HttpGet("get")]
     public IActionResult get(int id)
     {
-      return Ok(_context.inflectionclasses.FirstOrDefault(x => x.id == id));
+      return Ok(_context.inflectionclasses.FirstOrDefault(x => x.id == id && !x.isdeleted));
     }
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("insert")]
-    public IActionResult insert(InflectionClass pClass)
+    public IActionResult insert([FromBody] InflectionClass pClass)
     {
-      if (_context.inflectionclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid))
+      if (_context.inflectionclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid && !x.isdeleted))
         return BadRequest("duplicate");
 
+      pClass.isdeleted = false;
       _context.inflectionclasses.Add(pClass);
       _context.SaveChanges();
-      var id = pClass.id;
-      return Ok(id.ToString());
+      return Ok(new { id = pClass.id, success = true });
     }
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("update")]
-    public IActionResult update(InflectionClass pClass)
+    public IActionResult update([FromBody] InflectionClass pClass)
     {
       var old = _context.inflectionclasses.FirstOrDefault(x => x.id == pClass.id);
       if (old == null)
         return BadRequest("not exist");
-      _context.Entry(old).State = EntityState.Detached;
-      _context.inflectionclasses.Update(pClass);
+
+      old.title = pClass.title ?? old.title;
+      old.description = pClass.description ?? old.description;
       _context.SaveChanges();
-      return Ok(pClass.id.ToString());
+      return Ok(new { id = old.id, success = true });
+    }
+
+    [Authorize(Roles = "admin, linguist")]
+    [HttpPost("delete")]
+    public IActionResult delete([FromQuery] int id)
+    {
+      var old = _context.inflectionclasses.FirstOrDefault(x => x.id == id);
+      if (old == null)
+        return BadRequest("not exist");
+
+      old.isdeleted = true;
+      _context.SaveChanges();
+      return Ok(new { id = id, success = true });
     }
   }
 }

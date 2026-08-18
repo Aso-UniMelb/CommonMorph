@@ -68,6 +68,17 @@ builder.Services.AddMailKit(optionBuilder =>
   });
 });
 
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("AllowAll", policy =>
+  {
+    policy.WithOrigins("http://localhost:5173", "http://localhost:5041", "https://localhost:7242")
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
+  });
+});
+
 builder.Services.Configure<JsonOptions>(options =>
 {
   options.JsonSerializerOptions.PropertyNamingPolicy = null; // Keep PascalCase for responses
@@ -82,41 +93,26 @@ if (app.Environment.IsDevelopment())
   app.UseSwagger();
   app.UseSwaggerUI();
 }
+else
+{
+  app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
-
+app.UseDefaultFiles();
 app.UseStaticFiles();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowAll");
-
-// app.MapControllers();
-app.MapControllerRoute(
-    name: "User",
-    pattern: "user/{action=login}",
-    defaults: new { controller = "User" });
-
-app.MapControllerRoute(
-    name: "app",
-    pattern: "app/{action=dashboard}",
-    defaults: new { controller = "App" });
-
-app.MapControllerRoute(
-  name: "dataset",
-  pattern: "dataset/{langid}",
-  defaults: new { controller = "Home", action = "dataset" });
+app.MapControllers();
 
 app.MapControllerRoute(
   name: "download",
   pattern: "download/{type}/{langid}",
   defaults: new { controller = "Home", action = "Download" });
 
-app.MapControllerRoute(
-  name: "default",
-  pattern: "{action=Index}/{id?}",
-  defaults: new { controller = "Home" });
+app.MapFallbackToFile("index.html");
 
-app.Run();
-app.Run();
+app.Run();

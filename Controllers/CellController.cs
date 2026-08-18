@@ -31,25 +31,25 @@ namespace common_morph_backend.Controllers
     [HttpPost("batchInsert")]
     public IActionResult batchInsert([FromBody] List<Cell> cells)
     {
-      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+      
       foreach (var cell in cells)
       {
         // update if already deleted 
         if (_context.cells.Any(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.affixid == cell.affixid && x.isdeleted == true))
         {
           var old = _context.cells.FirstOrDefault(x => x.lemmaid == cell.lemmaid && x.structureid == cell.structureid && x.isdeleted == true);
-          if (old == null)
-            return BadRequest("not exist");
-
-          cell.datesubmitted = DateTime.UtcNow;
-          cell.byuserid = userId;
-          _context.Entry(old).State = EntityState.Detached;
-          old.isdeleted = false;
-          old.submitted = cell.submitted;
-          old.datesubmitted = cell.datesubmitted;
-          _context.cells.Update(old);
-          _context.SaveChanges();
-          return Ok(cell.id.ToString());
+          if (old != null)
+          {
+            cell.datesubmitted = DateTime.UtcNow;
+            cell.byuserid = userId;
+            _context.Entry(old).State = EntityState.Detached;
+            old.isdeleted = false;
+            old.submitted = cell.submitted;
+            old.datesubmitted = cell.datesubmitted;
+            _context.cells.Update(old);
+          }
         }
         else
         {
@@ -59,7 +59,7 @@ namespace common_morph_backend.Controllers
         }
       }
       _context.SaveChanges();
-      return Ok(cells.Count);
+      return Ok(new { count = cells.Count, success = true });
     }
 
 
@@ -159,41 +159,72 @@ namespace common_morph_backend.Controllers
       return Ok(cells.Count);
     }
 
+    public class CellRatingDto
+    {
+      public int cellid { get; set; }
+      public bool? rate { get; set; }
+    }
+
     [Authorize]
     [HttpPost("approve")]
-    public IActionResult approve(int cellid)
+    public IActionResult approve([FromBody] CellRatingDto? dto, [FromQuery] int? cellid)
     {
-      CellRating vt = new CellRating();
-      vt.cellid = cellid;
-      vt.rate = true;
-      vt.userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-      vt.daterated = DateTime.UtcNow;
-      // check if already rated
-      var old = _context.cellratings.FirstOrDefault(x => x.cellid == cellid && x.userid == vt.userid);
+      int cid = dto != null && dto.cellid > 0 ? dto.cellid : (cellid ?? 0);
+      if (cid == 0) return BadRequest("cellid is required");
+
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+
+      var old = _context.cellratings.FirstOrDefault(x => x.cellid == cid && x.userid == userId);
       if (old != null)
-        return BadRequest("You have already rated this cell!");
+      {
+        old.rate = true;
+        old.daterated = DateTime.UtcNow;
+        _context.SaveChanges();
+        return Ok(new { id = old.id, success = true });
+      }
+
+      var vt = new CellRating
+      {
+        cellid = cid,
+        rate = true,
+        userid = userId,
+        daterated = DateTime.UtcNow
+      };
       _context.cellratings.Add(vt);
       _context.SaveChanges();
-      return Ok(vt.id.ToString());
+      return Ok(new { id = vt.id, success = true });
     }
 
     [Authorize]
     [HttpPost("disapprove")]
-    public IActionResult disapprove(int cellid)
+    public IActionResult disapprove([FromBody] CellRatingDto? dto, [FromQuery] int? cellid)
     {
-      CellRating vt = new CellRating();
-      vt.cellid = cellid;
-      vt.rate = false;
-      vt.userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-      vt.daterated = DateTime.UtcNow;
+      int cid = dto != null && dto.cellid > 0 ? dto.cellid : (cellid ?? 0);
+      if (cid == 0) return BadRequest("cellid is required");
 
-      // check if already rated
-      var old = _context.cellratings.FirstOrDefault(x => x.cellid == cellid && x.userid == vt.userid);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+
+      var old = _context.cellratings.FirstOrDefault(x => x.cellid == cid && x.userid == userId);
       if (old != null)
-        return BadRequest("You have already rated this cell!");
+      {
+        old.rate = false;
+        old.daterated = DateTime.UtcNow;
+        _context.SaveChanges();
+        return Ok(new { id = old.id, success = true });
+      }
+
+      var vt = new CellRating
+      {
+        cellid = cid,
+        rate = false,
+        userid = userId,
+        daterated = DateTime.UtcNow
+      };
       _context.cellratings.Add(vt);
       _context.SaveChanges();
-      return Ok(vt.id.ToString());
+      return Ok(new { id = vt.id, success = true });
     }
 
     [Authorize(Roles = "admin, linguist")]
@@ -285,9 +316,22 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
       return Ok(new { forms, lemmas });
     }
     
-    [HttpPost("getAnalyses")]
-    public IActionResult GetAnalyses(string form, string lemma, string meaning, string tags)
+    public class SearchAnalysesRequest
     {
+      public string? form { get; set; }
+      public string? lemma { get; set; }
+      public string? meaning { get; set; }
+      public string? tags { get; set; }
+    }
+    
+    [HttpPost("getAnalyses")]
+    public IActionResult GetAnalyses([FromBody] SearchAnalysesRequest? req)
+    {
+      var form = req?.form;
+      var lemma = req?.lemma;
+      var meaning = req?.meaning;
+      var tags = req?.tags;
+
       if (string.IsNullOrWhiteSpace(form) && string.IsNullOrWhiteSpace(lemma) && string.IsNullOrWhiteSpace(meaning) && string.IsNullOrWhiteSpace(tags))
       {
         return Ok(new List<dynamic>());
@@ -299,19 +343,25 @@ WHERE pc.langid = {langid} AND l.isdeleted = FALSE");
       var parameters = new DynamicParameters();
       
       if (!string.IsNullOrWhiteSpace(form)) {
+          var f = form.Trim();
+          if (!f.Contains("%")) f = $"%{f}%";
           conditions.Add("form ILIKE @form");
-          parameters.Add("form", form.Trim());
+          parameters.Add("form", f);
       }
       if (!string.IsNullOrWhiteSpace(lemma)) {
+          var lm = lemma.Trim();
+          if (!lm.Contains("%")) lm = $"%{lm}%";
           conditions.Add("lemma ILIKE @lemma");
-          parameters.Add("lemma", lemma.Trim());
+          parameters.Add("lemma", lm);
       }
       if (!string.IsNullOrWhiteSpace(meaning)) {
+          var m = meaning.Trim();
+          if (!m.Contains("%")) m = $"%{m}%";
           conditions.Add("meaning ILIKE @meaning");
-          parameters.Add("meaning", meaning.Trim());
+          parameters.Add("meaning", m);
       }
       if (!string.IsNullOrWhiteSpace(tags)) {
-          var tagList = tags.ToUpper().Split(';', StringSplitOptions.RemoveEmptyEntries);
+          var tagList = tags.ToUpper().Split(new[] { ';', '+', ',' }, StringSplitOptions.RemoveEmptyEntries);
           for (int i = 0; i < tagList.Length; i++)
           {
               var t = tagList[i].Trim();
@@ -335,6 +385,7 @@ SELECT * FROM (
         ) || '; ' AS alltags
     FROM cells c
     INNER JOIN langs l ON l.id = c.langid
+    WHERE c.isdeleted IS NOT TRUE
 ) t
 {whereClause}
 ORDER BY languagename, lemma
@@ -345,7 +396,7 @@ LIMIT 500
       foreach (var r in results)
       {
           var combinedTags = r.alltags as string;
-          combinedTags = Regex.Replace(combinedTags, " +" , "");
+          combinedTags = Regex.Replace(combinedTags ?? "", " +" , "");
           formattedResults.Add(new {
               LanguageName = r.languagename,
               Lemma = r.lemma,

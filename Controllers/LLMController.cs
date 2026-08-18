@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -8,14 +7,12 @@ using System.Threading.Tasks;
 
 namespace common_morph_backend.Controllers
 {
-  // [ApiController]
+  [ApiController]
   [Route("[controller]")]
-  public class LLMController : Controller
+  public class LLMController : ControllerBase
   {
-
     private readonly AppDbContext _context;
     private readonly IHttpClientFactory _httpClientFactory;
-    // private readonly HttpClient _httpClient = new HttpClient();
     private readonly IConfiguration _configuration;
     public Dictionary<string, Provider> providedBy = new Dictionary<string, Provider>();
 
@@ -28,22 +25,22 @@ namespace common_morph_backend.Controllers
       {
         { "OpenAI", new Provider {
             Url = "https://api.openai.com/v1/chat/completions",
-            APIKey = Environment.GetEnvironmentVariable("OpenAI") ??  _configuration["OpenAI"]
+            APIKey = Environment.GetEnvironmentVariable("OpenAI") ?? _configuration["OpenAI"] ?? ""
            }
         },
         { "Groq", new Provider {
             Url = "https://api.groq.com/openai/v1/chat/completions",
-            APIKey = Environment.GetEnvironmentVariable("Groq") ?? _configuration["Groq"]
+            APIKey = Environment.GetEnvironmentVariable("Groq") ?? _configuration["Groq"] ?? ""
           }
         },
         { "OpenRouter", new Provider {
             Url = "https://openrouter.ai/api/v1/chat/completions",
-            APIKey = Environment.GetEnvironmentVariable("OpenRouter") ??_configuration["OpenRouter"]
+            APIKey = Environment.GetEnvironmentVariable("OpenRouter") ?? _configuration["OpenRouter"] ?? ""
           }
-          },
+        },
         { "GoogleAIStudio", new Provider {
             Url = "https://generativelanguage.googleapis.com/v1beta/models/",
-            APIKey = Environment.GetEnvironmentVariable("GoogleAIStudio") ?? _configuration["GoogleAIStudio"]
+            APIKey = Environment.GetEnvironmentVariable("GoogleAIStudio") ?? _configuration["GoogleAIStudio"] ?? ""
           }
         }
       };
@@ -51,146 +48,225 @@ namespace common_morph_backend.Controllers
 
     public class Provider
     {
-      public string Url { get; set; }
-      public string APIKey { get; set; }
+      public string Url { get; set; } = "";
+      public string APIKey { get; set; } = "";
     }
 
     public class Sample
     {
-      public string lemma { get; set; }
-      public string stem1 { get; set; }
-      public string stem2 { get; set; }
-      public string stem3 { get; set; }
-      public string form { get; set; }
+      public string? lemma { get; set; }
+      public string? stem1 { get; set; }
+      public string? stem2 { get; set; }
+      public string? stem3 { get; set; }
+      public string? form { get; set; }
+    }
+
+    public class QuestionPromptRequest
+    {
+      public string prompt { get; set; } = "";
+    }
+
+    public class SuggestionRequest
+    {
+      public Sample? curLemma { get; set; }
+      public List<Sample>? samples { get; set; }
+      public string? lang { get; set; }
     }
 
     [HttpPost("getQuestionFromLLM")]
-    public async Task<IActionResult> getQuestionFromLLM(string prompt)
+    public async Task<IActionResult> getQuestionFromLLM([FromBody] QuestionPromptRequest request)
     {
-      var results = await GetFromLLM(prompt, new Dictionary<string, Provider>
+      if (string.IsNullOrWhiteSpace(request?.prompt))
       {
-        {"gemini-flash-lite-latest", providedBy["GoogleAIStudio"] },
-        // {"gemini-2.5-flash-preview-04-17", providedBy["GoogleAIStudio"] }, // SLOW
-        { "gpt-5-mini", providedBy["OpenAI"] },
-        { "gpt-4.1-mini", providedBy["OpenAI"] },
-        // { "gpt-4o-2024-11-20", providedBy["OpenAI"] }, //"chatgpt-4o-latest",
-        { "llama-3.3-70b-versatile", providedBy["Groq"] },
-        { "moonshotai/kimi-k2-instruct-0905", providedBy["Groq"] },
-        { "groq/compound", providedBy["Groq"] },
-        // { "qwen-qwq-32b", providedBy["Groq"] }, //"qwen-2.5-32b",
-      });
+        return BadRequest(new { error = "Prompt is required" });
+      }
+
+      var modelsToQuery = new Dictionary<string, Provider>();
+
+      // Add models for providers that have valid API keys
+      if (!string.IsNullOrWhiteSpace(providedBy["GoogleAIStudio"].APIKey))
+      {
+        modelsToQuery["gemini-2.0-flash"] = providedBy["GoogleAIStudio"];
+        modelsToQuery["gemini-1.5-flash"] = providedBy["GoogleAIStudio"];
+      }
+
+      if (!string.IsNullOrWhiteSpace(providedBy["OpenAI"].APIKey))
+      {
+        modelsToQuery["gpt-4o-mini"] = providedBy["OpenAI"];
+        modelsToQuery["gpt-4o"] = providedBy["OpenAI"];
+      }
+
+      if (!string.IsNullOrWhiteSpace(providedBy["Groq"].APIKey))
+      {
+        modelsToQuery["llama-3.3-70b-versatile"] = providedBy["Groq"];
+        modelsToQuery["llama-3.1-8b-instant"] = providedBy["Groq"];
+      }
+
+      if (!string.IsNullOrWhiteSpace(providedBy["OpenRouter"].APIKey))
+      {
+        modelsToQuery["meta-llama/llama-3.3-70b-instruct"] = providedBy["OpenRouter"];
+      }
+
+      var results = await GetFromLLM(request.prompt, modelsToQuery);
       return Ok(results);
     }
 
     [HttpPost("getSuggestionFromLLM")]
-    public async Task<IActionResult> getSuggestionFromLLM(Sample curLemma, List<Sample> samples)
+    public async Task<IActionResult> getSuggestionFromLLM([FromBody] SuggestionRequest request)
     {
-      // 0. check if the database already has the suggestions
-      // 1. generate prompt
-      string prompt = suggestionPrompt(curLemma, samples);
-      // 2. get suggestions from LLMs
-      var Suggestions = await GetFromLLM(prompt, new Dictionary<string, Provider>
+      if (request?.curLemma == null || string.IsNullOrWhiteSpace(request.curLemma.lemma))
       {
-        { "gpt-4.1-mini", providedBy["OpenAI"] },
-        { "llama-3.3-70b-versatile", providedBy["Groq"] },
-      });
-      // 3. return the suggestions to frontend
-      return Ok(Suggestions);
+        return Ok(new Dictionary<string, string>());
+      }
+
+      string prompt = suggestionPrompt(request.curLemma, request.samples ?? new List<Sample>(), request.lang);
+      var modelsToQuery = new Dictionary<string, Provider>();
+
+      if (!string.IsNullOrWhiteSpace(providedBy["OpenAI"].APIKey))
+      {
+        modelsToQuery["gpt-4o-mini"] = providedBy["OpenAI"];
+      }
+
+      if (!string.IsNullOrWhiteSpace(providedBy["Groq"].APIKey))
+      {
+        modelsToQuery["llama-3.3-70b-versatile"] = providedBy["Groq"];
+      }
+
+      if (!string.IsNullOrWhiteSpace(providedBy["GoogleAIStudio"].APIKey))
+      {
+        modelsToQuery["gemini-2.0-flash"] = providedBy["GoogleAIStudio"];
+      }
+
+      var suggestions = await GetFromLLM(prompt, modelsToQuery);
+      return Ok(suggestions);
     }
 
-    private string suggestionPrompt(Sample curLemma, List<Sample> samples)
+    private string suggestionPrompt(Sample curLemma, List<Sample> samples, string? langName = null)
     {
-      // This prompt does not need to be translated because it is not visible to the speakers.
+      var lang = !string.IsNullOrWhiteSpace(langName) ? langName : "the target language";
       var prompt = new StringBuilder();
-      prompt.Append(@$"In the language YYY, what is the correct inflected form of the lemma ""{curLemma.lemma}""");
-      if (curLemma.stem1 != null)
+      prompt.Append($"In the language {lang}, what is the correct inflected word form of the lemma \"{curLemma.lemma}\"");
+      
+      if (!string.IsNullOrWhiteSpace(curLemma.stem1))
       {
-        prompt.Append(@$", given that its stem1 is ""{curLemma.stem1}""");
-        if (curLemma.stem2 != null)
-          prompt.Append(@$", and stem2 is ""{curLemma.stem2}""");
-        if (curLemma.stem3 != null)
-          prompt.Append(@$", and stem3 is ""{curLemma.stem3}""");
-        prompt.Append(@$" for a specific grammatical feature set? As reference examples, under the same grammatical features:");
+        prompt.Append($", given stem1 is \"{curLemma.stem1}\"");
+        if (!string.IsNullOrWhiteSpace(curLemma.stem2))
+          prompt.Append($", stem2 is \"{curLemma.stem2}\"");
+        if (!string.IsNullOrWhiteSpace(curLemma.stem3))
+          prompt.Append($", and stem3 is \"{curLemma.stem3}\"");
       }
-      // samples for few-shot learning
-      foreach (var sample in samples)
-      {
-        prompt.Append(@$"- The lemma {sample.lemma}");
-        // if stems are provided
-        if (sample.stem1 != null)
-        {
-          prompt.Append(@$"(with stem1: ""{sample.stem1}""");
-          if (sample.stem2 != null)
-            prompt.Append(@$", stem2: ""{sample.stem2}""");
-          if (sample.stem3 != null)
-            prompt.Append(@$", stem3: ""{sample.stem3}"")");
-          prompt.Append(")");
-        }
-        // inflected form:
-        prompt.Append(@$" yields the form ""{sample.form}"". ");
-        // finishing the prompt with the following instructions
-        prompt.Append("Do not explain anything to me. Just give me one final inflected word.");
+      prompt.Append(" for the requested grammatical feature set?");
 
+      if (samples != null && samples.Any())
+      {
+        prompt.Append(" Here are reference examples from the same variety under the exact same grammatical features:\n");
+        foreach (var sample in samples)
+        {
+          if (string.IsNullOrWhiteSpace(sample.lemma) || string.IsNullOrWhiteSpace(sample.form)) continue;
+          prompt.Append($"- Lemma \"{sample.lemma}\"");
+          if (!string.IsNullOrWhiteSpace(sample.stem1))
+          {
+            prompt.Append($" (stem1: \"{sample.stem1}\"");
+            if (!string.IsNullOrWhiteSpace(sample.stem2)) prompt.Append($", stem2: \"{sample.stem2}\"");
+            if (!string.IsNullOrWhiteSpace(sample.stem3)) prompt.Append($", stem3: \"{sample.stem3}\"");
+            prompt.Append(")");
+          }
+          prompt.Append($" -> Inflected form: \"{sample.form}\"\n");
+        }
       }
+
+      prompt.Append("\nDo not provide any explanation, markdown, or punctuation. Output ONLY the single final inflected word form.");
       return prompt.ToString();
     }
 
     private async Task<Dictionary<string, string>> GetFromLLM(string prompt, Dictionary<string, Provider> models)
     {
-      var tasks = models.Select(async model =>
+      var validModels = models.Where(m => m.Value != null && !string.IsNullOrWhiteSpace(m.Value.APIKey)).ToList();
+      if (!validModels.Any())
       {
-        var httpClient = _httpClientFactory.CreateClient();
-        var httpContent = new StringContent("");
-        string url = "";
+        return new Dictionary<string, string>();
+      }
 
-        if (model.Key.StartsWith("gemini"))
-        {
-          var requestBody = new
-          {
-            contents = new[] { new { role = "user", parts = new[] { new { text = prompt } } } },
-            generationConfig = new { temperature = 0.15 }
-          };
-          httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-          // "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=" + apiKey;
-          url = model.Value.Url + model.Key + ":generateContent?key=" + model.Value.APIKey;
-        }
-        else
-        {
-          var body = new
-          {
-            model = model.Key,
-            messages = new[] { new { role = "user", content = prompt } }
-          };
-          httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {model.Value.APIKey}");
-          httpContent = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-          url = model.Value.Url;
-        }
+      var tasks = validModels.Select(async model =>
+      {
         try
         {
-          var response = await httpClient.PostAsync(url, httpContent);
-          var responseContent = await response.Content.ReadAsStringAsync();
-          if (!response.IsSuccessStatusCode)
-            return new KeyValuePair<string, string>(model.Key, "Error" + StatusCode((int)response.StatusCode, responseContent));
-          using var doc = JsonDocument.Parse(responseContent);
-          var reply = "";
+          var httpClient = _httpClientFactory.CreateClient();
+          httpClient.Timeout = TimeSpan.FromSeconds(20);
+          HttpContent httpContent;
+          string url;
+
           if (model.Key.StartsWith("gemini"))
           {
-            reply = doc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
+            var requestBody = new
+            {
+              contents = new[] { new { role = "user", parts = new[] { new { text = prompt } } } },
+              generationConfig = new { temperature = 0.2, maxOutputTokens = 256 }
+            };
+            httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            url = $"{model.Value.Url}{model.Key}:generateContent?key={model.Value.APIKey}";
           }
           else
           {
-            reply = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-            reply = Regex.Replace(reply, @"<think>.+?</think>", "", RegexOptions.Singleline);
+            var body = new
+            {
+              model = model.Key,
+              messages = new[] { new { role = "user", content = prompt } },
+              temperature = 0.2,
+              max_tokens = 256
+            };
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", model.Value.APIKey);
+            httpContent = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+            url = model.Value.Url;
           }
-          return new KeyValuePair<string, string>(model.Key, reply.Trim());
+
+          var response = await httpClient.PostAsync(url, httpContent);
+          var responseContent = await response.Content.ReadAsStringAsync();
+          if (!response.IsSuccessStatusCode)
+          {
+            return new KeyValuePair<string, string>(model.Key, "");
+          }
+
+          using var doc = JsonDocument.Parse(responseContent);
+          var reply = "";
+
+          if (model.Key.StartsWith("gemini"))
+          {
+            if (doc.RootElement.TryGetProperty("candidates", out var candidates) && 
+                candidates.GetArrayLength() > 0 && 
+                candidates[0].TryGetProperty("content", out var content) &&
+                content.TryGetProperty("parts", out var parts) &&
+                parts.GetArrayLength() > 0 &&
+                parts[0].TryGetProperty("text", out var textProp))
+            {
+              reply = textProp.GetString() ?? "";
+            }
+          }
+          else
+          {
+            if (doc.RootElement.TryGetProperty("choices", out var choices) &&
+                choices.GetArrayLength() > 0 &&
+                choices[0].TryGetProperty("message", out var message) &&
+                message.TryGetProperty("content", out var contentProp))
+            {
+              reply = contentProp.GetString() ?? "";
+              reply = Regex.Replace(reply, @"<think>.*?</think>", "", RegexOptions.Singleline);
+            }
+          }
+
+          reply = reply.Trim().Trim('"', '\'', '`', '\n', '\r');
+          return new KeyValuePair<string, string>(model.Key, reply);
         }
-        catch (Exception ex)
+        catch
         {
-          return new KeyValuePair<string, string>(model.Key, "Error: " + ex.Message);
+          return new KeyValuePair<string, string>(model.Key, "");
         }
       });
+
       var results = await Task.WhenAll(tasks);
-      return results.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      return results
+        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
+        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
   }
 }

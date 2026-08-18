@@ -140,28 +140,36 @@ ORDER BY l.priority DESC, l.entry, s.order, s.unimorphtags");
     [HttpGet("CheckGetTableByLemma")]
     public IActionResult CheckGetTableByLemma(int langid, int page = 1)
     {
-      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+      var isAdmin = User.IsInRole("admin") || User.IsInRole("linguist") || userId == 0;
+
       using var connection = new NpgsqlConnection(connectionString);
+      var parameters = new { langid, userId, isAdmin, page };
+
       var lemma_ids = connection.Query(@$"
 WITH xx AS (
-  SELECT l.id lemma, c.id cell, r.userid
+  SELECT l.id AS lemma, c.id AS cell, r.userid
   FROM lexicon l 
   INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
   INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
   INNER JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
-  LEFT JOIN cellratings r ON r.cellid = c.id
-  WHERE p.langid = {langid} AND (c.byuserid != {userId}) 
+  LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+  WHERE p.langid = @langid 
+    AND (c.byuserid != @userId OR @isAdmin = TRUE)
+    AND c.submitted IS NOT NULL 
+    AND c.isdeleted IS NOT TRUE
 )
 SELECT DISTINCT lemma FROM xx 
-WHERE cell NOT IN (SELECT cell FROM xx WHERE userid ={userId})
-");
+WHERE cell NOT IN (SELECT cell FROM xx WHERE userid = @userId AND @userId > 0)", parameters).ToList();
 
       if (lemma_ids.ElementAtOrDefault(page - 1) == null)
-        return Ok(new List<Cell>());
+        return Ok(new { lemma = (object?)null, pool = new List<object>() });
 
-      int lemmaId = lemma_ids.ElementAtOrDefault(page - 1).lemma;
+      int lemmaId = Convert.ToInt32(lemma_ids.ElementAtOrDefault(page - 1).lemma);
       var lemma = _context.lexicon.FirstOrDefault(l => l.id == lemmaId);
-      // If the structures contain affixes:
+      var lemmaParams = new { langid, userId, isAdmin, lemmaId };
+
       var results1 = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags || ';' || a.unimorphtags AS tags,
   s.title AS stitle, a.title AS atitle, c.submitted AS submitted
@@ -169,18 +177,28 @@ FROM cells c
 INNER JOIN lexicon l ON l.id = c.lemmaid
 INNER JOIN structures s ON s.id = c.structureid
 INNER JOIN affixes a ON a.id = c.affixid
-WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId}
-ORDER BY s.order, s.unimorphtags, a.order");
-      // If the structures dose not contain affixes:
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE c.lemmaid = @lemmaId 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE)
+  AND r.cellid IS NULL
+  AND c.submitted IS NOT NULL
+  AND c.isdeleted IS NOT TRUE
+ORDER BY s.order, s.unimorphtags, a.order", lemmaParams);
+
       var results2 = connection.Query(@$"
-SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, c.submitted AS submitted
+SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, '' AS atitle, c.submitted AS submitted
 FROM cells c
 INNER JOIN lexicon l ON l.id = c.lemmaid
 INNER JOIN structures s ON s.id = c.structureid
-LEFT JOIN cellratings r ON r.cellid = c.id
-WHERE c.lemmaid = {lemmaId} AND c.byuserid != {userId} AND r.userid IS NULL AND s.formula NOT LIKE '%A%'
-ORDER BY s.order, s.unimorphtags");
-      //  merge the results
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE c.lemmaid = @lemmaId 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE)
+  AND r.cellid IS NULL 
+  AND (s.formula NOT LIKE '%A%' OR s.formula IS NULL)
+  AND c.submitted IS NOT NULL
+  AND c.isdeleted IS NOT TRUE
+ORDER BY s.order, s.unimorphtags", lemmaParams);
+
       return Ok(new { lemma = lemma, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
@@ -233,28 +251,36 @@ ORDER BY l.priority DESC, l.entry");
     [HttpGet("CheckGetTableByStructure")]
     public IActionResult CheckGetTableByStructure(int langid, int page = 1)
     {
-      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+      var isAdmin = User.IsInRole("admin") || User.IsInRole("linguist") || userId == 0;
+
       using var connection = new NpgsqlConnection(connectionString);
-      // find the structures that need to be checked by this user
+      var parameters = new { langid, userId, isAdmin, page };
+
       var structure_ids = connection.Query(@$"
 WITH xx AS (
-  SELECT s.id structure, c.id cell, r.userid
+  SELECT s.id AS structure, c.id AS cell, r.userid
   FROM lexicon l 
   INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
   INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
   INNER JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
-  LEFT JOIN cellratings r ON r.cellid = c.id
-  WHERE p.langid = {langid} AND (c.byuserid != {userId}) 
+  LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+  WHERE p.langid = @langid 
+    AND (c.byuserid != @userId OR @isAdmin = TRUE)
+    AND c.submitted IS NOT NULL 
+    AND c.isdeleted IS NOT TRUE
 )
 SELECT DISTINCT structure FROM xx 
-WHERE cell NOT IN (SELECT cell FROM xx WHERE userid ={userId})");
+WHERE cell NOT IN (SELECT cell FROM xx WHERE userid = @userId AND @userId > 0)", parameters).ToList();
 
       if (structure_ids.ElementAtOrDefault(page - 1) == null)
-        return Ok(new List<Cell>());
+        return Ok(new { structure = (object?)null, pool = new List<object>() });
 
-      int structureId = structure_ids.ElementAtOrDefault(page - 1).structure;
+      int structureId = Convert.ToInt32(structure_ids.ElementAtOrDefault(page - 1).structure);
       var slt = _context.structures.FirstOrDefault(l => l.id == structureId);
-      // If the structures contain affixes:
+      var structParams = new { langid, userId, isAdmin, structureId };
+
       var results1 = connection.Query(@$"
 SELECT c.id AS cellid, l.entry AS lemma, a.title AS atitle, a.unimorphtags AS tags, c.submitted AS submitted
 FROM lexicon l 
@@ -263,18 +289,29 @@ INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
 INNER JOIN affixes a ON a.reusablelayerid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
-WHERE s.id= {structureId} AND c.byuserid != {userId} AND  (c.submitted IS NOT NULL OR c.isdeleted = TRUE)
-ORDER BY a.order, l.priority DESC, l.entry");
-      // If the structures dose not contain affixes:
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE s.id = @structureId 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE) 
+  AND r.cellid IS NULL
+  AND c.submitted IS NOT NULL 
+  AND c.isdeleted IS NOT TRUE
+ORDER BY a.order, l.priority DESC, l.entry", structParams);
+
       var results2 = connection.Query(@$"
-SELECT  c.id AS cellid, l.entry AS lemma, c.submitted AS submitted
+SELECT  c.id AS cellid, l.entry AS lemma, '' AS atitle, s.unimorphtags AS tags, c.submitted AS submitted
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
 INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id
-WHERE s.id= {structureId} AND c.byuserid != {userId} AND (s.formula NOT LIKE '%A%')  AND (c.submitted IS NOT NULL OR c.isdeleted = TRUE) 
-ORDER BY l.priority DESC, l.entry");
-      //  merge the results
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE s.id = @structureId 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE) 
+  AND r.cellid IS NULL
+  AND (s.formula NOT LIKE '%A%' OR s.formula IS NULL)  
+  AND c.submitted IS NOT NULL 
+  AND c.isdeleted IS NOT TRUE
+ORDER BY l.priority DESC, l.entry", structParams);
+
       return Ok(new { structure = slt, pool = results1.Union(results2).ToList() });
     }
     // =====================================================================
@@ -282,10 +319,8 @@ ORDER BY l.priority DESC, l.entry");
     [HttpGet("listForEntry")]
     public IActionResult listForEntry(int langid, int page = 1, string metalang = "en")
     {
-      // using dapper
-      // using var connection = new MySqlConnection(connectionString);
-      // using var connection = new SqlConnection(connectionString);
       using var connection = new NpgsqlConnection(connectionString);
+      var parameters = new { langid, page, metalang };
 
       // If the structures contain affixes:
       var result = connection.Query(@$"
@@ -298,86 +333,79 @@ INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
 INNER JOIN affixes a ON a.reusablelayerid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
-WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-	AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
-WHERE questionlang='{metalang}'
-GROUP BY unimorphtags having count(distinct questionlang) = 1)
+WHERE p.langid = @langid 
+  AND p.isdeleted IS NOT TRUE
+  AND l.isdeleted IS NOT TRUE
+  AND s.isdeleted IS NOT TRUE
+  AND a.isdeleted IS NOT TRUE
+  AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
+  AND (s.unimorphtags || ';' || a.unimorphtags) IN (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = @metalang AND isdeleted IS NOT TRUE)
 ORDER BY l.priority DESC, l.entry, s.order, s.title
-OFFSET 1*({page}-1) LIMIT 1").ToList();
+OFFSET 1*(@page - 1) LIMIT 1", parameters).ToList();
 
-      // If the structures dose not contain affixes:
+      // If the structures do not contain affixes:
       var result2 = connection.Query(@$"
-SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS structureid,
+SELECT l.id AS lemmaid, l.entry AS lemma, s.id AS structureid, 0 AS affixid, '' AS a, '' AS atitle,
 	l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3,
 	l.engmeaning AS eng, s.formula AS formula, s.title AS stitle, s.unimorphtags AS tags
 FROM lexicon l 
 INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
 INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id 
-WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-	AND s.unimorphtags IN (SELECT unimorphtags FROM questions
-WHERE questionlang ='{metalang}'
-GROUP BY unimorphtags HAVING COUNT(DISTINCT questionlang) = 1)
+WHERE p.langid = @langid 
+  AND p.isdeleted IS NOT TRUE
+  AND l.isdeleted IS NOT TRUE
+  AND s.isdeleted IS NOT TRUE
+  AND (s.formula NOT LIKE '%A%' OR s.formula IS NULL)
+  AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
+  AND s.unimorphtags IN (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = @metalang AND isdeleted IS NOT TRUE)
 ORDER BY l.priority DESC, l.entry, s.order, s.title
-OFFSET 1*({page}-1) LIMIT 1").ToList();
+OFFSET 1*(@page - 1) LIMIT 1", parameters).ToList();
 
-      if (result.Count > 0)
+      var chosen = result.Count > 0 ? result.First() : (result2.Count > 0 ? result2.First() : null);
+
+      if (chosen != null)
       {
-        string tags = (string)(result.First().tags);
+        string tags = (string)chosen.tags;
         var question = _context.questions
-          .Where(q => q.unimorphtags == tags && q.questionlang == metalang)
-          .Select(q => new
-          {
-            q.question
-          })
-          .First();
-        // get previous samples from the same structure and affixes
-        int structureid = Convert.ToInt32(result.First().structureid);
-        int affixid = Convert.ToInt32(result.First().affixid);
+          .Where(q => q.unimorphtags == tags && q.questionlang == metalang && !q.isdeleted)
+          .Select(q => new { q.question })
+          .FirstOrDefault();
 
-        var samples = connection.Query(@$"
+        if (question != null)
+        {
+          int structureid = Convert.ToInt32(chosen.structureid);
+          int affixid = Convert.ToInt32(chosen.affixid);
+
+          var samples = connection.Query(@$"
 SELECT c.submitted AS form, l.entry AS lemma, l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3
 FROM cells c
-INNER JOIN lexicon l On l.id=c.lemmaid
-WHERE c.langid={langid} AND c.structureid={structureid} AND c.affixid={affixid} 
+INNER JOIN lexicon l ON l.id = c.lemmaid
+WHERE c.langid = @langid AND c.structureid = {structureid} AND (c.affixid = {affixid} OR {affixid} = 0)
+  AND c.submitted IS NOT NULL AND c.isdeleted IS NOT TRUE
 ORDER BY c.datesubmitted DESC 
-LIMIT 5").ToList();
-        return Ok(new { r = result.First(), q = question, s = samples });
+LIMIT 5", parameters).ToList();
+
+          return Ok(new { r = chosen, q = question, s = samples });
+        }
       }
 
-      if (result2.Count > 0)
-      {
-        var tags = (string)(result2.First().tags);
-        var question = _context.questions
-          .Where(q => q.unimorphtags == tags && q.questionlang == metalang)
-          .Select(q => new
-          {
-            q.question
-          })
-          .First();
-        // get previous samples from the same structure
-        int structureid = Convert.ToInt32(result2.First().structureid);
-        var samples = connection.Query(@$"
-SELECT c.submitted AS form, l.entry AS lemma, l.stem1 AS stem1, l.stem2 AS stem2, l.stem3 AS stem3
-FROM cells c
-INNER JOIN lexicon l On l.id=c.lemmaid
-WHERE c.langid={langid} AND c.structureid={structureid} 
-ORDER BY c.datesubmitted DESC 
-LIMIT 5").ToList();
-        // now we could get suggestions from LLM here but as it needs API call, better to do it in the frontend
-        return Ok(new { r = result2.First(), q = question, s = samples });
-      }
-      return Ok("No more Cells");
+      return Ok(new { r = (object?)null });
     }
+
     // =====================================================================
     // Called by check.js
     [HttpGet("listForCheck")]
     public IActionResult listForCheck(int langid, int page = 1, string metalang = "en")
     {
-      // using dapper
       using var connection = new NpgsqlConnection(connectionString);
 
-      var userId = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+      var isAdmin = User.IsInRole("admin") || User.IsInRole("linguist") || userId == 0;
+
+      var parameters = new { langid, userId, isAdmin, page, metalang };
+
       var result = connection.Query(@$"
 SELECT c.id AS cellid, s.unimorphtags || ';' || a.unimorphtags AS tags, s.title AS stitle, a.title AS atitle, 
 	l.entry AS lemma, l.engmeaning AS eng, c.submitted AS submitted
@@ -385,54 +413,49 @@ FROM cells c
 INNER JOIN lexicon l ON l.id = c.lemmaid
 INNER JOIN structures s ON s.id = c.structureid
 INNER JOIN affixes a ON a.id = c.affixid
-LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = {userId}
-WHERE c.langid = {langid} AND c.byuserid != {userId} AND  r.cellid IS NULL
-  AND s.unimorphtags || ';' || a.unimorphtags IN (SELECT unimorphtags FROM questions
-  WHERE questionlang='{metalang}'
-  GROUP BY unimorphtags having count(distinct questionlang) = 1)
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE c.langid = @langid 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE) 
+  AND r.cellid IS NULL
+  AND c.submitted IS NOT NULL 
+  AND c.isdeleted IS NOT TRUE
+  AND (s.unimorphtags || ';' || a.unimorphtags) IN (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = @metalang AND isdeleted IS NOT TRUE)
 ORDER BY l.priority DESC, l.entry, s.order, s.title
-OFFSET 1*({page}-1) LIMIT 1").ToList();
+OFFSET 1*(@page - 1) LIMIT 1", parameters).ToList();
 
       var result2 = connection.Query(@$"
-SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, 
+SELECT c.id AS cellid, s.unimorphtags AS tags, s.title AS stitle, '' AS atitle,
 	l.entry AS lemma, l.engmeaning AS eng, c.submitted AS submitted
 FROM cells c
 INNER JOIN lexicon l ON l.id = c.lemmaid
 INNER JOIN structures s ON s.id = c.structureid
-LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = {userId}
-WHERE c.langid = {langid} AND c.byuserid != {userId} AND r.cellid IS NULL
-  AND s.unimorphtags IN (SELECT unimorphtags FROM questions
-  WHERE questionlang ='{metalang}'
-  GROUP BY unimorphtags HAVING COUNT(DISTINCT questionlang) = 1)
+LEFT JOIN cellratings r ON r.cellid = c.id AND r.userid = @userId
+WHERE c.langid = @langid 
+  AND (c.byuserid != @userId OR @isAdmin = TRUE) 
+  AND r.cellid IS NULL
+  AND c.submitted IS NOT NULL 
+  AND c.isdeleted IS NOT TRUE
+  AND s.unimorphtags IN (SELECT DISTINCT unimorphtags FROM questions WHERE questionlang = @metalang AND isdeleted IS NOT TRUE)
 ORDER BY l.priority DESC, l.entry, s.order, s.title
-OFFSET 1*({page}-1) LIMIT 1").ToList();
+OFFSET 1*(@page - 1) LIMIT 1", parameters).ToList();
 
-      if (result.Count > 0)
+      var chosen = result.Count > 0 ? result.First() : (result2.Count > 0 ? result2.First() : null);
+
+      if (chosen != null)
       {
-        var tags = (string)(result.First().tags);
-        var question = _context.questions
-          .Where(q => q.unimorphtags == tags && q.questionlang == metalang)
-          .Select(q => new
-          {
-            q.question
-          })
-          .First();
-        return Ok(new { r = result.First(), q = question });
+        var tags = (string)chosen.tags;
+        var qObj = _context.questions
+          .Where(q => q.unimorphtags == tags && q.questionlang == metalang && !q.isdeleted)
+          .Select(q => new { q.question })
+          .FirstOrDefault();
+
+        if (qObj != null)
+        {
+          return Ok(new { r = chosen, q = qObj });
+        }
       }
 
-      if (result2.Count > 0)
-      {
-        var tags = (string)(result2.First().tags);
-        var question = _context.questions
-          .Where(q => q.unimorphtags == tags && q.questionlang == metalang)
-          .Select(q => new
-          {
-            q.question
-          })
-          .First();
-        return Ok(new { r = result2.First(), q = question });
-      }
-      return Ok(result);
+      return Ok(new { r = (object?)null });
     }
   }
 }

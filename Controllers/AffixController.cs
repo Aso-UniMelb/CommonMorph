@@ -31,20 +31,21 @@ namespace common_morph_backend.Controllers
       return Ok(_context.reusablelayers.FirstOrDefault(x => x.id == id));
     }
 
+    [Authorize(Roles = "admin, linguist")]
     [HttpPost("insertLayer")]
-    public IActionResult insertLayer(ReusableLayer agr)
+    public IActionResult insertLayer([FromBody] ReusableLayer agr)
     {
       if (_context.reusablelayers.Any(x => x.title == agr.title && x.langid == agr.langid))
         return BadRequest("duplicate");
 
       _context.reusablelayers.Add(agr);
       _context.SaveChanges();
-      var id = agr.id;
-      return Ok(id.ToString());
+      return Ok(new { id = agr.id, success = true });
     }
 
+    [Authorize(Roles = "admin, linguist")]
     [HttpPost("updateLayer")]
-    public IActionResult updateLayer(ReusableLayer agr)
+    public IActionResult updateLayer([FromBody] ReusableLayer agr)
     {
       var old = _context.reusablelayers.FirstOrDefault(x => x.id == agr.id);
       if (old == null)
@@ -52,7 +53,18 @@ namespace common_morph_backend.Controllers
       _context.Entry(old).State = EntityState.Detached;
       _context.reusablelayers.Update(agr);
       _context.SaveChanges();
-      return Ok(agr.id.ToString());
+      return Ok(new { id = agr.id, success = true });
+    }
+
+    [Authorize(Roles = "admin, linguist")]
+    [HttpPost("deleteLayer")]
+    public IActionResult deleteLayer([FromQuery] int id)
+    {
+      var old = _context.reusablelayers.FirstOrDefault(x => x.id == id);
+      if (old == null) return BadRequest("not exist");
+      _context.reusablelayers.Remove(old);
+      _context.SaveChanges();
+      return Ok(new { id, success = true });
     }
     // ============
 
@@ -61,7 +73,8 @@ namespace common_morph_backend.Controllers
     {
       return Ok(_context.affixes
       .Where(x => x.reusablelayerid == ReusableLayerId && x.isdeleted == false)
-      .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags }).OrderBy(x => x.order).ToList());
+      .Select(x => new { x.id, x.realization, x.order, x.title, x.unimorphtags, x.reusablelayerid })
+      .OrderBy(x => x.order).ToList());
     }
 
     [HttpGet("getAffix")]
@@ -70,86 +83,152 @@ namespace common_morph_backend.Controllers
       return Ok(_context.affixes.FirstOrDefault(x => x.id == id));
     }
 
+    [Authorize(Roles = "admin, linguist")]
     [HttpPost("insertAffix")]
-    public IActionResult insertAffix(Affix agr)
+    public IActionResult insertAffix([FromBody] Affix agr)
     {
-      if (_context.affixes.Any(x => x.unimorphtags == agr.unimorphtags && x.reusablelayerid == agr.reusablelayerid))
+      if (_context.affixes.Any(x => x.unimorphtags == agr.unimorphtags && x.reusablelayerid == agr.reusablelayerid && !x.isdeleted))
         return BadRequest("duplicate");
 
-      _context.affixes.Add(agr);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
 
+      agr.isdeleted = false;
+      _context.affixes.Add(agr);
       _context.SaveChanges();
 
-      var id = agr.id;
-      // log
       var userLog = new UserLog()
       {
         log = $"Inserted affix {agr.id}",
-        userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value),
+        userid = userId,
         logdate = DateTime.UtcNow
       };
       _context.userlogs.Add(userLog);
       _context.SaveChanges();
-      return Ok(id.ToString());
+      return Ok(new { id = agr.id, success = true });
     }
 
+    [Authorize(Roles = "admin, linguist")]
     [HttpPost("updateAffix")]
-    public IActionResult updateAffix(Affix agr)
+    public IActionResult updateAffix([FromBody] Affix agr)
     {
       var old = _context.affixes.FirstOrDefault(x => x.id == agr.id);
       if (old == null)
         return BadRequest("not exist");
-      _context.Entry(old).State = EntityState.Detached;
-      _context.affixes.Update(agr);
+
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+
+      old.title = agr.title ?? old.title;
+      old.realization = agr.realization ?? old.realization;
+      old.unimorphtags = agr.unimorphtags ?? old.unimorphtags;
+      old.order = agr.order;
+
+      var userLog = new UserLog()
+      {
+        log = $"Updated affix {agr.id}",
+        userid = userId,
+        logdate = DateTime.UtcNow
+      };
+      _context.userlogs.Add(userLog);
       _context.SaveChanges();
-      return Ok(agr.id.ToString());
+      return Ok(new { id = old.id, success = true });
     }
 
-    [HttpPost("import")]
-    public IActionResult import(string file, int langid)
+    [Authorize(Roles = "admin, linguist")]
+    [HttpPost("deleteAffix")]
+    public IActionResult deleteAffix([FromQuery] int id)
     {
-      // read the string line by line
-      var lines = file.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
+      var old = _context.affixes.FirstOrDefault(x => x.id == id);
+      if (old == null) return BadRequest("not exist");
+      old.isdeleted = true;
+      _context.SaveChanges();
+      return Ok(new { id, success = true });
+    }
+
+    public class AffixImportRequest
+    {
+      public string file { get; set; } = "";
+      public int langid { get; set; }
+    }
+
+    [Authorize(Roles = "admin, linguist")]
+    [HttpPost("import")]
+    public IActionResult import([FromBody] AffixImportRequest req)
+    {
+      if (string.IsNullOrWhiteSpace(req.file)) return BadRequest("Empty content");
+      var lines = req.file.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
       var curGroupId = 0;
+
       foreach (var l in lines)
       {
         var line = l.Trim();
+        if (string.IsNullOrEmpty(line)) continue;
+
         if (line.StartsWith("#"))
         {
-          var agrGr = new ReusableLayer()
+          var title = line.Replace("#", "").Trim();
+          var agrGr = _context.reusablelayers.FirstOrDefault(x => x.title == title && x.langid == req.langid);
+          if (agrGr == null)
           {
-            title = line.Replace("#", "").Trim(),
-            langid = langid
-          };
-          if (_context.reusablelayers.Any(x => x.title == agrGr.title && x.langid == agrGr.langid))
-          {
-            curGroupId = _context.reusablelayers.FirstOrDefault(x => x.title == agrGr.title && x.langid == agrGr.langid).id;
-          }
-          else
-          {
+            agrGr = new ReusableLayer
+            {
+              title = title,
+              langid = req.langid
+            };
             _context.reusablelayers.Add(agrGr);
             _context.SaveChanges();
-            curGroupId = agrGr.id;
           }
+          curGroupId = agrGr.id;
         }
-        else
+        else if (curGroupId > 0)
         {
-          if (!string.IsNullOrEmpty(line) && line.Trim().Length > 1)
+          var parts = line.Split('\t');
+          if (parts.Length >= 2)
           {
-            var agr = new Affix()
+            int order = 1;
+            string tags = "";
+            string realization = "";
+            string title = "";
+
+            if (int.TryParse(parts[0].Trim(), out int parsedOrder))
             {
-              order = Int32.Parse(line.Split('\t')[0].Trim()),
-              unimorphtags = line.Split('\t')[1].Trim(),
-              realization = line.Split('\t')[2].Trim(),
-              title = line.Split('\t')[3].Trim(),
-              reusablelayerid = curGroupId,
-            };
-            _context.affixes.Add(agr);
+              order = parsedOrder;
+              tags = parts.Length > 1 ? parts[1].Trim() : "";
+              realization = parts.Length > 2 ? parts[2].Trim() : "";
+              title = parts.Length > 3 ? parts[3].Trim() : "";
+            }
+            else
+            {
+              tags = parts[0].Trim();
+              realization = parts.Length > 1 ? parts[1].Trim() : "";
+              title = parts.Length > 2 ? parts[2].Trim() : "";
+            }
+
+            var existing = _context.affixes.FirstOrDefault(x => x.reusablelayerid == curGroupId && x.realization == realization && x.unimorphtags == tags && !x.isdeleted);
+            if (existing != null)
+            {
+              existing.order = order;
+              existing.title = title;
+            }
+            else
+            {
+              var affix = new Affix
+              {
+                reusablelayerid = curGroupId,
+                order = order,
+                unimorphtags = tags,
+                realization = realization,
+                title = title,
+                isdeleted = false
+              };
+              _context.affixes.Add(affix);
+            }
             _context.SaveChanges();
           }
         }
       }
-      return Ok();
+      return Ok(new { success = true });
     }
   }
 }

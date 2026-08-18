@@ -39,14 +39,42 @@ ORDER BY cnt DESC").ToList();
       ViewBag.lexiconStats = lexiconStats;
       // get the count of inflected forms for each language
       var langs = string.Join(",", lexiconStats.Select(l => l.langid));
-      ViewBag.submittedByLang = connection.Query(@$"
+      ViewBag.submittedByLang = !string.IsNullOrEmpty(langs) 
+        ? connection.Query(@$"
 SELECT cells.langid, COUNT(*) AS cnt
 FROM cells
 INNER JOIN langs ON langs.id = cells.langid
 WHERE cells.langid IN ({langs})
 GROUP BY langid, title, code
-ORDER BY cnt DESC").ToDictionary(x => x.langid, x => x.cnt);
+ORDER BY cnt DESC").ToDictionary(x => x.langid, x => x.cnt)
+        : new Dictionary<object, object>();
       return View();
+    }
+
+    [HttpGet("Home/api/datasets")]
+    public IActionResult ApiDatasets()
+    {
+      using var connection = new NpgsqlConnection(connectionString);
+      var lexiconStats = connection.Query(@$"
+SELECT langs.id AS langid, langs.title, langs.code, COUNT(*) AS cnt
+FROM lexicon l
+INNER JOIN inflectionclasses pc ON pc.id = l.inflectionclassid
+INNER JOIN langs ON langs.id = pc.langid
+GROUP BY langs.id, langs.title, langs.code
+ORDER BY cnt DESC").ToList();
+
+      var langs = string.Join(",", lexiconStats.Select(l => (int)l.langid));
+      var submittedByLang = !string.IsNullOrEmpty(langs)
+        ? connection.Query(@$"
+SELECT cells.langid, COUNT(*) AS cnt
+FROM cells
+INNER JOIN langs ON langs.id = cells.langid
+WHERE cells.langid IN ({langs})
+GROUP BY langid, title, code
+ORDER BY cnt DESC").ToDictionary(x => (int)x.langid, x => (int)x.cnt)
+        : new Dictionary<int, int>();
+
+      return Ok(new { lexiconStats, submittedByLang });
     }
 
     public IActionResult Dataset(int langid)
@@ -62,6 +90,23 @@ GROUP BY langid
 ORDER BY cnt DESC");
       return View();
     }
+
+    [HttpGet("Home/api/dataset")]
+    public IActionResult ApiDataset(int langid)
+    {
+      using var connection = new NpgsqlConnection(connectionString);
+      var lang = _context.langs.FirstOrDefault(x => x.id == langid);
+      if (lang == null) return NotFound("Language not found");
+      var submitted = connection.QueryFirstOrDefault<int>(@$"
+SELECT COUNT(*) AS cnt
+FROM cells
+INNER JOIN langs ON langs.id = cells.langid
+WHERE cells.langid = {langid}
+GROUP BY langid
+ORDER BY cnt DESC");
+      return Ok(new { lang, submitted });
+    }
+
 
     public IActionResult Download(int langid, string type)
     {

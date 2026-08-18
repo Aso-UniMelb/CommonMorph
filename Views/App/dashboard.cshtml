@@ -24,9 +24,54 @@
       </div>
     </form>
   </div>
-  <div class="field">
-    <label>My language variety:</label>
-    <select id="cmbLangs" style="width: 300px;"></select>
+  <div class="field" style="align-items: center;">
+    <div style="display: flex; flex-direction: column;">
+      <label>My language variety:</label>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+        <select id="cmbLangs" style="width: 300px;"></select>
+        <button type="button" class="primary" id="btnRequestLang" style="padding: 6px 12px; font-size: 0.9rem; background: var(--C3); border: none; border-radius: 4px; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; height: 38px;">
+          <span class="material-icons" style="font-size: 1.1rem;">add_circle</span> Request new variety
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="frmRequestLang" class="form" style="display: none; margin: 15px auto; max-width: 500px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: #fafafa;">
+    <form onsubmit="RequestLangSubmit(); return false;" style="display: flex; flex-direction: column; gap: 15px;">
+      <h3 style="margin-top: 0; text-align: center; color: var(--C);">Request New Language Variety</h3>
+      
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label for="txtReqLangTitle" style="font-weight: bold; font-size: 0.9rem;">Title</label>
+        <input type="text" id="txtReqLangTitle" name="title" required placeholder="e.g. Kurmanji Kurdish" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label for="txtReqLangCode" style="font-weight: bold; font-size: 0.9rem;">Code <small>(ISO 639-3)</small></label>
+        <input type="text" id="txtReqLangCode" name="code" required placeholder="e.g. kmr" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label for="txtReqLangValidChars" style="font-weight: bold; font-size: 0.9rem;">Valid Characters</label>
+        <input type="text" id="txtReqLangValidChars" name="ValidChars" placeholder="e.g. abcdeêfghiîjklmnoôpqrstuûvwxyz" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label for="txtReqLangDescription" style="font-weight: bold; font-size: 0.9rem;">Description</label>
+        <textarea id="txtReqLangDescription" name="description" placeholder="Provide details about the variety or dialect..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-height: 80px; font-family: inherit;"></textarea>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label style="font-weight: bold; font-size: 0.9rem;">Coordinates</label>
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <input type="number" step="0.0001" id="txtReqLatitude" name="latitude" placeholder="Latitude (e.g. 37.0)" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+          <input type="number" step="0.0001" id="txtReqLongitude" name="longitude" placeholder="Longitude (e.g. 43.0)" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+        </div>
+      </div>
+
+      <div class="field-end" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+        <button type="button" id="btnReqLangCancel" style="background: #ccc; color: #333; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancel</button>
+        <button type="submit" id="btnReqLangSubmit" style="background: var(--C); color: #fff; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Submit Request</button>
+      </div>
+    </form>
   </div>
   <div id="langstats" class="progress-container"></div>
   <div class="field">

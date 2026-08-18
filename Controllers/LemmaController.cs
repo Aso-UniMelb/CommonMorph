@@ -29,7 +29,8 @@ namespace common_morph_backend.Controllers
       var result = from l in _context.lexicon
                    join w in _context.inflectionclasses
                    on l.inflectionclassid equals w.id
-                   where w.langid == LangID
+                   where w.langid == LangID && !l.isdeleted
+                   orderby l.entry
                    select new
                    {
                      l.id,
@@ -42,7 +43,7 @@ namespace common_morph_backend.Controllers
                      l.description,
                      l.inflectionclassid,
                      l.unimorphtags,
-                     l.priority,
+                     priority = l.priority != null ? (int)l.priority : 1,
                      wClass = w.title
                    };
 
@@ -57,55 +58,72 @@ namespace common_morph_backend.Controllers
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("insert")]
-    public IActionResult insert(Lemma lem)
+    public IActionResult insert([FromBody] Lemma lem)
     {
-      if (_context.lexicon.Any(x => x.entry == lem.entry && x.inflectionclassid == lem.inflectionclassid))
-        return BadRequest("duplicate");
+      if (_context.lexicon.Any(x => x.entry == lem.entry && x.inflectionclassid == lem.inflectionclassid && !x.isdeleted))
+        return BadRequest("A lemma with this citation entry already exists in this inflection class.");
     
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
+
+      lem.isdeleted = false;
       _context.lexicon.Add(lem);
       _context.SaveChanges();
 
-      var id = lem.id;
       var userLog = new UserLog()
       {
         log = $"Inserted lemma {lem.id}",
-        userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value),
+        userid = userId,
         logdate = DateTime.UtcNow
       };
       _context.userlogs.Add(userLog);
       _context.SaveChanges();
-      return Ok(id.ToString());
+      return Ok(new { id = lem.id, success = true });
     }
 
     [Authorize(Roles = "admin, linguist")]
     [HttpPost("update")]
-    public IActionResult update(Lemma lem)
+    public IActionResult update([FromBody] Lemma lem)
     {
       var old = _context.lexicon.FirstOrDefault(x => x.id == lem.id);
       if (old == null)
-        return BadRequest("not exist");
+        return BadRequest("Lemma does not exist");
 
-      _context.Entry(old).State = EntityState.Detached;
-      _context.lexicon.Update(lem);
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
 
-      // delete all cells with this lemma
-      // var cells = _context.cells.Where(x => x.lemmaid == lem.id).ToList();
-      // foreach (var cell in cells)
-      // {
-      //   _context.cells.Remove(cell);
-      // }
+      old.entry = lem.entry ?? old.entry;
+      old.inflectionclassid = lem.inflectionclassid != 0 ? lem.inflectionclassid : old.inflectionclassid;
+      old.engmeaning = lem.engmeaning ?? old.engmeaning;
+      old.stem1 = lem.stem1 ?? old.stem1;
+      old.stem2 = lem.stem2 ?? old.stem2;
+      old.stem3 = lem.stem3 ?? old.stem3;
+      old.stem4 = lem.stem4 ?? old.stem4;
+      old.unimorphtags = lem.unimorphtags ?? old.unimorphtags;
+      old.priority = lem.priority;
 
-      // log
       var userLog = new UserLog()
       {
-        log = $"Updatede lemma {lem.id}",
-        userid = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value),
+        log = $"Updated lemma {lem.id}",
+        userid = userId,
         logdate = DateTime.UtcNow
       };
       _context.userlogs.Add(userLog);
 
       _context.SaveChanges();
-      return Ok(lem.id.ToString());
+      return Ok(new { id = old.id, success = true });
+    }
+
+    [Authorize(Roles = "admin, linguist")]
+    [HttpPost("delete")]
+    public IActionResult delete([FromQuery] int id)
+    {
+      var old = _context.lexicon.FirstOrDefault(x => x.id == id);
+      if (old == null) return BadRequest("Lemma does not exist");
+
+      old.isdeleted = true;
+      _context.SaveChanges();
+      return Ok(new { id = id, success = true });
     }
 
     [Authorize(Roles = "admin, linguist")]
