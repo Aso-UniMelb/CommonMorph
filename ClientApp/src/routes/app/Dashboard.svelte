@@ -12,9 +12,16 @@
 
   // Language stats & Active learning
   let stats = { countAll: 0, remaining: 0 };
-  let modelStatus = 'Checking...';
+  let modelInfo = {
+    isTrained: false,
+    lastTrained: '',
+    message: 'Checking status...',
+    isOffline: false
+  };
   let isTraining = false;
-  let trainingProgress = 0;
+  let trainEpochs = 15;
+  let trainSuccessMessage = '';
+  let trainErrorMessage = '';
   let loadingStats = false;
 
   // Request new variety form
@@ -50,17 +57,22 @@
     }
 
     try {
-      const modelData = await api.get('/ActiveLearning/checkModelTrained', { langid: langId });
-      if (typeof modelData === 'string') {
-        const parsed = JSON.parse(modelData);
-        modelStatus = parsed.message || 'Model trained';
-      } else if (modelData?.message) {
-        modelStatus = modelData.message;
-      } else {
-        modelStatus = 'Model active';
+      const res = await api.get('/ActiveLearning/checkModelTrained', { langid: langId });
+      if (res && typeof res === 'object') {
+        modelInfo = {
+          isTrained: !!res.isTrained,
+          lastTrained: res.lastTrained || '',
+          message: res.message || (res.isTrained ? 'Active' : 'Not trained yet'),
+          isOffline: !!res.isOffline
+        };
       }
     } catch {
-      modelStatus = 'Not trained yet';
+      modelInfo = {
+        isTrained: false,
+        lastTrained: '',
+        message: 'Active learning service offline',
+        isOffline: true
+      };
     }
   }
 
@@ -74,28 +86,26 @@
   }
 
   async function handleTrainModel() {
-    if (!$selectedLang) return;
+    if (!$selectedLang || isTraining) return;
     isTraining = true;
-    trainingProgress = 0;
-
-    const interval = setInterval(() => {
-      trainingProgress += 5;
-      if (trainingProgress >= 95) clearInterval(interval);
-    }, 1000);
+    trainSuccessMessage = '';
+    trainErrorMessage = '';
 
     try {
-      await api.post(`/ActiveLearning/train?langid=${$selectedLang.id}`);
-      clearInterval(interval);
-      trainingProgress = 100;
-      modelStatus = 'Just trained';
-      setTimeout(() => {
-        isTraining = false;
-        if ($selectedLang) loadStats($selectedLang.id);
-      }, 1500);
+      const res = await api.post(`/ActiveLearning/train?langid=${$selectedLang.id}&epochs=${trainEpochs}`, {
+        langid: String($selectedLang.id),
+        epochs: trainEpochs
+      });
+      if (res && res.success) {
+        trainSuccessMessage = res.message || 'Neural model trained successfully.';
+        if ($selectedLang) await loadStats($selectedLang.id);
+      } else {
+        trainErrorMessage = res?.error || 'Training failed';
+      }
     } catch (err: any) {
-      clearInterval(interval);
+      trainErrorMessage = err.message || 'Connection to active learning service failed.';
+    } finally {
       isTraining = false;
-      alert(err.message || 'Training failed');
     }
   }
 
@@ -218,34 +228,93 @@
     </div>
 
     <!-- Active Learning AI Model Card -->
-    <div class="card">
-      <h3>Active Learning Neural Model</h3>
-      <p style="color: var(--text-muted); font-size: 0.9rem;">
-        CommonMorph uses active-learning neural models to suggest accurate inflected forms for upcoming elicitation cells.
-      </p>
+    <div class="card al-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+          <span class="material-icons" style="color: var(--primary); font-size: 1.25rem;">psychology</span>
+          Active Learning Neural Model
+        </h3>
 
-      <div style="background: #f8fafc; padding: 0.85rem; border-radius: 6px; margin: 1rem 0; font-size: 0.9rem;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <span class="material-icons" style="font-size: 1.1rem; color: var(--primary);">model_training</span>
-          <strong>Status:</strong>
-          <span>{modelStatus}</span>
-        </div>
+        {#if isTraining}
+          <span class="badge warning" style="display: inline-flex; align-items: center; gap: 0.3rem;">
+            <span class="material-icons rotating" style="font-size: 0.85rem;">sync</span> Training...
+          </span>
+        {:else if modelInfo.isTrained}
+          <span class="badge success" style="display: inline-flex; align-items: center; gap: 0.3rem;">
+            <span class="material-icons" style="font-size: 0.85rem;">check_circle</span> Active
+          </span>
+        {:else if modelInfo.isOffline}
+          <span class="badge secondary" style="font-size: 0.75rem;">Offline</span>
+        {:else}
+          <span class="badge secondary" style="font-size: 0.75rem;">Not Trained</span>
+        {/if}
       </div>
 
-      <button 
-        type="button" 
-        class="secondary" 
-        on:click={handleTrainModel} 
-        disabled={isTraining || !$selectedLang}
-        style="width: 100%;"
-      >
-        {#if isTraining}
-          <span class="material-icons" style="animation: spin 1s infinite linear;">sync</span>
-          Retraining ({trainingProgress}%)...
-        {:else}
-          <span class="material-icons">psychology</span> Retrain Active Learning Model
+      <p style="color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 0.75rem;">
+        Trains an internal sequence-to-sequence neural network on verified forms to generate real-time suggestions and rank uncertainty during elicitation.
+      </p>
+
+      <div class="al-status-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem;">
+          <span style="color: var(--text-muted);">Model Status:</span>
+          <strong style="color: var(--text);">{modelInfo.message}</strong>
+        </div>
+        {#if modelInfo.lastTrained}
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; margin-top: 0.35rem; color: var(--text-muted);">
+            <span>Last Checkpoint:</span>
+            <span>{modelInfo.lastTrained}</span>
+          </div>
         {/if}
-      </button>
+      </div>
+
+      {#if trainSuccessMessage}
+        <div class="alert alert-success" style="margin-top: 0.75rem; font-size: 0.85rem; padding: 0.6rem 0.8rem;">
+          <span class="material-icons" style="font-size: 1rem;">check_circle</span>
+          {trainSuccessMessage}
+        </div>
+      {/if}
+
+      {#if trainErrorMessage}
+        <div class="alert alert-error" style="margin-top: 0.75rem; font-size: 0.85rem; padding: 0.6rem 0.8rem;">
+          <span class="material-icons" style="font-size: 1rem;">error_outline</span>
+          {trainErrorMessage}
+        </div>
+      {/if}
+
+      <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.85rem;">
+        <div style="flex: 1; display: flex; align-items: center; gap: 0.4rem;">
+          <label for="selTrainEpochs" style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin: 0; white-space: nowrap;">
+            Epochs:
+          </label>
+          <select 
+            id="selTrainEpochs" 
+            bind:value={trainEpochs} 
+            disabled={isTraining}
+            style="padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: var(--radius); width: auto;"
+          >
+            <option value={5}>5 Epochs (Faster, lower accuracy)</option>
+            <option value={10}>10 Epochs</option>
+            <option value={15}>15 Epochs</option>
+            <option value={20}>20 Epochs (Higher accuracy)</option>
+          </select>
+        </div>
+
+        <button 
+          type="button" 
+          class="button secondary" 
+          on:click={handleTrainModel} 
+          disabled={isTraining || !$selectedLang}
+          style="flex: 2; justify-content: center;"
+        >
+          {#if isTraining}
+            <span class="material-icons rotating" style="font-size: 1rem;">sync</span>
+            Training ({trainEpochs} Epochs)...
+          {:else}
+            <span class="material-icons" style="font-size: 1rem;">model_training</span>
+            {modelInfo.isTrained ? 'Retrain Model' : 'Train Model'}
+          {/if}
+        </button>
+      </div>
     </div>
   </div>
 
@@ -438,6 +507,18 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+  }
+
+  .al-status-box {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0;
+  }
+
+  .rotating {
+    animation: spin 1.2s infinite linear;
   }
 
   @keyframes spin {

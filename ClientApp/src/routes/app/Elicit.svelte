@@ -121,9 +121,7 @@
       } else {
         samples = [];
       }
-      if (samples.length > 0) {
-        fetchAiSuggestions(currentCell, samples);
-      }
+      fetchAiSuggestions(currentCell, samples);
     } else {
       currentCell = null;
       isCompleted = true;
@@ -297,21 +295,47 @@
   }
 
   async function fetchAiSuggestions(cell: any, sampleList: any[]) {
-    try {
-      const res = await api.post('/LLM/getSuggestionFromLLM', {
-        curLemma: { lemma: cell.lemma, stem1: cell.stem1, stem2: cell.stem2, stem3: cell.stem3 },
-        samples: sampleList,
-        lang: $selectedLang?.title || '',
-      });
-      if (res && typeof res === 'object') {
-        for (const [model, val] of Object.entries(res)) {
-          const text = String(val).trim();
+    // 1. Fetch FastAPI Active Learning Neural Model suggestion
+    const fetchNeural = async () => {
+      try {
+        const res = await api.post('/ActiveLearning/suggest', {
+          langid: String($selectedLang?.id || ''),
+          lemma: cell.lemma,
+          tags: cell.tags || '',
+        });
+        if (res && res.success && res.predicted) {
+          const text = String(res.predicted).trim();
           if (text && !suggestions.some(s => s.text === text)) {
-            suggestions = [...suggestions, { source: 'llm', text }];
+            suggestions = [...suggestions, { 
+              source: 'neural', 
+              text, 
+              conf: res.avg_confidence ? Math.round(res.avg_confidence * 100) : null 
+            }];
           }
         }
-      }
-    } catch {}
+      } catch {}
+    };
+
+    // 2. Fetch LLM suggestions
+    const fetchLLM = async () => {
+      try {
+        const res = await api.post('/LLM/getSuggestionFromLLM', {
+          curLemma: { lemma: cell.lemma, stem1: cell.stem1, stem2: cell.stem2, stem3: cell.stem3 },
+          samples: sampleList,
+          lang: $selectedLang?.title || '',
+        });
+        if (res && typeof res === 'object') {
+          for (const [model, val] of Object.entries(res)) {
+            const text = String(val).trim();
+            if (text && !suggestions.some(s => s.text === text)) {
+              suggestions = [...suggestions, { source: 'llm', text }];
+            }
+          }
+        }
+      } catch {}
+    };
+
+    await Promise.allSettled([fetchNeural(), fetchLLM()]);
   }
 </script>
 
@@ -416,10 +440,15 @@
                 class="suggestion-chip" 
                 on:click={() => submittedForm = s.text}
               >
-              <div>
-                <div>{s.text}</div>
-                <div class="sug-tag">[{s.source}]</div>
-              </div>
+                <div>
+                  <div style="font-weight: 600;">{s.text}</div>
+                  <div class="sug-tag">
+                    [{s.source === 'neural' ? 'Neural' : s.source === 'formula' ? 'Rule' : 'LLM'}]
+                    {#if s.conf}
+                      <span style="opacity: 0.85; font-size: 0.72rem;">({s.conf}%)</span>
+                    {/if}
+                  </div>
+                </div>
               </button>
             {/each}
           </div>

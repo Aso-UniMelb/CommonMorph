@@ -83,28 +83,30 @@ namespace common_morph_backend.Controllers
 
       var modelsToQuery = new Dictionary<string, Provider>();
 
-      // Add models for providers that have valid API keys
+      // Google AI Studio
       if (!string.IsNullOrWhiteSpace(providedBy["GoogleAIStudio"].APIKey))
       {
-        modelsToQuery["gemini-2.0-flash"] = providedBy["GoogleAIStudio"];
-        modelsToQuery["gemini-1.5-flash"] = providedBy["GoogleAIStudio"];
+        modelsToQuery["gemini-flash-lite-latest"] = providedBy["GoogleAIStudio"];
+        modelsToQuery["gemini-flash-latest"] = providedBy["GoogleAIStudio"];
       }
 
-      if (!string.IsNullOrWhiteSpace(providedBy["OpenAI"].APIKey))
-      {
-        modelsToQuery["gpt-4o-mini"] = providedBy["OpenAI"];
-        modelsToQuery["gpt-4o"] = providedBy["OpenAI"];
-      }
-
+      // Groq
       if (!string.IsNullOrWhiteSpace(providedBy["Groq"].APIKey))
       {
-        modelsToQuery["llama-3.3-70b-versatile"] = providedBy["Groq"];
-        modelsToQuery["llama-3.1-8b-instant"] = providedBy["Groq"];
+        modelsToQuery["groq/compound-mini"] = providedBy["Groq"];
+        modelsToQuery["groq/compound"] = providedBy["Groq"];
       }
 
+      // OpenRouter
       if (!string.IsNullOrWhiteSpace(providedBy["OpenRouter"].APIKey))
       {
         modelsToQuery["meta-llama/llama-3.3-70b-instruct"] = providedBy["OpenRouter"];
+      }
+
+      // OpenAI
+      if (!string.IsNullOrWhiteSpace(providedBy["OpenAI"].APIKey))
+      {
+        modelsToQuery["gpt-4o-mini"] = providedBy["OpenAI"];
       }
 
       var results = await GetFromLLM(request.prompt, modelsToQuery);
@@ -122,19 +124,28 @@ namespace common_morph_backend.Controllers
       string prompt = suggestionPrompt(request.curLemma, request.samples ?? new List<Sample>(), request.lang);
       var modelsToQuery = new Dictionary<string, Provider>();
 
+      // Google AI Studio (Fast, robust)
+      if (!string.IsNullOrWhiteSpace(providedBy["GoogleAIStudio"].APIKey))
+      {
+        modelsToQuery["gemini-flash-lite-latest"] = providedBy["GoogleAIStudio"];
+      }
+
+      // Groq
+      if (!string.IsNullOrWhiteSpace(providedBy["Groq"].APIKey))
+      {
+        modelsToQuery["groq/compound-mini"] = providedBy["Groq"];
+      }
+
+      // OpenRouter
+      if (!string.IsNullOrWhiteSpace(providedBy["OpenRouter"].APIKey))
+      {
+        modelsToQuery["meta-llama/llama-3.3-70b-instruct"] = providedBy["OpenRouter"];
+      }
+
+      // OpenAI
       if (!string.IsNullOrWhiteSpace(providedBy["OpenAI"].APIKey))
       {
         modelsToQuery["gpt-4o-mini"] = providedBy["OpenAI"];
-      }
-
-      if (!string.IsNullOrWhiteSpace(providedBy["Groq"].APIKey))
-      {
-        modelsToQuery["llama-3.3-70b-versatile"] = providedBy["Groq"];
-      }
-
-      if (!string.IsNullOrWhiteSpace(providedBy["GoogleAIStudio"].APIKey))
-      {
-        modelsToQuery["gemini-2.0-flash"] = providedBy["GoogleAIStudio"];
       }
 
       var suggestions = await GetFromLLM(prompt, modelsToQuery);
@@ -192,7 +203,7 @@ namespace common_morph_backend.Controllers
         try
         {
           var httpClient = _httpClientFactory.CreateClient();
-          httpClient.Timeout = TimeSpan.FromSeconds(20);
+          httpClient.Timeout = TimeSpan.FromSeconds(15);
           HttpContent httpContent;
           string url;
 
@@ -200,8 +211,8 @@ namespace common_morph_backend.Controllers
           {
             var requestBody = new
             {
-              contents = new[] { new { role = "user", parts = new[] { new { text = prompt } } } },
-              generationConfig = new { temperature = 0.2, maxOutputTokens = 256 }
+              contents = new[] { new { parts = new[] { new { text = prompt } } } },
+              generationConfig = new { temperature = 0.15, maxOutputTokens = 256 }
             };
             httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
             url = $"{model.Value.Url}{model.Key}:generateContent?key={model.Value.APIKey}";
@@ -212,7 +223,7 @@ namespace common_morph_backend.Controllers
             {
               model = model.Key,
               messages = new[] { new { role = "user", content = prompt } },
-              temperature = 0.2,
+              temperature = 0.15,
               max_tokens = 256
             };
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", model.Value.APIKey);

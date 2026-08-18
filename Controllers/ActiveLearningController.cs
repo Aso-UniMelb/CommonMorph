@@ -13,36 +13,46 @@ using System.Threading.Tasks;
 
 namespace common_morph_backend.Controllers
 {
+  [ApiController]
   [Route("[controller]")]
-  public class ActiveLearningController : Controller
+  public class ActiveLearningController : ControllerBase
   {
-
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
-    private string connectionString;
-    private string server = "http://46.62.152.200";
+    private readonly string connectionString;
+
+    private string ServerUrl => _configuration["FastAPI_Server"] ?? Environment.GetEnvironmentVariable("FastAPI_Server") ?? "http://localhost:8000";
+
     public ActiveLearningController(AppDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
     {
       _context = context;
       _configuration = configuration;
-      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection");
+      connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? _configuration.GetConnectionString("DefaultConnection") ?? "";
       _httpClientFactory = httpClientFactory;
     }
+
     public class NNresult
     {
       public int poolorder { get; set; }
-      public string pred { get; set; }
+      public string? pred { get; set; }
       public float conf { get; set; }
+    }
+
+    public class TrainModelRequest
+    {
+      public string langid { get; set; } = "";
+      public int? epochs { get; set; }
     }
 
     // =====================================================================
     [HttpGet("EntryGetTableByNN")]
     public async Task<IActionResult> EntryGetTableByNNAsync(int langid, int page = 1)
     {
-      // extract data from the database
-      using var connection = new NpgsqlConnection(connectionString);
-      var pool = connection.Query(@$"
+      try
+      {
+        using var connection = new NpgsqlConnection(connectionString);
+        var pool = (await connection.QueryAsync(@$"
 SELECT l.id AS lemmaid, s.id AS structureid, a.id AS affixid, (l.priority) AS priority,
   s.title AS stitle, a.title AS atitle, a.realization AS a, s.formula AS formula,
   l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags,
@@ -54,9 +64,9 @@ INNER JOIN reusablelayers ag ON ag.id = s.reusablelayerid
 INNER JOIN affixes a ON a.reusablelayerid = ag.id
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id AND c.affixid = a.id
 WHERE p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY priority DESC, lemmaid").ToList();
+ORDER BY priority DESC, lemmaid")).ToList();
 
-      var pool2 = connection.Query(@$"
+        var pool2 = (await connection.QueryAsync(@$"
 SELECT l.id AS lemmaid, s.id AS structureid, (l.priority) AS priority,
   s.title AS stitle, s.formula AS formula,  l.stem1, l.stem2, l.stem3, l.stem4, l.unimorphtags,
   l.entry lemma, s.unimorphtags AS tags
@@ -65,128 +75,205 @@ INNER JOIN inflectionclasses p ON p.id = l.inflectionclassid
 INNER JOIN structures s ON s.inflectionclassid = l.inflectionclassid
 LEFT JOIN cells c ON c.lemmaid = l.id AND c.structureid = s.id 
 WHERE s.formula NOT LIKE '%A%' AND p.langid = {langid} AND (c.submitted IS NULL OR c.isdeleted = TRUE) 
-ORDER BY priority DESC, lemmaid").ToList();
-      pool.AddRange(pool2);
+ORDER BY priority DESC, lemmaid")).ToList();
+        pool.AddRange(pool2);
 
-      // check if the model is trained using GET endpoint of API
-      var httpClient = _httpClientFactory.CreateClient();
-      string url = server + "/is_model_trained?langid=" + langid;
-      var responseget = httpClient.GetAsync(url).Result;
-      if (!responseget.IsSuccessStatusCode)
-      {
-        // take 100 samples randomly from first 500 of the pool
-        Random rand = new Random();
-        var randomPool = pool.Take(100).OrderBy(x => rand.Next()).Take(80).ToList();
-        return Ok(new { pool = randomPool });
-      }
-      else
-      {
-        httpClient = _httpClientFactory.CreateClient();
-        var httpContent = new StringContent("");
-        url = server + "/listpredict";
-        var words = new List<string>();
-        foreach (var record in pool)
-          words.Add(record.lemma + "_" + record.tags);
-
-        var requestBody = new { langid = langid.ToString(), words = words.ToArray() };
-        httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
-        try
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(8);
+        string url = $"{ServerUrl}/is_model_trained?langid={langid}";
+        var responseget = await httpClient.GetAsync(url);
+        
+        if (!responseget.IsSuccessStatusCode)
         {
-          HttpResponseMessage response = await httpClient.PostAsync(url, httpContent);
+          Random rand = new Random();
+          var randomPool = pool.Take(100).OrderBy(x => rand.Next()).Take(80).ToList();
+          return Ok(new { pool = randomPool });
+        }
+        else
+        {
+          var words = new List<string>();
+          foreach (var record in pool)
+            words.Add(record.lemma + "_" + record.tags);
+
+          var requestBody = new { langid = langid.ToString(), words = words.ToArray() };
+          var httpContent = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+          
+          var response = await httpClient.PostAsync($"{ServerUrl}/listpredict", httpContent);
           if (response.IsSuccessStatusCode)
           {
             string responseBody = await response.Content.ReadAsStringAsync();
             var results = JsonSerializer.Deserialize<List<NNresult>>(responseBody);
-            for (int i = 0; i < results.Count; i++)
-              results[i].poolorder = i;
-            // order by confidence
-            var newpool = results.OrderBy(x => x.conf).Take(80).ToList();
-            var bIndexes = new HashSet<int>(newpool.Select(b => b.poolorder));
-            var filteredpool = pool.Where(a => bIndexes.Contains(a.Id)).ToList();
+            if (results != null)
+            {
+              for (int i = 0; i < results.Count; i++)
+                results[i].poolorder = i;
+              var newpool = results.OrderBy(x => x.conf).Take(80).ToList();
+              var bIndexes = new HashSet<int>(newpool.Select(b => b.poolorder));
+              var filteredpool = pool.Where(a => bIndexes.Contains(a.Id)).ToList();
+              return Ok(new { pool = filteredpool });
+            }
+          }
+        }
+        return Ok(new { pool = pool.Take(80).ToList() });
+      }
+      catch (Exception ex)
+      {
+        return Ok(new { pool = new List<object>(), error = ex.Message });
+      }
+    }
 
-            // add 
-            return Ok(new { pool = filteredpool });
-          }
-          else
-          {
-            // Console.WriteLine($"Error: {(int)response.StatusCode} {response.StatusCode}");
-            string errorBody = await response.Content.ReadAsStringAsync();
-          }
-        }
-        catch (HttpRequestException e)
-        {
-          //
-        }
-      }
-      return Ok("No more Cells");
-    }
-    // =====================================================================
-    // single suggest
-    [HttpPost("suggest")]
-    public async Task<IActionResult> suggest(string langid, string lemma, string tags)
+    public class NNSuggestRequest
     {
-      string url = server + "/suggest";
-      var httpClient = _httpClientFactory.CreateClient();
-      var vocab_id = langid;
-      var input_data = lemma + "_" + tags;
-      var json = JsonSerializer.Serialize(new { langid, vocab_id, input_data });
-      var content = new StringContent(json, Encoding.UTF8, "application/json");
-      httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-      var response = await httpClient.PostAsync(url, content);
-      if (response.IsSuccessStatusCode)
+      public string? langid { get; set; }
+      public string? lemma { get; set; }
+      public string? tags { get; set; }
+    }
+
+    // =====================================================================
+    [HttpPost("suggest")]
+    public async Task<IActionResult> suggest([FromBody] NNSuggestRequest? body, [FromQuery] string? langid, [FromQuery] string? lemma, [FromQuery] string? tags)
+    {
+      var targetLangId = !string.IsNullOrWhiteSpace(langid) ? langid : body?.langid;
+      var targetLemma = !string.IsNullOrWhiteSpace(lemma) ? lemma : body?.lemma;
+      var targetTags = !string.IsNullOrWhiteSpace(tags) ? tags : body?.tags ?? "";
+
+      if (string.IsNullOrWhiteSpace(targetLangId) || string.IsNullOrWhiteSpace(targetLemma))
       {
-        var result = await response.Content.ReadAsStringAsync();
-        return Ok(result);
+        return Ok(new { success = false, message = "langid and lemma are required" });
       }
-      else
+
+      try
       {
-        return BadRequest("Error");
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(6);
+        var input_data = $"{targetLemma.Trim()}_{targetTags.Trim()}";
+        var payload = new { langid = targetLangId, vocab_id = targetLangId, input_data };
+        var json = JsonSerializer.Serialize(payload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await httpClient.PostAsync($"{ServerUrl}/suggest", content);
+        if (response.IsSuccessStatusCode)
+        {
+          var resultString = await response.Content.ReadAsStringAsync();
+          using var doc = JsonDocument.Parse(resultString);
+          var root = doc.RootElement;
+
+          string predicted = "";
+          double avgConf = 0.0;
+
+          if (root.TryGetProperty("predicted", out var predProp))
+            predicted = predProp.GetString() ?? "";
+          if (root.TryGetProperty("avg_confidence", out var confProp))
+            avgConf = confProp.GetDouble();
+
+          if (!string.IsNullOrWhiteSpace(predicted))
+          {
+            return Ok(new { success = true, predicted = predicted.Trim(), avg_confidence = avgConf });
+          }
+        }
+        return Ok(new { success = false, message = "No neural prediction available" });
+      }
+      catch (Exception ex)
+      {
+        return Ok(new { success = false, message = ex.Message });
       }
     }
+
     // =====================================================================
     [HttpGet("checkModelTrained")]
-    public IActionResult checkModelTrained(string langid)
+    public async Task<IActionResult> checkModelTrained([FromQuery] string langid)
     {
-      // check if the model is trained using GET endpoint of API
-      var httpClient = _httpClientFactory.CreateClient();
-      string url = server + "/is_model_trained?langid=" + langid;
-      var responseget = httpClient.GetAsync(url).Result;
-      if (!responseget.IsSuccessStatusCode)
+      if (string.IsNullOrWhiteSpace(langid))
       {
-        return BadRequest(responseget.Content.ReadAsStringAsync().Result);
+        return BadRequest(new { isTrained = false, message = "Language ID is required" });
       }
-      else
+
+      try
       {
-        return Ok(responseget.Content.ReadAsStringAsync().Result);
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(5);
+        var response = await httpClient.GetAsync($"{ServerUrl}/is_model_trained?langid={langid}");
+        
+        if (response.IsSuccessStatusCode)
+        {
+          var content = await response.Content.ReadAsStringAsync();
+          using var doc = JsonDocument.Parse(content);
+          string lastTrained = "";
+          if (doc.RootElement.TryGetProperty("message", out var msgProp))
+          {
+            lastTrained = msgProp.GetString() ?? "";
+          }
+          return Ok(new { isTrained = true, lastTrained, message = $"Trained on {lastTrained}" });
+        }
+        else
+        {
+          return Ok(new { isTrained = false, lastTrained = "", message = "No trained model found" });
+        }
+      }
+      catch
+      {
+        return Ok(new { isTrained = false, lastTrained = "", isOffline = true, message = "Active learning service offline" });
       }
     }
-    // =====================================================================
 
-    // train the model
+    // =====================================================================
     [HttpPost("train")]
-    public IActionResult train(string langid)
+    public async Task<IActionResult> train([FromQuery] string? langid, [FromQuery] int? epochs, [FromBody] TrainModelRequest? body)
     {
-      string url = server + "/train";
-      var httpClient = _httpClientFactory.CreateClient();
-      var json = JsonSerializer.Serialize(new { langid });
-      var content = new StringContent(json, Encoding.UTF8, "application/json");
-      httpClient.DefaultRequestHeaders.Clear();
-      httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-      var response = httpClient.PostAsync(url, content).Result;
-      if (response.IsSuccessStatusCode)
+      var targetLangId = !string.IsNullOrWhiteSpace(langid) ? langid : body?.langid;
+      var targetEpochs = epochs ?? body?.epochs ?? 15;
+
+      if (string.IsNullOrWhiteSpace(targetLangId))
       {
-        string responseString = response.Content.ReadAsStringAsync().Result;
-        // return train_loss_records, train_time
-        return Ok(responseString);
+        return BadRequest(new { error = "Language ID is required for training" });
       }
-      else
+
+      try
       {
-        return BadRequest("Error");
+        var httpClient = _httpClientFactory.CreateClient();
+        httpClient.Timeout = TimeSpan.FromSeconds(180); // allow sufficient time for training epochs
+
+        var json = JsonSerializer.Serialize(new { langid = targetLangId, epochs = targetEpochs });
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        
+        var response = await httpClient.PostAsync($"{ServerUrl}/train", content);
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+          string message = "Model trained successfully";
+          try
+          {
+            using var doc = JsonDocument.Parse(responseString);
+            if (doc.RootElement.TryGetProperty("message", out var msgProp))
+            {
+              message = msgProp.GetString() ?? message;
+            }
+          }
+          catch {}
+
+          return Ok(new { success = true, message });
+        }
+        else
+        {
+          string errorDetail = "Training service returned an error";
+          try
+          {
+            using var doc = JsonDocument.Parse(responseString);
+            if (doc.RootElement.TryGetProperty("detail", out var detailProp))
+            {
+              errorDetail = detailProp.GetString() ?? errorDetail;
+            }
+          }
+          catch {}
+
+          return BadRequest(new { success = false, error = errorDetail });
+        }
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, new { success = false, error = $"Connection to FastAPI server failed: {ex.Message}" });
       }
     }
-
-    // =====================================================================
-    // finetune the model
-
   }
 }

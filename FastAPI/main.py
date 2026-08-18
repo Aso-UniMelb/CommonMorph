@@ -1,420 +1,628 @@
+import os
+import json
+import time
+import random
+import datetime
+import urllib.request
+from typing import List, Optional, Tuple, Dict
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader, TensorDataset, random_split
-from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence, pad_packed_sequence
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-from fastapi import FastAPI, HTTPException, Request, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-import shutil
-from typing import List, Optional
+from torch.utils.data import Dataset, DataLoader
 from pydantic import BaseModel
-import json
-import time
-import datetime
-import os
-import urllib.request
+from fastapi import FastAPI, HTTPException
+
+# Set CPU threads for optimal matrix operations
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+    torch.set_num_threads(max(1, os.cpu_count() or 4))
 
 # =============================================================================
-criterion = nn.CrossEntropyLoss()
-
-tag_splitter = '@'
-MAX_LEN = 20
-LEARNING_RATE = 0.002
-BATCH_SIZE = 8
-EPOCHS = 15
-HIDDEN_DIM = 128
-EMB_DIM = 128
-N_LAYERS = 2
-
-PAD_TOKEN = '¶'
+# Constants & Special Tokens
+# =============================================================================
+PAD_TOKEN = '<PAD>'
 PAD_IDX = 0
-UNK_TOKEN = '■'
+UNK_TOKEN = '<UNK>'
 UNK_IDX = 1
-BOS_TOKEN = '#'
+BOS_TOKEN = '<BOS>'
 BOS_IDX = 2
-EOS_TOKEN = '$'
+EOS_TOKEN = '<EOS>'
 EOS_IDX = 3
 
+# Default Hyperparameters (Optimized for CPU)
+EMB_DIM = 64
+ENC_HID_DIM = 128
+DEC_HID_DIM = 128
+BATCH_SIZE = 32
+EPOCHS = 20
+LEARNING_RATE = 0.003
+DROPOUT = 0.2
+MAX_DECODE_LEN = 40
+
 # =============================================================================
-app = FastAPI()
+# Vocabulary
+# =============================================================================
+class MorphVocab:
+    def __init__(self):
+        self.stoi = {
+            PAD_TOKEN: PAD_IDX,
+            UNK_TOKEN: UNK_IDX,
+            BOS_TOKEN: BOS_IDX,
+            EOS_TOKEN: EOS_IDX,
+        }
+        self.itos = {v: k for k, v in self.stoi.items()}
+
+    def build_vocab(self, data: List[Tuple[str, str, str]]):
+        """
+        Builds vocabulary from list of (lemma, target, tagset) tuples.
+        """
+        for lemma, target, tagset in data:
+            # Process tag features
+            tags = self.parse_tags(tagset)
+            for tag in tags:
+                tag_token = f"[{tag}]"
+                if tag_token not in self.stoi:
+                    idx = len(self.stoi)
+                    self.stoi[tag_token] = idx
+                    self.itos[idx] = tag_token
+
+            # Process characters from lemma and target
+            for ch in lemma.strip():
+                if ch not in self.stoi:
+                    idx = len(self.stoi)
+                    self.stoi[ch] = idx
+                    self.itos[idx] = ch
+
+            for ch in target.strip():
+                if ch not in self.stoi:
+                    idx = len(self.stoi)
+                    self.stoi[ch] = idx
+                    self.itos[idx] = ch
+
+    @staticmethod
+    def parse_tags(tagset: str) -> List[str]:
+        # Handle both ';' (UniMorph standard) and '@' delimiters
+        delimiter = ';' if ';' in tagset else '@'
+        return [t.strip() for t in tagset.split(delimiter) if t.strip()]
+
+    def encode_src(self, lemma: str, tagset: str) -> List[int]:
+        tags = self.parse_tags(tagset)
+        tokens = [self.stoi.get(f"[{t}]", UNK_IDX) for t in tags]
+        tokens.append(BOS_IDX)
+        tokens.extend([self.stoi.get(ch, UNK_IDX) for ch in lemma.strip()])
+        tokens.append(EOS_IDX)
+        return tokens
+
+    def encode_trg(self, target: str) -> List[int]:
+        tokens = [BOS_IDX]
+        tokens.extend([self.stoi.get(ch, UNK_IDX) for ch in target.strip()])
+        tokens.append(EOS_IDX)
+        return tokens
+
+    def decode_tokens(self, indices: List[int]) -> str:
+        chars = []
+        for idx in indices:
+            if idx in (PAD_IDX, BOS_IDX, EOS_IDX):
+                continue
+            token = self.itos.get(idx, "")
+            if not token.startswith("["):  # skip tag tokens if any
+                chars.append(token)
+        return "".join(chars)
+
+    def save(self, filepath: str):
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump({"stoi": self.stoi}, f, ensure_ascii=False, indent=2)
+
+    @classmethod
+    def load(cls, filepath: str) -> "MorphVocab":
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        vocab = cls()
+        # Handle both new format {"stoi": ...} and legacy {"char_vocab": ..., "tag_vocab": ...}
+        if "stoi" in data:
+            vocab.stoi = data["stoi"]
+        else:
+            stoi = {PAD_TOKEN: PAD_IDX, UNK_TOKEN: UNK_IDX, BOS_TOKEN: BOS_IDX, EOS_TOKEN: EOS_IDX}
+            for ch, _ in data.get("char_vocab", {}).items():
+                if ch not in stoi:
+                    stoi[ch] = len(stoi)
+            for tag, _ in data.get("tag_vocab", {}).items():
+                tag_token = f"[{tag}]"
+                if tag_token not in stoi:
+                    stoi[tag_token] = len(stoi)
+            vocab.stoi = stoi
+        vocab.itos = {v: k for k, v in vocab.stoi.items()}
+        return vocab
+
+    def __len__(self):
+        return len(self.stoi)
+
+
+# =============================================================================
+# Dataset & Dynamic Batching Collate Function
+# =============================================================================
+class MorphDataset(Dataset):
+    def __init__(self, data: List[Tuple[str, str, str]], vocab: MorphVocab):
+        self.samples = []
+        for lemma, target, tagset in data:
+            src = vocab.encode_src(lemma, tagset)
+            trg = vocab.encode_trg(target)
+            self.samples.append((
+                torch.tensor(src, dtype=torch.long),
+                torch.tensor(trg, dtype=torch.long),
+                lemma,
+                target
+            ))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return self.samples[idx]
+
+
+def collate_fn(batch):
+    src_list, trg_list, lemmas, targets = zip(*batch)
+    src_padded = torch.nn.utils.rnn.pad_sequence(src_list, batch_first=True, padding_value=PAD_IDX)
+    trg_padded = torch.nn.utils.rnn.pad_sequence(trg_list, batch_first=True, padding_value=PAD_IDX)
+    return src_padded, trg_padded, lemmas, targets
+
+
+# =============================================================================
+# Neural Architecture: Attentional Seq2Seq
+# =============================================================================
+class BahdanauAttention(nn.Module):
+    def __init__(self, enc_hid_dim: int, dec_hid_dim: int):
+        super().__init__()
+        self.attn = nn.Linear((enc_hid_dim * 2) + dec_hid_dim, dec_hid_dim)
+        self.v = nn.Linear(dec_hid_dim, 1, bias=False)
+
+    def forward(self, hidden, encoder_outputs, mask=None):
+        # hidden: [batch_size, dec_hid_dim]
+        # encoder_outputs: [batch_size, src_len, enc_hid_dim * 2]
+        src_len = encoder_outputs.shape[1]
+        hidden = hidden.unsqueeze(1).repeat(1, src_len, 1)
+        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim=2)))
+        attention = self.v(energy).squeeze(2)  # [batch_size, src_len]
+
+        if mask is not None:
+            attention = attention.masked_fill(mask == 0, -1e10)
+
+        return F.softmax(attention, dim=1)
+
+
+class Seq2SeqMorph(nn.Module):
+    def __init__(self, vocab_size: int, emb_dim: int = EMB_DIM, enc_hid: int = ENC_HID_DIM,
+                 dec_hid: int = DEC_HID_DIM, pad_idx: int = PAD_IDX, dropout: float = 0.2):
+        super().__init__()
+        self.pad_idx = pad_idx
+        self.vocab_size = vocab_size
+
+        self.embedding = nn.Embedding(vocab_size, emb_dim, padding_idx=pad_idx)
+        self.encoder = nn.GRU(emb_dim, enc_hid, batch_first=True, bidirectional=True)
+        self.enc_to_dec = nn.Linear(enc_hid * 2, dec_hid)
+
+        self.attention = BahdanauAttention(enc_hid, dec_hid)
+        self.decoder = nn.GRU((enc_hid * 2) + emb_dim, dec_hid, batch_first=True)
+        self.fc_out = nn.Linear(dec_hid + (enc_hid * 2) + emb_dim, vocab_size)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, src, trg, teacher_forcing_ratio: float = 0.5):
+        # src: [B, src_len], trg: [B, trg_len]
+        batch_size = src.shape[0]
+        trg_len = trg.shape[1]
+
+        enc_emb = self.dropout(self.embedding(src))
+        enc_outputs, enc_hidden = self.encoder(enc_emb)
+
+        # Initial decoder hidden state from bidirectional encoder
+        dec_hidden = torch.tanh(self.enc_to_dec(torch.cat((enc_hidden[-2], enc_hidden[-1]), dim=1)))
+        mask = (src != self.pad_idx)
+
+        outputs = torch.zeros(batch_size, trg_len - 1, self.vocab_size, device=src.device)
+        input_token = trg[:, 0]  # <BOS>
+
+        for t in range(1, trg_len):
+            input_emb = self.dropout(self.embedding(input_token))  # [B, emb_dim]
+            a = self.attention(dec_hidden, enc_outputs, mask).unsqueeze(1)  # [B, 1, src_len]
+            context = torch.bmm(a, enc_outputs).squeeze(1)  # [B, enc_hid * 2]
+
+            dec_input = torch.cat((input_emb, context), dim=1).unsqueeze(1)
+            dec_output, dec_hidden = self.decoder(dec_input, dec_hidden.unsqueeze(0))
+            dec_hidden = dec_hidden.squeeze(0)
+
+            pred = self.fc_out(torch.cat((dec_output.squeeze(1), context, input_emb), dim=1))
+            outputs[:, t - 1] = pred
+
+            teacher_force = random.random() < teacher_forcing_ratio
+            top1 = pred.argmax(1)
+            input_token = trg[:, t] if teacher_force else top1
+
+        return outputs
+
+    @torch.no_grad()
+    def predict_sample(self, src_tokens: List[int], vocab: MorphVocab, max_len: int = MAX_DECODE_LEN):
+        self.eval()
+        src_tensor = torch.tensor(src_tokens, dtype=torch.long, device=device).unsqueeze(0)
+        enc_emb = self.embedding(src_tensor)
+        enc_outputs, enc_hidden = self.encoder(enc_emb)
+        dec_hidden = torch.tanh(self.enc_to_dec(torch.cat((enc_hidden[-2], enc_hidden[-1]), dim=1)))
+        mask = (src_tensor != self.pad_idx)
+
+        input_token = torch.tensor([BOS_IDX], dtype=torch.long, device=device)
+        pred_indices = []
+        confidences = []
+
+        for _ in range(max_len):
+            input_emb = self.embedding(input_token)
+            a = self.attention(dec_hidden, enc_outputs, mask).unsqueeze(1)
+            context = torch.bmm(a, enc_outputs).squeeze(1)
+
+            dec_input = torch.cat((input_emb, context), dim=1).unsqueeze(1)
+            dec_output, dec_hidden = self.decoder(dec_input, dec_hidden.unsqueeze(0))
+            dec_hidden = dec_hidden.squeeze(0)
+
+            pred_logits = self.fc_out(torch.cat((dec_output.squeeze(1), context, input_emb), dim=1))
+            probs = F.softmax(pred_logits, dim=-1)
+            conf, pred_token = torch.max(probs, dim=-1)
+
+            token_id = pred_token.item()
+            if token_id == EOS_IDX:
+                break
+
+            pred_indices.append(token_id)
+            confidences.append(round(conf.item(), 3))
+            input_token = pred_token
+
+        predicted_word = vocab.decode_tokens(pred_indices)
+        avg_conf = round(sum(confidences) / len(confidences), 3) if confidences else 0.0
+        return predicted_word, confidences, avg_conf
+
+
+# =============================================================================
+# Helper Utilities & Model Loading
+# =============================================================================
+def write_log(content: str):
+    with open('log.txt', 'a', encoding='utf-8') as logger:
+        now = datetime.datetime.now().strftime("%m/%d %H:%M:%S")
+        logger.write(f"{now}\t{content}\n")
+
+
+def read_tsv_data(filename: str) -> List[Tuple[str, str, str]]:
+    data = []
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split('\t')
+            if len(parts) >= 3:
+                data.append((parts[0].strip(), parts[1].strip(), parts[2].strip()))
+    return data
+
+
+def split_data(data: List[Tuple[str, str, str]], train_ratio=0.8, dev_ratio=0.1, seed=42):
+    random.seed(seed)
+    shuffled = data.copy()
+    random.shuffle(shuffled)
+    n = len(shuffled)
+    n_train = int(n * train_ratio)
+    n_dev = int(n * dev_ratio)
+    train_data = shuffled[:n_train]
+    dev_data = shuffled[n_train:n_train + n_dev]
+    test_data = shuffled[n_train + n_dev:]
+    return train_data, dev_data, test_data
+
+
+def load_model_and_vocab(langid: str, vocab_id: Optional[str] = None):
+    v_id = vocab_id if vocab_id else langid
+    vocab_path = f"model/{v_id}_vocab.json"
+    model_path = f"model/{langid}.pt"
+
+    if not os.path.exists(vocab_path):
+        raise HTTPException(status_code=404, detail=f"Vocab file '{vocab_path}' not found")
+    if not os.path.exists(model_path):
+        raise HTTPException(status_code=404, detail=f"Model weights '{model_path}' not found")
+
+    vocab = MorphVocab.load(vocab_path)
+    model = Seq2SeqMorph(vocab_size=len(vocab), emb_dim=EMB_DIM, enc_hid=ENC_HID_DIM, dec_hid=DEC_HID_DIM, pad_idx=PAD_IDX)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
+    model.eval()
+    return model, vocab
+
+
+# =============================================================================
+# Training Engine
+# =============================================================================
+def train_morph_model(data: List[Tuple[str, str, str]], model_name: str, epochs: int = EPOCHS,
+                      batch_size: int = BATCH_SIZE, lr: float = LEARNING_RATE,
+                      saved_state: Optional[str] = None) -> Dict:
+    os.makedirs('model', exist_ok=True)
+    start_time = time.time()
+
+    # 1. 80 / 10 / 10 Data Split
+    train_data, dev_data, test_data = split_data(data, 0.8, 0.1, seed=42)
+
+    # 2. Build Vocabulary
+    vocab = MorphVocab()
+    vocab.build_vocab(data)
+    vocab_file = f"model/{model_name}_vocab.json"
+    vocab.save(vocab_file)
+
+    train_dataset = MorphDataset(train_data, vocab)
+    dev_dataset = MorphDataset(dev_data, vocab)
+    test_dataset = MorphDataset(test_data, vocab)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+    dev_loader = DataLoader(dev_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+
+    # 3. Instantiate Model
+    model = Seq2SeqMorph(vocab_size=len(vocab), emb_dim=EMB_DIM, enc_hid=ENC_HID_DIM, dec_hid=DEC_HID_DIM, pad_idx=PAD_IDX)
+    if saved_state and os.path.exists(saved_state):
+        try:
+            model.load_state_dict(torch.load(saved_state, map_location=device))
+        except Exception as e:
+            write_log(f"Warning: could not load saved state: {e}")
+
+    model.to(device)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+    criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX, label_smoothing=0.05)
+
+    best_dev_acc = -1.0
+    best_model_path = f"model/{model_name}.pt"
+
+    for epoch in range(1, epochs + 1):
+        model.train()
+        train_loss = 0.0
+        # Linear decay of teacher forcing
+        tf_ratio = max(0.3, 0.8 - (0.5 * (epoch / epochs)))
+
+        for src, trg, _, _ in train_loader:
+            src, trg = src.to(device), trg.to(device)
+            optimizer.zero_grad()
+            output = model(src, trg, teacher_forcing_ratio=tf_ratio)
+            # trg[:, 1:] excludes <BOS>
+            loss = criterion(output.reshape(-1, len(vocab)), trg[:, 1:].reshape(-1))
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            optimizer.step()
+            train_loss += loss.item()
+
+        scheduler.step()
+        train_loss /= len(train_loader)
+
+        # Evaluate on Dev set (Exact Match)
+        model.eval()
+        correct = 0
+        total = len(dev_data)
+        for lemma, target, tagset in dev_data:
+            src_tokens = vocab.encode_src(lemma, tagset)
+            pred_word, _, _ = model.predict_sample(src_tokens, vocab)
+            if pred_word == target:
+                correct += 1
+        dev_acc = (correct / total) * 100
+
+        write_log(f"Epoch {epoch}/{epochs} | Loss: {train_loss:.4f} | Dev Acc: {dev_acc:.2f}%")
+
+        if dev_acc > best_dev_acc:
+            best_dev_acc = dev_acc
+            torch.save(model.state_dict(), best_model_path)
+
+    # 4. Final Evaluation on Test Set with Best Model
+    model.load_state_dict(torch.load(best_model_path, map_location=device))
+    model.eval()
+    test_correct = 0
+    for lemma, target, tagset in test_data:
+        src_tokens = vocab.encode_src(lemma, tagset)
+        pred_word, _, _ = model.predict_sample(src_tokens, vocab)
+        if pred_word == target:
+            test_correct += 1
+    test_acc = (test_correct / len(test_data)) * 100
+
+    elapsed = time.time() - start_time
+    write_log(f"Finished {model_name} in {elapsed:.2f}s | Best Dev: {best_dev_acc:.2f}% | Test: {test_acc:.2f}%")
+
+    return {
+        "train_time_seconds": round(elapsed, 2),
+        "dev_accuracy_percent": round(best_dev_acc, 2),
+        "test_accuracy_percent": round(test_acc, 2),
+        "total_samples": len(data),
+        "train_samples": len(train_data),
+        "dev_samples": len(dev_data),
+        "test_samples": len(test_data),
+        "vocab_size": len(vocab)
+    }
+
+
+# =============================================================================
+# FastAPI Application & Endpoints
+# =============================================================================
+app = FastAPI(title="CommonMorph Neural Inflection API")
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to CommonMorph active learning API!"}
+    return {"message": "Welcome to CommonMorph Neural Inflection API!"}
+
 
 @app.get("/is_model_trained")
 async def is_model_trained(langid: str):
-  file_path = f'model/{langid}.model'
-  if os.path.exists(file_path):
-    creation_time = os.path.getctime(file_path)
-    creation_date = datetime.datetime.fromtimestamp(creation_time)
-    return {"message": creation_date.strftime("%Y-%m-%d %H:%M")}
-  else:
-    raise HTTPException(status_code=400, detail="No model trained for this language")
+    file_path = f'model/{langid}.pt'
+    if os.path.exists(file_path):
+        creation_time = os.path.getctime(file_path)
+        creation_date = datetime.datetime.fromtimestamp(creation_time)
+        return {"message": creation_date.strftime("%Y-%m-%d %H:%M"), "model": langid}
+    else:
+        raise HTTPException(status_code=400, detail=f"No model trained for language '{langid}'")
 
-# =============================================================================  
-# build the encoder and decoder
-class VocabFromJson:
-  def __init__(self, vocab_file):
+
+# -----------------------------------------------------------------------------
+class TrainRequest(BaseModel):
+    langid: str
+    epochs: Optional[int] = EPOCHS
+    batch_size: Optional[int] = BATCH_SIZE
+    lr: Optional[float] = LEARNING_RATE
+
+
+@app.post("/train")
+def train_endpoint(request: TrainRequest):
+    os.makedirs('data', exist_ok=True)
+    local_tsv = f'data/{request.langid}.tsv'
+
+    # Download fresh UniMorph data from backend (prioritize local backend, fallback to remote)
+    backend_url = os.environ.get("BACKEND_URL", "http://localhost:5041")
+    url = f'{backend_url}/download/unimorph/{request.langid}'
     try:
-      with open(vocab_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-        self.tags_vocab_stoi = data['tag_vocab']
-        self.char_vocab_stoi = data['char_vocab']
-        self.tags_vocab_itos = {tag: idx for idx, tag in self.tags_vocab_stoi.items()}
-        self.char_vocab_itos = {ch: idx for idx, ch in self.char_vocab_stoi.items()}
-        
-    except FileNotFoundError:
-        raise FileNotFoundError(f"TSV file {vocab_file} not found")
-    except ValueError:
-        raise ValueError("TSV file must have two columns: character and ID")
-  
-  def encode_tagset(self, tagset):
-    tagset = tagset.split(tag_splitter)
-    return [self.tags_vocab_stoi.get(tag, UNK_IDX) for tag in tagset]
+        write_log(f'Fetching latest data for {request.langid} from {url}')
+        with urllib.request.urlopen(url, timeout=10) as response:
+            content = response.read().decode("utf-8")
+            if len(content.strip()) > 0:
+                with open(local_tsv, 'w', encoding='utf-8') as f:
+                    f.write(content)
+    except Exception as e:
+        write_log(f'Local backend fetch failed ({e}), checking fallback or existing file')
+        if not os.path.exists(local_tsv):
+            try:
+                url_fallback = f'https://common-morph.com/download/unimorph/{request.langid}'
+                with urllib.request.urlopen(url_fallback, timeout=15) as response:
+                    content = response.read().decode("utf-8")
+                    with open(local_tsv, 'w', encoding='utf-8') as f:
+                        f.write(content)
+            except Exception as ex:
+                raise HTTPException(status_code=400, detail=f"Failed to fetch data for language {request.langid}: {ex}")
 
-  def decode_tagset(self, indices):
-    if not isinstance(indices, list):
-      indices = [indices]
-    return tag_splitter.join([self.tags_vocab_itos[idx] for idx in indices if (idx != PAD_IDX)])
+    data = read_tsv_data(local_tsv)
+    if not data:
+        raise HTTPException(status_code=400, detail=f"Dataset for language {request.langid} is empty or not formatted correctly")
 
-  def encode_word(self, word, add_start_end=False):
-    if add_start_end:
-      word = BOS_TOKEN + word + EOS_TOKEN
-    word = word.ljust(MAX_LEN, PAD_TOKEN)
-    return [self.char_vocab_stoi.get(ch, UNK_IDX) for ch in word]
+    target_epochs = request.epochs if (request.epochs is not None and request.epochs > 0) else EPOCHS
+    results = train_morph_model(
+        data=data,
+        model_name=request.langid,
+        epochs=target_epochs,
+        batch_size=request.batch_size or BATCH_SIZE,
+        lr=request.lr or LEARNING_RATE
+    )
+    return {
+        "message": f"Model {request.langid} trained successfully in {results['train_time_seconds']} seconds",
+        "metrics": results
+    }
 
-  def decode_word(self, chars):
-    return ''.join([self.char_vocab_itos[idx] for idx in chars if (idx != PAD_IDX and idx != BOS_IDX and idx != EOS_IDX)])
-      
-  def decoder_confidence(self, indices, confidence):
-    word = ''
-    conf = []
-    indices = indices.tolist()
-    confidence = confidence.tolist()
-    for i in range(len(indices)):
-      if indices[i] != PAD_IDX and indices[i] != BOS_IDX and indices[i] != EOS_IDX:
-        word += self.char_vocab_itos.get(indices[i], "")
-        conf.append(confidence[i])
-    return word, conf
 
-# =============================================================================
-class TestRequest(BaseModel):
-  langid: str
-  vocab_id: str
-  test_file: str
-@app.post("/testfile/")
-def testfile(request: TestRequest):
-  # read lines
-  data = []
-  with open(f"Test/{request.test_file}.tsv", "r", encoding="utf-8") as f:
-    for line in f:
-      parts = line.strip().split('\t')
-      if len(parts) > 2:
-        data.append(parts)
-  
-  # Load vocab file
-  if request.vocab_id:
-    vocab = VocabFromJson(f'model/{request.vocab_id}_vocab.json')
-  else:
-    vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  # Load TorchScript model
-  model = torch.jit.load(f'model/{request.langid}.model')
-  model.eval()
-  count_correct = 0
-  with open(f"Test/{request.test_file}_{request.langid}_results.tsv", "w", encoding="utf-8") as f:
-    for i in range(len(data)):
-      lemma, target, tagset = data[i]
-      lemma = vocab.encode_word(lemma.strip())
-      lemma = torch.tensor(lemma).unsqueeze(0)
-      tagset = vocab.encode_tagset(tagset.strip())
-      tagset = torch.tensor(tagset).unsqueeze(0)
-      output = model(lemma, tagset)
-      probs = F.softmax(output, dim=-1)
-      confidence, predicted_class = torch.max(probs, dim=-1)
-      predicted, conf = vocab.decoder_confidence(output.argmax(dim=2)[0], confidence.squeeze(0))
-      conf_average = 0
-      if len(conf) != 0:
-        conf_average = round(sum(conf) / len(conf), 3)
-      is_correct = 1 if (target == predicted) else 0
-      count_correct += is_correct
-      f.write(f"{is_correct}\t{target}\t{predicted}\t{conf_average}\n")
-  return f'{count_correct} correct from {len(data)}'
-  
-# =============================================================================
+# -----------------------------------------------------------------------------
+class SingleSuggest(BaseModel):
+    langid: str
+    input_data: str
+    vocab_id: Optional[str] = None
+
+
+@app.post("/suggest")
+def suggest(request: SingleSuggest):
+    model, vocab = load_model_and_vocab(request.langid, request.vocab_id)
+    if '_' not in request.input_data:
+        raise HTTPException(status_code=400, detail="input_data must be formatted as 'lemma_tagset'")
+
+    lemma, tagset = request.input_data.split('_', 1)
+    src_tokens = vocab.encode_src(lemma.strip(), tagset.strip())
+    predicted, conf, conf_average = model.predict_sample(src_tokens, vocab)
+
+    return {
+        "predicted": predicted,
+        "confidence": conf,
+        "avg_confidence": conf_average
+    }
+
+
+# -----------------------------------------------------------------------------
 class BatchSuggest(BaseModel):
-  langid: str
-  words: List[str]
-  vocab_id: str
+    langid: str
+    words: List[str]
+    vocab_id: Optional[str] = None
+
 
 @app.post("/listpredict/")
 def listpredict(request: BatchSuggest):
-  if not request.words:
-    raise HTTPException(status_code=400, detail="List is empty.")
-  # Load vocab file
-  if request.vocab_id:
-    vocab = VocabFromJson(f'model/{request.vocab_id}_vocab.json')
-  else:
-    vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  # Load TorchScript model
-  model = torch.jit.load(f'model/{request.langid}.model')
-  model.eval()
-  results = []
-  for i in range(len(request.words)):
-    lemma, tagset = request.words[i].split('_')
-    lemma = vocab.encode_word(lemma.strip())
-    lemma = torch.tensor(lemma).unsqueeze(0)
-    tagset = vocab.encode_tagset(tagset.strip())
-    tagset = torch.tensor(tagset).unsqueeze(0)
-    output = model(lemma, tagset)
-    probs = F.softmax(output, dim=-1)
-    confidence, predicted_class = torch.max(probs, dim=-1)
-    predicted, conf = vocab.decoder_confidence(output.argmax(dim=2)[0], confidence.squeeze(0))
-    conf_average = round(sum(conf) / len(conf), 3)
-    results.append({"pred": predicted, "conf": conf_average})
-  return results
+    if not request.words:
+        raise HTTPException(status_code=400, detail="List is empty.")
 
-# =============================================================================
-class SingleSuggest(BaseModel):
-  langid: str
-  input_data: str
-  vocab_id: str
-  
-@app.post("/suggest")
-def suggest(request: SingleSuggest):
-  # Load vocab file
-  if request.vocab_id:
-    vocab = VocabFromJson(f'model/{request.vocab_id}_vocab.json')
-  else:
-    vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  # Load TorchScript model
-  model = torch.jit.load(f'model/{request.langid}.model')
-  model.eval()
-  with torch.no_grad():
-    lemma, tagset = request.input_data.split('_')
-    lemma = vocab.encode_word(lemma.strip())
-    lemma = torch.tensor(lemma)
-    tagset = vocab.encode_tagset(tagset.strip())
-    tagset = torch.tensor(tagset)
-    output = model(lemma.unsqueeze(0), tagset.unsqueeze(0))
-    probs = F.softmax(output, dim=-1)
-    confidence, predicted_class = torch.max(probs, dim=-1)    
-    predicted, conf = vocab.decoder_confidence(output.argmax(dim=2)[0], confidence.squeeze(0))
-    conf_average = round(sum(conf) / len(conf), 3)
-    conf = [round(i, 2) for i in conf]
-  return {"predicted": predicted, "confidence": conf, "avg_confidence": conf_average}
+    model, vocab = load_model_and_vocab(request.langid, request.vocab_id)
+    results = []
 
-# =============================================================================
-import datetime
-def write_log(content):
-  with open('log.txt', 'a', encoding='utf-8') as logger:
-    now = datetime.datetime.now().strftime("%m/%d %H:%M:%S")
-    logger.write(now + '\t' + content + '\n')
+    for item in request.words:
+        if '_' not in item:
+            continue
+        lemma, tagset = item.split('_', 1)
+        src_tokens = vocab.encode_src(lemma.strip(), tagset.strip())
+        predicted, conf, conf_average = model.predict_sample(src_tokens, vocab)
+        results.append({"pred": predicted, "conf": conf_average})
 
-def read_data(filename):
-  with open(filename, 'r', encoding='utf-8') as f:
-    data = []
-    for line in f:
-        parts = line.strip().split('\t')
-        if len(parts) > 2:
-          data.append([part.strip() for part in parts])
-  return data
+    return results
 
-def extract(data, specials=None, splitter=None):
-  stoi = {PAD_TOKEN: PAD_IDX, UNK_TOKEN: UNK_IDX}
-  if specials is not None:
-    for tok in specials:
-      stoi[tok] = len(stoi)
-  for line in data:
-    if splitter is not None:
-      for item in line.split(splitter):
-        if item not in stoi:
-          stoi[item] = len(stoi)
-    else:
-      for char in line:
-        if char not in stoi:
-          stoi[char] = len(stoi)
-  return stoi
-            
-def ExtractVocabFromUniMorph(data, char_fields, tag_fields, specials=None, splitter=None): 
-  char_data = []
-  tag_data = []
-  for line in data:
-    for column in tag_fields:
-      tag_data.append(line[column])
-    for column in char_fields:
-      char_data.append(line[column])
-  char_stoi = extract(char_data, specials=[BOS_TOKEN, EOS_TOKEN])
-  tags_stoi = extract(tag_data, splitter=tag_splitter)
-  return char_stoi, tags_stoi
 
-def encode_dataset(data, tag_fields, char_fields, vocab):
-  encoded_dataset = []
-  for row in data:
-    for i in tag_fields + char_fields:
-      if i==0: # lemma
-        lemma_ids = torch.tensor(vocab.encode_word(row[i].strip()), dtype=torch.long)
-      elif i==1:
-        target_ids = torch.tensor(vocab.encode_word(row[i].strip(), add_start_end=True), dtype=torch.long)
-      elif i==2:
-        tag_ids = torch.tensor(vocab.encode_tagset(row[i].strip()), dtype=torch.long)
-    encoded_dataset.append((lemma_ids, tag_ids, target_ids))
-  return encoded_dataset
+# -----------------------------------------------------------------------------
+class TestRequest(BaseModel):
+    langid: str
+    vocab_id: Optional[str] = None
+    test_file: str
 
-# =============================================================================
-class LSTMModel(nn.Module):
-  def __init__(self, char_vocab_size, tag_vocab_size, emb_dim, hidden_dim, n_layers, dropout=0.5):
-    super(LSTMModel, self).__init__()
-    self.hidden_dim = hidden_dim
-    self.n_layers = n_layers
-    self.bidirectional = False
-    self.embedding_w = nn.Embedding(char_vocab_size, emb_dim, padding_idx=PAD_IDX)
-    self.embedding_t = nn.Embedding(tag_vocab_size, emb_dim, padding_idx=PAD_IDX)
-    self.lstm = nn.LSTM(emb_dim, hidden_dim, n_layers, batch_first=True, dropout=dropout if n_layers > 1 else 0)
-    self.fc = nn.Linear(hidden_dim, char_vocab_size)
-    self.dropout = nn.Dropout(dropout)
 
-  def forward(self, src_words, src_tags):
-    # embedding
-    embedded_w = self.embedding_w(src_words) # [B, Len_w, emb_dim]
-    embedded_t = self.embedding_t(src_tags) # [B, Len_w, emb_dim]
-    if embedded_t.size(1) > 1:
-      pad_size = embedded_w.size(1) - embedded_t.size(1)
-      embedded_t = torch.cat([embedded_t, torch.zeros(embedded_t.size(0), pad_size, embedded_t.size(2))], dim=1)
-    
-    combined = embedded_w + embedded_t
-    # LSTM
-    lstm_out, (hidden, cell) = self.lstm(combined)
-    output = self.fc(self.dropout(lstm_out)) 
-    return output # [B, Len_w, emb_dim]
+@app.post("/testfile/")
+def testfile(request: TestRequest):
+    os.makedirs('Test', exist_ok=True)
+    test_path = f"Test/{request.test_file}.tsv"
+    if not os.path.exists(test_path):
+        test_path = f"data/{request.test_file}.tsv"
+        if not os.path.exists(test_path):
+            raise HTTPException(status_code=404, detail=f"Test file '{request.test_file}' not found in Test/ or data/")
 
-def train_LSTM(train_loader, epochs, model_name, word_vocab_size, tag_vocab_size, saved_state=None):    
-  model = LSTMModel(word_vocab_size, tag_vocab_size, EMB_DIM, HIDDEN_DIM, N_LAYERS)
-  # load the saved state for fine-tuning
-  if saved_state is not None:
-    model.load_state_dict(torch.load(saved_state))    
-  # Train the model
-  optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-  criterion = nn.CrossEntropyLoss(label_smoothing=0.1, ignore_index=PAD_IDX)
-  start_time = time.time()
-  train_loss_records = []
-  for epoch in range(epochs):
-    model.train()
-    train_loss = 0.0
-    for src_words, src_tags, target_word in train_loader:
-      optimizer.zero_grad()
-      output = model(src_words, src_tags)
-      loss = criterion(output.view(-1, word_vocab_size),  target_word.view(-1))
-      loss.backward()
-      optimizer.step()
-      train_loss += loss.item()
-    train_loss /= len(train_loader)
-    train_loss_records.append(train_loss)
-  train_time = time.time() - start_time
-  torch.save(model.state_dict(), f'model/{model_name}.pt')
-  scripted_model = torch.jit.script(model)
-  scripted_model.save(f'model/{model_name}.model')
-  return train_loss_records, train_time
+    data = read_tsv_data(test_path)
+    model, vocab = load_model_and_vocab(request.langid, request.vocab_id)
 
-# =============================================================================
-class TrainRequest(BaseModel):
-  langid: str
-  vocab_id: Optional[str] = None
-  char_fields: Optional[List[int]] = None
-  tag_fields: Optional[List[int]] = None
+    count_correct = 0
+    out_path = f"Test/{request.test_file}_{request.langid}_results.tsv"
+    with open(out_path, "w", encoding="utf-8") as f:
+        for lemma, target, tagset in data:
+            src_tokens = vocab.encode_src(lemma, tagset)
+            predicted, conf, avg_conf = model.predict_sample(src_tokens, vocab)
+            is_correct = 1 if (target == predicted) else 0
+            count_correct += is_correct
+            f.write(f"{is_correct}\t{target}\t{predicted}\t{avg_conf}\n")
 
-@app.post("/train")
-def train(request: TrainRequest):
-  # create folders if not exist
-  if not os.path.exists(f'data'):
-    os.makedirs(f'data')  
-  if not os.path.exists(f'model'):
-    os.makedirs(f'model')
-  # default values for char_fields and tag_fields
-  char_fields = request.char_fields or [0, 1]
-  tag_fields = request.tag_fields or [2]
-  # read the data from Common-Morph and write it to a local file
-  url = f'https://common-morph.com/download/unimorph/{request.langid}'
-  response = urllib.request.urlopen(url)
-  write_log(f'response got for {request.langid}')
-  with open(f'data/{request.langid}.tsv', 'w', encoding='utf-8') as f:
-    f.write(response.read().decode("utf-8"))
-  write_log(f'response wrote for {request.langid}')
-  data = read_data(f'data/{request.langid}.tsv')
-  # build vocabs
-  vocab_file = f'model/{request.langid}_vocab.json'
-  if os.path.exists(vocab_file):
-    old_vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  char_stoi, tags_stoi = ExtractVocabFromUniMorph(data, char_fields, tag_fields)
-  # save vocabs to file
-  with open(vocab_file, 'w') as f:
-    json.dump({"char_vocab": char_stoi, "tag_vocab": tags_stoi}, f)
-  write_log(f'vocab wrote for {request.langid}')
-  # encode dataset
-  new_vocab = VocabFromJson(vocab_file)    
-  dataset = encode_dataset(data, tag_fields, char_fields, new_vocab)
-  # get the dataloaders
-  train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-  # train the model
-  word_vocab_size = len(new_vocab.char_vocab_stoi)
-  tag_vocab_size = len(new_vocab.tags_vocab_stoi)
-  write_log(f'ready to train {request.langid}')
-  # if model exists, finetune it
-  if (os.path.exists(f'model/{request.langid}.pt')) and (old_vocab is not None) and (new_vocab == old_vocab):
-    saved_state = f'model/{request.langid}.pt'
-    train_loss_records, train_time = train_LSTM(train_loader, EPOCHS, request.langid, word_vocab_size, tag_vocab_size, saved_state=saved_state)
-  else:
-    train_loss_records, train_time = train_LSTM(train_loader, EPOCHS, request.langid, word_vocab_size, tag_vocab_size)
-  write_log(f'model {request.langid} trained')
-  return {"message": f"Model trained successfully in {train_time:.2f} seconds"}
+    accuracy = round((count_correct / len(data)) * 100, 2) if data else 0
+    return {
+        "result": f"{count_correct} correct from {len(data)}",
+        "accuracy_percent": accuracy,
+        "output_file": out_path
+    }
 
-# =============================================================================
+
+# -----------------------------------------------------------------------------
 class FinetuneRequest(BaseModel):
-  langid: str
-  finetune_id: str
-  vocab_id: Optional[str] = None
-  char_fields: Optional[List[int]] = None
-  tag_fields: Optional[List[int]] = None
+    langid: str
+    finetune_id: str
+    vocab_id: Optional[str] = None
+    epochs: Optional[int] = 10
+
 
 @app.post("/finetune")
 def finetune(request: FinetuneRequest):
-  # create folders if not exist
-  if not os.path.exists(f'data'):
-    os.makedirs(f'data')  
-  if not os.path.exists(f'model'):
-    os.makedirs(f'model')
-  # default values for char_fields and tag_fields
-  char_fields = request.char_fields or [0, 1]
-  tag_fields = request.tag_fields or [2]
-  # read the data from Common-Morph and write it to a local file
-  url = f'https://common-morph.com/download/unimorph/{request.finetune_id}'
-  response = urllib.request.urlopen(url)
-  with open(f'data/{request.finetune_id}.tsv', 'w', encoding='utf-8') as f:
-    f.write(response.read().decode("utf-8"))  
-  data = read_data(f'data/{request.finetune_id}.tsv')
-  # build vocabs
-  if request.vocab_id:
-    vocab = VocabFromJson(f'model/{request.vocab_id}_vocab.json')
-  else:    
-    vocab = VocabFromJson(f'model/{request.langid}_vocab.json')
-  # encode dataset
-  # checking if new vocab items are in finetune file
-  char_stoi, tags_stoi = ExtractVocabFromUniMorph(data, char_fields, tag_fields)
-  if len(set(tags_stoi.keys()) - set(vocab.tags_vocab_stoi.keys())) > 0:
-    raise HTTPException(status_code=400, detail="New tags detected! Re-train the model")
-  if len(set(char_stoi.keys()) - set(vocab.char_vocab_stoi.keys())) > 0:
-    raise HTTPException(status_code=400, detail="New characters detected! Re-train the model")
-  
-  dataset = encode_dataset(data, tag_fields, char_fields, vocab)
-  # get the dataloaders
-  train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-  # train the model
-  word_vocab_size = len(vocab.char_vocab_stoi)
-  tag_vocab_size = len(vocab.tags_vocab_stoi)
-  saved_state = f'model/{request.langid}.pt'
-  train_loss_records, train_time = train_LSTM(train_loader, EPOCHS, request.finetune_id, word_vocab_size, tag_vocab_size, saved_state=saved_state)
-  return {"message": f"Model trained successfully in {train_time:.2f} seconds"}
+    local_tsv = f'data/{request.finetune_id}.tsv'
+    if not os.path.exists(local_tsv):
+        url = f'https://common-morph.com/download/unimorph/{request.finetune_id}'
+        with urllib.request.urlopen(url) as response:
+            with open(local_tsv, 'w', encoding='utf-8') as f:
+                f.write(response.read().decode("utf-8"))
+
+    data = read_tsv_data(local_tsv)
+    saved_state = f'model/{request.langid}.pt'
+    results = train_morph_model(
+        data=data,
+        model_name=request.finetune_id,
+        epochs=request.epochs or 10,
+        saved_state=saved_state if os.path.exists(saved_state) else None
+    )
+    return {"message": f"Model fine-tuned successfully in {results['train_time_seconds']}s", "metrics": results}
