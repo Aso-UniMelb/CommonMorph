@@ -34,8 +34,14 @@ namespace common_morph_backend.Controllers
     [HttpPost("insert")]
     public IActionResult insert([FromBody] InflectionClass pClass)
     {
-      if (_context.inflectionclasses.Any(x => x.title == pClass.title && x.langid == pClass.langid && !x.isdeleted))
-        return BadRequest("duplicate");
+      if (pClass == null)
+        return BadRequest("Invalid inflection class payload");
+
+      var title = pClass.title ?? "";
+      var langId = pClass.langid;
+
+      if (_context.inflectionclasses.Any(x => x.title == title && x.langid == langId && !x.isdeleted))
+        return BadRequest("An inflection class with this title already exists.");
 
       pClass.isdeleted = false;
       _context.inflectionclasses.Add(pClass);
@@ -47,9 +53,13 @@ namespace common_morph_backend.Controllers
     [HttpPost("update")]
     public IActionResult update([FromBody] InflectionClass pClass)
     {
-      var old = _context.inflectionclasses.FirstOrDefault(x => x.id == pClass.id);
+      if (pClass == null || pClass.id == 0)
+        return BadRequest("Invalid inflection class payload");
+
+      var targetId = pClass.id;
+      var old = _context.inflectionclasses.FirstOrDefault(x => x.id == targetId);
       if (old == null)
-        return BadRequest("not exist");
+        return BadRequest("Inflection class does not exist");
 
       old.title = pClass.title ?? old.title;
       old.description = pClass.description ?? old.description;

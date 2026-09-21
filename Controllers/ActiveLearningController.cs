@@ -231,7 +231,7 @@ ORDER BY priority DESC, lemmaid")).ToList();
       try
       {
         var httpClient = _httpClientFactory.CreateClient();
-        httpClient.Timeout = TimeSpan.FromSeconds(180); // allow sufficient time for training epochs
+        httpClient.Timeout = TimeSpan.FromMinutes(5); // 5 minutes timeout for training epochs
 
         var json = JsonSerializer.Serialize(new { langid = targetLangId, epochs = targetEpochs });
         var content = new StringContent(json, Encoding.UTF8, "application/json");

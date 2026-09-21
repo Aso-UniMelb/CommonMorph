@@ -47,9 +47,13 @@ namespace common_morph_backend.Controllers
     [HttpPost("updateLayer")]
     public IActionResult updateLayer([FromBody] ReusableLayer agr)
     {
-      var old = _context.reusablelayers.FirstOrDefault(x => x.id == agr.id);
+      if (agr == null || agr.id == 0)
+        return BadRequest("Invalid layer payload");
+
+      var targetId = agr.id;
+      var old = _context.reusablelayers.FirstOrDefault(x => x.id == targetId);
       if (old == null)
-        return BadRequest("not exist");
+        return BadRequest("Layer does not exist");
       _context.Entry(old).State = EntityState.Detached;
       _context.reusablelayers.Update(agr);
       _context.SaveChanges();
@@ -87,8 +91,14 @@ namespace common_morph_backend.Controllers
     [HttpPost("insertAffix")]
     public IActionResult insertAffix([FromBody] Affix agr)
     {
-      if (_context.affixes.Any(x => x.unimorphtags == agr.unimorphtags && x.reusablelayerid == agr.reusablelayerid && !x.isdeleted))
-        return BadRequest("duplicate");
+      if (agr == null)
+        return BadRequest("Invalid affix payload");
+
+      var tags = agr.unimorphtags ?? "";
+      var layerId = agr.reusablelayerid;
+
+      if (_context.affixes.Any(x => x.unimorphtags == tags && x.reusablelayerid == layerId && !x.isdeleted))
+        return BadRequest("An affix with these UniMorph tags already exists in this reusable layer.");
 
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
@@ -112,9 +122,13 @@ namespace common_morph_backend.Controllers
     [HttpPost("updateAffix")]
     public IActionResult updateAffix([FromBody] Affix agr)
     {
-      var old = _context.affixes.FirstOrDefault(x => x.id == agr.id);
+      if (agr == null || agr.id == 0)
+        return BadRequest("Invalid affix payload");
+
+      var targetId = agr.id;
+      var old = _context.affixes.FirstOrDefault(x => x.id == targetId);
       if (old == null)
-        return BadRequest("not exist");
+        return BadRequest("Affix does not exist");
 
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;

@@ -55,7 +55,7 @@
   <div style="margin-bottom: 2rem; text-align: center;">
     <h1>Advanced Morphological Search</h1>
     <p style="color: var(--text-muted); max-width: 650px; margin: 0 auto;">
-      Search across all documented languages and paradigms using surface forms, base lemmas, gloss meanings, or UniMorph tag patterns. Use <code>%</code> for wildcard matching.
+      Search across all documented languages and paradigms using surface forms, lemmas, gloss meanings, or UniMorph tag patterns. Use <code>%</code> for wildcard matching.
     </p>
   </div>
 

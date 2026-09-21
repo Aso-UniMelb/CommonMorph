@@ -210,9 +210,9 @@
           title: structureTitle.trim(),
           unimorphtags: structureTags.trim(),
           formula: structureFormula.trim(),
-          reusablelayerid: structureLayerId || null,
+          reusablelayerid: structureLayerId || 0,
           inflectionclassid: structureClassId,
-          order: structureOrder
+          order: Number(structureOrder) || 0
         });
       } else {
         await api.post('/Structure/update', {
@@ -220,9 +220,9 @@
           title: structureTitle.trim(),
           unimorphtags: structureTags.trim(),
           formula: structureFormula.trim(),
-          reusablelayerid: structureLayerId || null,
+          reusablelayerid: structureLayerId || 0,
           inflectionclassid: structureClassId,
-          order: structureOrder
+          order: Number(structureOrder) || 0
         });
       }
       showStructureModal = false;
@@ -449,6 +449,18 @@
   }
 
   // --- Lexicon (Lemmas) ---
+  let lemmaSortKey: 'entry' | 'meaning' | 'class' | 'tags' | 'priority' = 'entry';
+  let lemmaSortAsc = true;
+
+  function toggleLemmaSort(key: 'entry' | 'meaning' | 'class' | 'tags' | 'priority') {
+    if (lemmaSortKey === key) {
+      lemmaSortAsc = !lemmaSortAsc;
+    } else {
+      lemmaSortKey = key;
+      lemmaSortAsc = true;
+    }
+  }
+
   async function loadLemmas(langId: number) {
     try {
       lemmas = await api.get('/Lemma/list', { LangID: langId }) || [];
@@ -458,13 +470,44 @@
     }
   }
 
-  $: filteredLemmas = Array.isArray(lemmas)
-    ? (lemmaSearch.trim()
-        ? lemmas.filter(l => 
-            (l.entry && l.entry.toLowerCase().includes(lemmaSearch.toLowerCase())) ||
-            (l.engmeaning && l.engmeaning.toLowerCase().includes(lemmaSearch.toLowerCase())))
-        : lemmas)
-    : [];
+  $: filteredLemmas = (() => {
+    if (!Array.isArray(lemmas)) return [];
+    let list = lemmas;
+    if (lemmaSearch.trim()) {
+      const q = lemmaSearch.toLowerCase();
+      list = list.filter(l => 
+        (l.entry && l.entry.toLowerCase().includes(q)) ||
+        (l.engmeaning && l.engmeaning.toLowerCase().includes(q)) ||
+        (l.unimorphtags && l.unimorphtags.toLowerCase().includes(q)) ||
+        (l.wClass && l.wClass.toLowerCase().includes(q))
+      );
+    }
+    return [...list].sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+      if (lemmaSortKey === 'entry') {
+        valA = a.entry || '';
+        valB = b.entry || '';
+      } else if (lemmaSortKey === 'meaning') {
+        valA = a.engmeaning || '';
+        valB = b.engmeaning || '';
+      } else if (lemmaSortKey === 'class') {
+        const icA = inflectionClasses.find(c => c.id === a.inflectionclassid);
+        const icB = inflectionClasses.find(c => c.id === b.inflectionclassid);
+        valA = icA?.title || a.wClass || '';
+        valB = icB?.title || b.wClass || '';
+      } else if (lemmaSortKey === 'tags') {
+        valA = a.unimorphtags || '';
+        valB = b.unimorphtags || '';
+      } else if (lemmaSortKey === 'priority') {
+        valA = a.priority ?? 1;
+        valB = b.priority ?? 1;
+        return lemmaSortAsc ? valA - valB : valB - valA;
+      }
+      const cmp = String(valA).localeCompare(String(valB), undefined, { sensitivity: 'base' });
+      return lemmaSortAsc ? cmp : -cmp;
+    });
+  })();
 
   function openAddLemma() {
     currentLemmaId = 0;
@@ -545,9 +588,11 @@
       alert('No lemmas to export.');
       return;
     }
-    let file = ['Entry', 'InflectionClassID', 'EnglishMeaning', 'Stem1', 'Stem2', 'Stem3', 'Stem4', 'Priority'].join('\t') + '\n';
+    let file = ['Entry', 'InflectionClass', 'EnglishMeaning', 'Stem1', 'Stem2', 'Stem3', 'Stem4', 'UniMorphTags'].join('\t') + '\n';
     for (const l of lemmas) {
-      file += [l.entry, l.inflectionclassid, l.engmeaning || '', l.stem1 || '', l.stem2 || '', l.stem3 || '', l.stem4 || '', l.priority ?? 1].join('\t') + '\n';
+      const ic = inflectionClasses.find(c => c.id === l.inflectionclassid);
+      const classTitle = ic ? ic.title : (l.wClass || l.inflectionclassid);
+      file += [l.entry, classTitle, l.engmeaning || '', l.stem1 || '', l.stem2 || '', l.stem3 || '', l.stem4 || '', l.unimorphtags || ''].join('\t') + '\n';
     }
     const blob = new Blob([file], { type: 'text/tab-separated-values;charset=utf-8' });
     const link = document.createElement('a');
@@ -638,7 +683,7 @@
       <span class="material-icons" style="font-size: 1.1rem;">layers</span> Reusable Layers ({reusableLayers.length})
     </button>
     <button type="button" class="s-tab" class:active={activeAccordion === 'lexicon'} on:click={() => activeAccordion = 'lexicon'}>
-      <span class="material-icons" style="font-size: 1.1rem;">menu_book</span> Lexicon (Lemmas) ({lemmas.length})
+      <span class="material-icons" style="font-size: 1.1rem;">menu_book</span> Lexicon ({lemmas.length})
     </button>
     <button type="button" class="s-tab" class:active={activeAccordion === 'rules'} on:click={() => activeAccordion = 'rules'}>
       <span class="material-icons" style="font-size: 1.1rem;">rule</span> Morphophonology ({rules.length})
@@ -679,7 +724,7 @@
 
                 <div style="display: flex; gap: 0.3rem; align-items: center;">
                   <button type="button" class="btn-compact-text" on:click={() => openAddStructure(ic.id)}>
-                    <span class="material-icons" style="font-size: 0.95rem;">add</span> Slot
+                    <span class="material-icons" style="font-size: 0.95rem;">add</span> Structure
                   </button>
                   <button type="button" class="icon-btn edit" title="Edit Class" on:click={() => openEditClass(ic)}>
                     <span class="material-icons">edit</span>
@@ -693,7 +738,7 @@
               {#if openedClasses[ic.id]}
                 <div class="tree-children">
                   {#if !structuresByClass[ic.id] || structuresByClass[ic.id].length === 0}
-                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0.25rem 0;">No paradigm slots defined in this class yet.</p>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0.25rem 0;">No paradigm structures defined in this class yet.</p>
                   {:else}
                     <table class="data-table compact">
                       <thead>
@@ -853,17 +898,63 @@
         <table class="data-table compact">
           <thead>
             <tr>
-              <th>Lemma Entry</th>
-              <th>Gloss / Meaning</th>
-              <th>Inflection Class</th>
-              <th style="width: 80px; text-align: center;">Priority</th>
+              <th on:click={() => toggleLemmaSort('entry')} style="cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <span>Lemma Entry</span>
+                  {#if lemmaSortKey === 'entry'}
+                    <span class="material-icons" style="font-size: 0.9rem; color: var(--primary);">{lemmaSortAsc ? 'arrow_upward' : 'arrow_downward'}</span>
+                  {:else}
+                    <span class="material-icons" style="font-size: 0.85rem; opacity: 0.35;">unfold_more</span>
+                  {/if}
+                </div>
+              </th>
+              <th on:click={() => toggleLemmaSort('meaning')} style="cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <span>Gloss / Meaning</span>
+                  {#if lemmaSortKey === 'meaning'}
+                    <span class="material-icons" style="font-size: 0.9rem; color: var(--primary);">{lemmaSortAsc ? 'arrow_upward' : 'arrow_downward'}</span>
+                  {:else}
+                    <span class="material-icons" style="font-size: 0.85rem; opacity: 0.35;">unfold_more</span>
+                  {/if}
+                </div>
+              </th>
+              <th on:click={() => toggleLemmaSort('class')} style="cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <span>Inflection Class</span>
+                  {#if lemmaSortKey === 'class'}
+                    <span class="material-icons" style="font-size: 0.9rem; color: var(--primary);">{lemmaSortAsc ? 'arrow_upward' : 'arrow_downward'}</span>
+                  {:else}
+                    <span class="material-icons" style="font-size: 0.85rem; opacity: 0.35;">unfold_more</span>
+                  {/if}
+                </div>
+              </th>
+              <th on:click={() => toggleLemmaSort('tags')} style="cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <span>UniMorph Tags</span>
+                  {#if lemmaSortKey === 'tags'}
+                    <span class="material-icons" style="font-size: 0.9rem; color: var(--primary);">{lemmaSortAsc ? 'arrow_upward' : 'arrow_downward'}</span>
+                  {:else}
+                    <span class="material-icons" style="font-size: 0.85rem; opacity: 0.35;">unfold_more</span>
+                  {/if}
+                </div>
+              </th>
+              <th on:click={() => toggleLemmaSort('priority')} style="width: 95px; text-align: center; cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                  <span>Priority</span>
+                  {#if lemmaSortKey === 'priority'}
+                    <span class="material-icons" style="font-size: 0.9rem; color: var(--primary);">{lemmaSortAsc ? 'arrow_upward' : 'arrow_downward'}</span>
+                  {:else}
+                    <span class="material-icons" style="font-size: 0.85rem; opacity: 0.35;">unfold_more</span>
+                  {/if}
+                </div>
+              </th>
               <th style="width: 70px; text-align: center;">Actions</th>
             </tr>
           </thead>
           <tbody>
             {#if filteredLemmas.length === 0}
               <tr>
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">
                   No lemmas found.
                 </td>
               </tr>
@@ -874,6 +965,13 @@
                   <td><b>{l.entry}</b></td>
                   <td><span style="color: var(--text-muted);">{l.engmeaning || '-'}</span></td>
                   <td><span class="badge primary" style="font-size: 0.75rem; padding: 2px 6px;">{ic ? ic.title : (l.wClass || l.inflectionclassid)}</span></td>
+                  <td>
+                    {#if l.unimorphtags}
+                      <code style="font-size: 0.78rem; color: var(--primary); font-weight: 600;">{l.unimorphtags}</code>
+                    {:else}
+                      <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+                    {/if}
+                  </td>
                   <td style="text-align: center;">
                     {#if l.priority === 2}
                       <span class="badge danger" style="font-weight: 600; font-size: 0.72rem; padding: 1px 5px;">High</span>
@@ -1088,7 +1186,7 @@
 </Modal>
 
 <!-- Modal: Lemma -->
-<Modal isOpen={showLemmaModal} title="{currentLemmaId === 0 ? 'Add' : 'Edit'} Base Lemma" onClose={() => showLemmaModal = false} maxWidth="650px">
+<Modal isOpen={showLemmaModal} title="{currentLemmaId === 0 ? 'Add' : 'Edit'} Lemma" onClose={() => showLemmaModal = false} maxWidth="650px">
   <form on:submit|preventDefault={handleSaveLemma}>
     <div class="field small">
       <label for="txtLemmaEntry">Base Entry / Citation Form *</label>
@@ -1109,15 +1207,6 @@
       <input id="txtLemmaMeaning" type="text" bind:value={lemmaMeaning} placeholder="e.g. to write" />
     </div>
 
-    <div class="field small">
-      <label for="cmbLemmaPriority">Elicitation Priority</label>
-      <select id="cmbLemmaPriority" bind:value={lemmaPriority}>
-        <option value={2}>High (Top priority in elicitation)</option>
-        <option value={1}>Med (Normal)</option>
-        <option value={0}>Low (Lower priority)</option>
-      </select>
-    </div>
-
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
       <div class="field small">
         <label for="txtLemmaStem1">Stem 1 (e.g. Present root)</label>
@@ -1136,6 +1225,17 @@
         <input id="txtLemmaStem4" type="text" bind:value={lemmaStem4} />
       </div>
     </div>
+    
+    <UniMorphSelector bind:value={lemmaTags} label="UniMorph Features / Tags (Optional)" />
+
+    <div class="field small">
+      <label for="cmbLemmaPriority">Elicitation Priority</label>
+      <select id="cmbLemmaPriority" bind:value={lemmaPriority}>
+        <option value={2}>High (Top priority in elicitation)</option>
+        <option value={1}>Med (Normal)</option>
+        <option value={0}>Low (Lower priority)</option>
+      </select>
+    </div>
 
     <div class="field-end">
       <button type="button" class="secondary" on:click={() => showLemmaModal = false}>Cancel</button>
@@ -1153,11 +1253,11 @@
     </div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
       <div class="field small">
-        <label for="txtRuleReplaceFrom">Replaces From (Source, one per line) *</label>
+        <label for="txtRuleReplaceFrom">Replaces From (one per line) *</label>
         <textarea id="txtRuleReplaceFrom" bind:value={ruleReplaceFrom} rows="5" required placeholder="aa&#10;ee&#10;iy"></textarea>
       </div>
       <div class="field small">
-        <label for="txtRuleReplaceTo">Replaces To (Target, one per line)</label>
+        <label for="txtRuleReplaceTo">Replaces To (one per line)</label>
         <textarea id="txtRuleReplaceTo" bind:value={ruleReplaceTo} rows="5" placeholder="a&#10;e&#10;î"></textarea>
       </div>
     </div>
@@ -1169,38 +1269,90 @@
 </Modal>
 
 <!-- Modal: Import Lemmas TSV -->
-<Modal isOpen={showImportLemmasModal} title="Import Base Lemmas (TSV / CSV)" onClose={() => showImportLemmasModal = false} maxWidth="700px">
+<Modal isOpen={showImportLemmasModal} title="Import Lemmas (TSV)" onClose={() => showImportLemmasModal = false} maxWidth="700px">
   <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
     Paste tab-separated lines with format: <br/>
-    <code>Entry [tab] InflectionClassID [tab] EnglishMeaning [tab] Stem1 [tab] Stem2 [tab] Stem3 [tab] Stem4</code>
+    <code>Entry [tab] InflectionClassTitle [tab] EnglishMeaning [tab] Stem1 [tab] Stem2 [tab] Stem3 [tab] Stem4 [tab] UniMorphTags</code>
+    {#if inflectionClasses.length > 0}
+      <div style="margin-top: 0.4rem; font-size: 0.82rem; color: var(--text);">
+        Available Inflection Classes: 
+        <span style="font-weight: 600; color: var(--primary);">
+          {inflectionClasses.map(c => c.title).join(', ')}
+        </span>
+      </div>
+    {/if}
   </div>
   <div class="field small">
-    <textarea bind:value={lemmaImportText} rows="8" placeholder="nivîsîn&#9;1&#9;to write&#9;nivîs&#9;nivîsî"></textarea>
+    <textarea bind:value={lemmaImportText} rows="8" placeholder="nivîsîn&#9;VT&#9;to write&#9;nivîs&#9;nivîsî&#9;&#9;&#9;V;NFIN"></textarea>
   </div>
   <div class="field-end">
     <button type="button" class="secondary" on:click={() => showImportLemmasModal = false}>Cancel</button>
     <button type="button" class="primary" on:click={async () => {
       if (!lemmaImportText.trim() || !$selectedLang) return;
       const lines = lemmaImportText.trim().split('\n');
+      let importedCount = 0;
+      let failedLines = [];
+
       for (const line of lines) {
+        if (!line.trim()) continue;
         const parts = line.split('\t');
-        if (parts.length >= 2) {
+        if (parts.length >= 1) {
+          const entry = parts[0]?.trim() || '';
+          if (!entry) continue;
+
+          const classIdentifier = parts[1]?.trim() || '';
+          const normClassId = classIdentifier.toLowerCase().replace(/^[-\s]+/, '');
+
+          // Robust class matching: exact, stripped hyphens, numeric ID, or substring
+          let matchedClass = inflectionClasses.find(c => {
+            const t = (c.title || '').trim().toLowerCase();
+            const tNorm = t.replace(/^[-\s]+/, '');
+            return t === classIdentifier.toLowerCase() ||
+                   (normClassId && tNorm === normClassId) ||
+                   String(c.id) === classIdentifier;
+          });
+
+          if (!matchedClass && classIdentifier) {
+            matchedClass = inflectionClasses.find(c => 
+              (c.title || '').toLowerCase().includes(classIdentifier.toLowerCase())
+            );
+          }
+
+          const classId = matchedClass?.id || (parseInt(classIdentifier, 10) || (inflectionClasses.length === 1 ? inflectionClasses[0].id : (inflectionClasses[0]?.id || 0)));
+
+          if (!classId) {
+            failedLines.push({
+              entry,
+              reason: `Inflection class '${classIdentifier}' not found. Available: ${inflectionClasses.map(c => c.title).join(', ') || 'None'}`
+            });
+            continue;
+          }
+
           try {
             await api.post('/Lemma/insert', {
-              entry: parts[0].trim(),
-              inflectionclassid: parseInt(parts[1].trim(), 10) || inflectionClasses[0]?.id || 1,
+              entry: entry,
+              inflectionclassid: classId,
               engmeaning: parts[2]?.trim() || '',
               stem1: parts[3]?.trim() || '',
               stem2: parts[4]?.trim() || '',
               stem3: parts[5]?.trim() || '',
-              stem4: parts[6]?.trim() || ''
+              stem4: parts[6]?.trim() || '',
+              unimorphtags: parts[7]?.trim() || '',
+              priority: 0
             });
-          } catch {}
+            importedCount++;
+          } catch (e) {
+            failedLines.push({ entry, reason: e.message || 'Duplicate or server error' });
+          }
         }
       }
       showImportLemmasModal = false;
       lemmaImportText = '';
       await loadLemmas($selectedLang.id);
+      if (failedLines.length > 0) {
+        const details = failedLines.map(f => `• ${f.entry}: ${f.reason}`).join('\n');
+        alert(`Imported ${importedCount} lemmas successfully.\n\nFailed entries (${failedLines.length}):\n${details}`);
+      }
     }}>Import Lemmas</button>
   </div>
 </Modal>

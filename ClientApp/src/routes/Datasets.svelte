@@ -80,7 +80,7 @@
       <div class="card" style="margin-bottom: 2rem;">
         <h3>UniMorph & CLDF Compatible</h3>
         <p>
-          We provide tab-separated values (TSV) compatible with the Universal Morphology (UniMorph) standard. Each record consists of a base lemma, surface inflected form, and structured feature bundle.
+          We provide tab-separated values (TSV) compatible with the Universal Morphology (UniMorph) standard. Each record consists of a lemma, surface inflected form, and structured feature bundle.
         </p>
       </div>
 

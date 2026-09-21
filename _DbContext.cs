@@ -150,9 +150,9 @@ namespace common_morph_backend
       public string? title { get; set; }
       public string? unimorphtags { get; set; }
       public string? formula { get; set; }
-      public int order { get; set; }
+      public int? order { get; set; }
       public int inflectionclassid { get; set; }
-      public int reusablelayerid { get; set; }
+      public int? reusablelayerid { get; set; }
       public bool isdeleted { get; set; }
     }
 

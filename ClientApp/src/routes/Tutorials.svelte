@@ -75,7 +75,7 @@
             <li><strong>Define Inflection Classes:</strong> Group words into conjugation/declension classes.</li>
             <li><strong>Create Reusable Layers:</strong> Define shared morpheme slots (e.g. agreement affixes).</li>
             <li><strong>Define Paradigm Structures:</strong> Specify formulas combining stems and agreement layers with UniMorph tags.</li>
-            <li><strong>Populate the Lexicon:</strong> Add base lemmas and stems.</li>
+            <li><strong>Populate the Lexicon:</strong> Add lemmas and stems.</li>
           </ol>
         </div>
       {:else if activeSection === 'elicit'}

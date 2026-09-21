@@ -60,12 +60,19 @@ namespace common_morph_backend.Controllers
     [HttpPost("insert")]
     public IActionResult insert([FromBody] Lemma lem)
     {
-      if (_context.lexicon.Any(x => x.entry == lem.entry && x.inflectionclassid == lem.inflectionclassid && !x.isdeleted))
+      if (lem == null)
+        return BadRequest("Invalid lemma payload");
+
+      var entry = lem.entry ?? "";
+      var classId = lem.inflectionclassid;
+
+      if (_context.lexicon.Any(x => x.entry == entry && x.inflectionclassid == classId && !x.isdeleted))
         return BadRequest("A lemma with this citation entry already exists in this inflection class.");
     
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
 
+      lem.priority = lem.priority ?? Priority.Low;
       lem.isdeleted = false;
       _context.lexicon.Add(lem);
       _context.SaveChanges();
@@ -85,7 +92,11 @@ namespace common_morph_backend.Controllers
     [HttpPost("update")]
     public IActionResult update([FromBody] Lemma lem)
     {
-      var old = _context.lexicon.FirstOrDefault(x => x.id == lem.id);
+      if (lem == null || lem.id == 0)
+        return BadRequest("Invalid lemma payload");
+
+      var targetId = lem.id;
+      var old = _context.lexicon.FirstOrDefault(x => x.id == targetId);
       if (old == null)
         return BadRequest("Lemma does not exist");
 
@@ -100,7 +111,7 @@ namespace common_morph_backend.Controllers
       old.stem3 = lem.stem3 ?? old.stem3;
       old.stem4 = lem.stem4 ?? old.stem4;
       old.unimorphtags = lem.unimorphtags ?? old.unimorphtags;
-      old.priority = lem.priority;
+      old.priority = lem.priority ?? old.priority ?? Priority.Medium;
 
       var userLog = new UserLog()
       {

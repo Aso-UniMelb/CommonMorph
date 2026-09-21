@@ -89,7 +89,7 @@ export const dictionaries: Record<string, I18nDictionary> = {
     studio_title: 'Linguist Studio',
     studio_tab_structures: 'Paradigm Structures',
     studio_tab_layers: 'Reusable Layers',
-    studio_tab_lexicon: 'Lexicon (Lemmas)',
+    studio_tab_lexicon: 'Lexicon',
     studio_tab_rules: 'Morphophonology',
     btn_add: 'Add',
     btn_edit: 'Edit',

@@ -16,7 +16,7 @@ export default defineConfig({
       '/InflectionClass': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
       '/Elicit': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
       '/Cell': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
-      '/ActiveLearning': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
+      '/ActiveLearning': { target: 'http://localhost:5041', changeOrigin: true, secure: false, timeout: 300000 },
       '/LLM': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
       '/Survey': { target: 'http://localhost:5041', changeOrigin: true, secure: false },
       '/QTemplate': { target: 'http://localhost:5041', changeOrigin: true, secure: false },

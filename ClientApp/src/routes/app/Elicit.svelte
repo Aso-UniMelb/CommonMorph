@@ -534,7 +534,7 @@
           <thead>
             <tr>
               {#if batchOrder === 'Structure'}
-                <th>Base Lemma</th>
+                <th>Lemma</th>
               {/if}
 
               <!-- Header label changes depending on Level 1 (Alias) vs Level 2 (Linguistic Terms) -->

@@ -37,12 +37,20 @@ namespace common_morph_backend.Controllers
     [HttpPost("insert")]
     public IActionResult insert([FromBody] Structure structure)
     {
-      if (_context.structures.Any(x => x.unimorphtags == structure.unimorphtags && x.inflectionclassid == structure.inflectionclassid && !x.isdeleted))
-        return BadRequest("duplicate");
+      if (structure == null)
+        return BadRequest("Invalid structure payload");
+
+      var tags = structure.unimorphtags ?? "";
+      var classId = structure.inflectionclassid;
+
+      if (_context.structures.Any(x => x.unimorphtags == tags && x.inflectionclassid == classId && !x.isdeleted))
+        return BadRequest("A structure with these UniMorph tags already exists in this inflection class.");
 
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
 
+      structure.reusablelayerid = structure.reusablelayerid ?? 0;
+      structure.order = structure.order ?? 0;
       structure.isdeleted = false;
       _context.structures.Add(structure);
       _context.SaveChanges();
@@ -62,9 +70,13 @@ namespace common_morph_backend.Controllers
     [HttpPost("update")]
     public IActionResult update([FromBody] Structure structure)
     {
-      var old = _context.structures.FirstOrDefault(x => x.id == structure.id);
+      if (structure == null || structure.id == 0)
+        return BadRequest("Invalid structure payload");
+
+      var targetId = structure.id;
+      var old = _context.structures.FirstOrDefault(x => x.id == targetId);
       if (old == null)
-        return BadRequest("not exist");
+        return BadRequest("Structure does not exist");
 
       var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       var userId = userIdClaim != null ? Convert.ToInt32(userIdClaim) : 0;
@@ -72,8 +84,8 @@ namespace common_morph_backend.Controllers
       old.title = structure.title ?? old.title;
       old.unimorphtags = structure.unimorphtags ?? old.unimorphtags;
       old.formula = structure.formula ?? old.formula;
-      old.order = structure.order;
-      old.reusablelayerid = structure.reusablelayerid;
+      old.order = structure.order ?? old.order ?? 0;
+      old.reusablelayerid = structure.reusablelayerid ?? 0;
       old.inflectionclassid = structure.inflectionclassid != 0 ? structure.inflectionclassid : old.inflectionclassid;
 
       var userLog = new UserLog()

@@ -281,16 +281,16 @@
         </div>
       {/if}
 
-      <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.85rem;">
-        <div style="flex: 1; display: flex; align-items: center; gap: 0.4rem;">
-          <label for="selTrainEpochs" style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin: 0; white-space: nowrap;">
-            Epochs:
+      <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+          <label for="selTrainEpochs" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin: 0; white-space: nowrap;">
+            Training Epochs:
           </label>
           <select 
             id="selTrainEpochs" 
             bind:value={trainEpochs} 
             disabled={isTraining}
-            style="padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: var(--radius); width: auto;"
+            style="padding: 0.4rem 0.6rem; font-size: 0.85rem; border-radius: var(--radius); flex: 1; max-width: 260px;"
           >
             <option value={5}>5 Epochs (Faster, lower accuracy)</option>
             <option value={10}>10 Epochs</option>
@@ -304,7 +304,7 @@
           class="button secondary" 
           on:click={handleTrainModel} 
           disabled={isTraining || !$selectedLang}
-          style="flex: 2; justify-content: center;"
+          style="width: 100%; justify-content: center;"
         >
           {#if isTraining}
             <span class="material-icons rotating" style="font-size: 1rem;">sync</span>
